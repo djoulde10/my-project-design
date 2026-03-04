@@ -31,8 +31,8 @@ export default function Actions() {
 
   const fetchAll = async () => {
     const [actRes, solRes, memRes] = await Promise.all([
-      supabase.from("actions").select("*, solutions(numero_solution, texte), members(full_name)").order("due_date"),
-      supabase.from("solutions").select("id, numero_solution, texte"),
+      supabase.from("actions").select("*, solutions(title, description), members(full_name)").order("due_date"),
+      supabase.from("solutions").select("id, title, description"),
       supabase.from("members").select("id, full_name").eq("is_active", true),
     ]);
     setActions(actRes.data ?? []);
@@ -79,7 +79,7 @@ export default function Actions() {
                 <Select value={form.solution_id} onValueChange={(v) => setForm({ ...form, solution_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                   <SelectContent>
-                    {solutions.map((d) => (<SelectItem key={d.id} value={d.id}>{d.numero_solution} - {d.texte?.substring(0, 50)}</SelectItem>))}
+                    {solutions.map((d) => (<SelectItem key={d.id} value={d.id}>{d.title?.substring(0, 60)}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
@@ -153,7 +153,7 @@ export default function Actions() {
                   return (
                     <TableRow key={a.id}>
                       <TableCell className="font-medium">{a.title}</TableCell>
-                      <TableCell className="text-sm font-mono">{(a as any).solutions?.numero_solution}</TableCell>
+                      <TableCell className="text-sm">{(a as any).solutions?.title}</TableCell>
                       <TableCell className="text-sm">{(a as any).members?.full_name ?? "—"}</TableCell>
                       <TableCell className="text-sm">
                         {a.due_date ? new Date(a.due_date).toLocaleDateString("fr-FR") : "—"}
