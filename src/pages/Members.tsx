@@ -1,0 +1,174 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+const qualityLabels: Record<string, string> = {
+  pca: "PCA",
+  administrateur: "Administrateur",
+  president_comite: "Président du Comité",
+  secretariat_juridique: "Secrétariat juridique",
+  autre: "Autre",
+};
+
+const qualityOptions = ["pca", "administrateur", "president_comite", "secretariat_juridique", "autre"] as const;
+
+export default function Members() {
+  const { toast } = useToast();
+  const [members, setMembers] = useState<any[]>([]);
+  const [organs, setOrgans] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    organ_id: "", full_name: "", quality: "autre" as "pca" | "administrateur" | "president_comite" | "secretariat_juridique" | "autre",
+    mandate_start: "", mandate_end: "", email: "", phone: "",
+  });
+
+  const fetchMembers = async () => {
+    const { data } = await supabase.from("members").select("*, organs(name)").order("full_name");
+    setMembers(data ?? []);
+  };
+
+  const fetchOrgans = async () => {
+    const { data } = await supabase.from("organs").select("*");
+    setOrgans(data ?? []);
+  };
+
+  useEffect(() => { fetchMembers(); fetchOrgans(); }, []);
+
+  const handleCreate = async () => {
+    const { error } = await supabase.from("members").insert([{
+      ...form,
+      mandate_end: form.mandate_end || null,
+    }]);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Membre ajouté" });
+      setOpen(false);
+      setForm({ organ_id: "", full_name: "", quality: "autre", mandate_start: "", mandate_end: "", email: "", phone: "" });
+      fetchMembers();
+    }
+  };
+
+  return (
+    <div className="p-6 lg:p-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Membres</h1>
+          <p className="text-muted-foreground">Gestion des membres des organes</p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button><Plus className="w-4 h-4 mr-2" />Nouveau membre</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Ajouter un membre</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Organe</Label>
+                <Select value={form.organ_id} onValueChange={(v) => setForm({ ...form, organ_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                  <SelectContent>
+                    {organs.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Nom complet</Label>
+                <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Qualité</Label>
+                <Select value={form.quality} onValueChange={(v) => setForm({ ...form, quality: v as typeof form.quality })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {qualityOptions.map((k) => (
+                      <SelectItem key={k} value={k}>{qualityLabels[k]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Début mandat</Label>
+                  <Input type="date" value={form.mandate_start} onChange={(e) => setForm({ ...form, mandate_start: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Fin mandat</Label>
+                  <Input type="date" value={form.mandate_end} onChange={(e) => setForm({ ...form, mandate_end: e.target.value })} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Téléphone</Label>
+                  <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+              <Button onClick={handleCreate} disabled={!form.organ_id || !form.full_name || !form.mandate_start}>Ajouter</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nom</TableHead>
+                <TableHead>Organe</TableHead>
+                <TableHead>Qualité</TableHead>
+                <TableHead>Mandat</TableHead>
+                <TableHead>Statut</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {members.length === 0 ? (
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Aucun membre</TableCell></TableRow>
+              ) : (
+                members.map((m) => (
+                  <TableRow key={m.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="w-4 h-4 text-primary" />
+                        </div>
+                        {m.full_name}
+                      </div>
+                    </TableCell>
+                    <TableCell>{(m as any).organs?.name}</TableCell>
+                    <TableCell><Badge variant="outline">{qualityLabels[m.quality] ?? m.quality}</Badge></TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(m.mandate_start).toLocaleDateString("fr-FR")}
+                      {m.mandate_end ? ` — ${new Date(m.mandate_end).toLocaleDateString("fr-FR")}` : " — En cours"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={m.is_active ? "default" : "secondary"}>
+                        {m.is_active ? "Actif" : "Inactif"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
