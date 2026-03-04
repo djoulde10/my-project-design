@@ -8,31 +8,31 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, FileText } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const pvStatusLabels: Record<string, string> = {
-  en_attente: "En attente",
-  vote: "Voté",
-  adopte: "Adopté",
-  adopte_et_signe: "Adopté et signé",
+  brouillon: "Brouillon",
+  valide: "Validé",
+  signe: "Signé",
 };
 
 const pvStatusColors: Record<string, string> = {
-  en_attente: "bg-muted text-muted-foreground",
-  vote: "bg-amber-100 text-amber-800",
-  adopte: "bg-primary/10 text-primary",
-  adopte_et_signe: "bg-emerald-100 text-emerald-800",
+  brouillon: "bg-muted text-muted-foreground",
+  valide: "bg-primary/10 text-primary",
+  signe: "bg-emerald-100 text-emerald-800",
 };
+
+type PvStatus = "brouillon" | "valide" | "signe";
 
 export default function Minutes() {
   const { toast } = useToast();
   const [minutes, setMinutes] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [pvOpen, setPvOpen] = useState(false);
-  const [pvForm, setPvForm] = useState({ session_id: "", content: "", pv_status: "en_attente" });
+  const [pvForm, setPvForm] = useState<{ session_id: string; content: string; pv_status: PvStatus }>({ session_id: "", content: "", pv_status: "brouillon" });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editStatus, setEditStatus] = useState("");
+  const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
 
   const fetchAll = async () => {
     const [minRes, sessRes] = await Promise.all([
@@ -48,10 +48,10 @@ export default function Minutes() {
   const createPV = async () => {
     const { error } = await supabase.from("minutes").insert([pvForm]);
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "PV créé" }); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "en_attente" }); fetchAll(); }
+    else { toast({ title: "PV créé" }); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll(); }
   };
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, status: PvStatus) => {
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
     else { toast({ title: "Statut mis à jour" }); setEditingId(null); fetchAll(); }
@@ -82,7 +82,7 @@ export default function Minutes() {
               </div>
               <div className="space-y-2">
                 <Label>Statut</Label>
-                <Select value={pvForm.pv_status} onValueChange={(v) => setPvForm({ ...pvForm, pv_status: v })}>
+                <Select value={pvForm.pv_status} onValueChange={(v) => setPvForm({ ...pvForm, pv_status: v as PvStatus })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(pvStatusLabels).map(([k, v]) => (
@@ -120,7 +120,7 @@ export default function Minutes() {
                     <TableCell className="font-medium">{(m as any).sessions?.title}</TableCell>
                     <TableCell>
                       {editingId === m.id ? (
-                        <Select value={editStatus} onValueChange={(v) => { setEditStatus(v); updateStatus(m.id, v); }}>
+                        <Select value={editStatus} onValueChange={(v) => { const s = v as PvStatus; setEditStatus(s); updateStatus(m.id, s); }}>
                           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             {Object.entries(pvStatusLabels).map(([k, v]) => (
@@ -130,13 +130,13 @@ export default function Minutes() {
                         </Select>
                       ) : (
                         <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
-                          {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "En attente"}
+                          {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
                         </Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "en_attente"); }}>
+                      <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
                         Modifier statut
                       </Button>
                     </TableCell>

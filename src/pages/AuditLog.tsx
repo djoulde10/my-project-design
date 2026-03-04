@@ -16,7 +16,7 @@ const actionColors: Record<string, string> = {
 export default function AuditLog() {
   const [logs, setLogs] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [filterTable, setFilterTable] = useState("all");
+  const [filterEntity, setFilterEntity] = useState("all");
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -25,21 +25,20 @@ export default function AuditLog() {
         .select("*")
         .order("created_at", { ascending: false })
         .limit(200);
-      if (filterTable !== "all") {
-        query = query.eq("table_name", filterTable);
+      if (filterEntity !== "all") {
+        query = query.eq("entity_type", filterEntity);
       }
       const { data } = await query;
       setLogs(data ?? []);
     };
     fetchLogs();
-  }, [filterTable]);
+  }, [filterEntity]);
 
-  const tableNames = ["sessions", "agenda_items", "documents", "minutes", "solutions", "actions", "members", "session_attendees"];
+  const entityTypes = ["sessions", "agenda_items", "documents", "minutes", "solutions", "actions", "members", "session_attendees"];
 
   const filtered = logs.filter((l) =>
     !search || l.action?.toLowerCase().includes(search.toLowerCase()) ||
-    l.table_name?.toLowerCase().includes(search.toLowerCase()) ||
-    l.record_id?.includes(search)
+    l.entity_type?.toLowerCase().includes(search.toLowerCase())
   );
 
   const renderJson = (val: any) => {
@@ -68,11 +67,11 @@ export default function AuditLog() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Rechercher..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={filterTable} onValueChange={setFilterTable}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Toutes les tables" /></SelectTrigger>
+        <Select value={filterEntity} onValueChange={setFilterEntity}>
+          <SelectTrigger className="w-48"><SelectValue placeholder="Toutes les entités" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toutes les tables</SelectItem>
-            {tableNames.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            <SelectItem value="all">Toutes les entités</SelectItem>
+            {entityTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -84,23 +83,21 @@ export default function AuditLog() {
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Action</TableHead>
-                <TableHead>Table</TableHead>
-                <TableHead>Anciennes valeurs</TableHead>
-                <TableHead>Nouvelles valeurs</TableHead>
+                <TableHead>Entité</TableHead>
+                <TableHead>Détails</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Aucun enregistrement</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun enregistrement</TableCell></TableRow>
               ) : filtered.map((l) => (
                 <TableRow key={l.id}>
                   <TableCell className="text-xs whitespace-nowrap">
                     {new Date(l.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </TableCell>
                   <TableCell><Badge className={actionColors[l.action] ?? ""}>{l.action}</Badge></TableCell>
-                  <TableCell><Badge variant="outline" className="text-xs">{l.table_name}</Badge></TableCell>
-                  <TableCell>{renderJson(l.old_values)}</TableCell>
-                  <TableCell>{renderJson(l.new_values)}</TableCell>
+                  <TableCell><Badge variant="outline" className="text-xs">{l.entity_type}</Badge></TableCell>
+                  <TableCell>{renderJson(l.details)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

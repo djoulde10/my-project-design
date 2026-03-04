@@ -28,7 +28,7 @@ const navItems = [
   { label: "PV & Solutions", icon: ClipboardCheck, path: "/minutes" },
   { label: "Suivi des actions", icon: ListTodo, path: "/actions" },
   { label: "Archives", icon: Archive, path: "/archives" },
-  { label: "Journal d'audit", icon: Shield, path: "/audit-log" },
+  { label: "Journal d'audit", icon: Shield, path: "/audit" },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
