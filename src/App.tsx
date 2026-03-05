@@ -16,6 +16,7 @@ import Decisions from "@/pages/Decisions";
 import Actions from "@/pages/Actions";
 import Archives from "@/pages/Archives";
 import AuditLog from "@/pages/AuditLog";
+import UserManagement from "@/pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/actions" element={<ProtectedRoute><Actions /></ProtectedRoute>} />
             <Route path="/archives" element={<ProtectedRoute><Archives /></ProtectedRoute>} />
             <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
+            <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

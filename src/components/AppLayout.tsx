@@ -31,6 +31,7 @@ const navItems = [
   { label: "Suivi des actions", icon: ListTodo, path: "/actions" },
   { label: "Archives", icon: Archive, path: "/archives" },
   { label: "Journal d'audit", icon: Shield, path: "/audit" },
+  { label: "Utilisateurs", icon: Users, path: "/users" },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
