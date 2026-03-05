@@ -393,6 +393,7 @@ export type Database = {
           phone: string | null
           quality: Database["public"]["Enums"]["member_quality"]
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           company_id?: string | null
@@ -407,6 +408,7 @@ export type Database = {
           phone?: string | null
           quality?: Database["public"]["Enums"]["member_quality"]
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           company_id?: string | null
@@ -421,6 +423,7 @@ export type Database = {
           phone?: string | null
           quality?: Database["public"]["Enums"]["member_quality"]
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -528,6 +531,27 @@ export type Database = {
           },
         ]
       }
+      permissions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          nom: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          nom: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          nom?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -535,6 +559,8 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          role_id: string | null
+          statut: string
           updated_at: string
         }
         Insert: {
@@ -543,6 +569,8 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          role_id?: string | null
+          statut?: string
           updated_at?: string
         }
         Update: {
@@ -551,6 +579,8 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          role_id?: string | null
+          statut?: string
           updated_at?: string
         }
         Relationships: [
@@ -561,7 +591,68 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      role_permissions: {
+        Row: {
+          id: string
+          permission_id: string
+          role_id: string
+        }
+        Insert: {
+          id?: string
+          permission_id: string
+          role_id: string
+        }
+        Update: {
+          id?: string
+          permission_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          nom: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          nom: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          nom?: string
+        }
+        Relationships: []
       }
       session_attendees: {
         Row: {
@@ -742,11 +833,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_permissions: {
+        Args: { _user_id: string }
+        Returns: {
+          permission_nom: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      user_has_permission: {
+        Args: { _permission_nom: string; _user_id: string }
         Returns: boolean
       }
     }
