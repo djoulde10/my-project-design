@@ -22,21 +22,21 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 export default function Actions() {
   const { toast } = useToast();
   const [actions, setActions] = useState<any[]>([]);
-  const [solutions, setSolutions] = useState<any[]>([]);
+  const [decisions, setDecisions] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    solution_id: "", title: "", description: "", responsible_member_id: "", due_date: "",
+    decision_id: "", title: "", description: "", responsible_member_id: "", due_date: "",
   });
 
   const fetchAll = async () => {
-    const [actRes, solRes, memRes] = await Promise.all([
-      supabase.from("actions").select("*, solutions(title, description), members(full_name)").order("due_date"),
-      supabase.from("solutions").select("id, title, description"),
+    const [actRes, decRes, memRes] = await Promise.all([
+      supabase.from("actions").select("*, decisions(numero_decision, texte), members(full_name)").order("due_date"),
+      supabase.from("decisions").select("id, numero_decision, texte"),
       supabase.from("members").select("id, full_name").eq("is_active", true),
     ]);
     setActions(actRes.data ?? []);
-    setSolutions(solRes.data ?? []);
+    setDecisions(decRes.data ?? []);
     setMembers(memRes.data ?? []);
   };
 
@@ -44,14 +44,14 @@ export default function Actions() {
 
   const handleCreate = async () => {
     const { error } = await supabase.from("actions").insert([{
-      solution_id: form.solution_id,
+      decision_id: form.decision_id || null,
       title: form.title,
       description: form.description || null,
       responsible_member_id: form.responsible_member_id || null,
       due_date: form.due_date || null,
     }]);
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Action créée" }); setOpen(false); fetchAll(); }
+    else { toast({ title: "Action créée" }); setOpen(false); setForm({ decision_id: "", title: "", description: "", responsible_member_id: "", due_date: "" }); fetchAll(); }
   };
 
   const updateStatus = async (id: string, status: string) => {
@@ -67,7 +67,7 @@ export default function Actions() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Suivi des actions</h1>
-          <p className="text-muted-foreground">Actions issues des solutions</p>
+          <p className="text-muted-foreground">Actions issues des décisions</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
@@ -75,11 +75,15 @@ export default function Actions() {
             <DialogHeader><DialogTitle>Créer une action</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Solution source</Label>
-                <Select value={form.solution_id} onValueChange={(v) => setForm({ ...form, solution_id: v })}>
+                <Label>Décision source</Label>
+                <Select value={form.decision_id} onValueChange={(v) => setForm({ ...form, decision_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                   <SelectContent>
-                    {solutions.map((d) => (<SelectItem key={d.id} value={d.id}>{d.title?.substring(0, 60)}</SelectItem>))}
+                    {decisions.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.numero_decision ? `${d.numero_decision} — ` : ""}{d.texte?.substring(0, 50)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -107,7 +111,7 @@ export default function Actions() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-              <Button onClick={handleCreate} disabled={!form.solution_id || !form.title}>Créer</Button>
+              <Button onClick={handleCreate} disabled={!form.title}>Créer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -137,7 +141,7 @@ export default function Actions() {
             <TableHeader>
               <TableRow>
                 <TableHead>Action</TableHead>
-                <TableHead>Solution</TableHead>
+                <TableHead>Décision</TableHead>
                 <TableHead>Responsable</TableHead>
                 <TableHead>Échéance</TableHead>
                 <TableHead>Statut</TableHead>
@@ -153,7 +157,7 @@ export default function Actions() {
                   return (
                     <TableRow key={a.id}>
                       <TableCell className="font-medium">{a.title}</TableCell>
-                      <TableCell className="text-sm">{(a as any).solutions?.title}</TableCell>
+                      <TableCell className="text-sm font-mono">{(a as any).decisions?.numero_decision ?? "—"}</TableCell>
                       <TableCell className="text-sm">{(a as any).members?.full_name ?? "—"}</TableCell>
                       <TableCell className="text-sm">
                         {a.due_date ? new Date(a.due_date).toLocaleDateString("fr-FR") : "—"}
