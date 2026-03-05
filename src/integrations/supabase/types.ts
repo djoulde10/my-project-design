@@ -983,6 +983,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      my_company_id: { Args: never; Returns: string }
       user_has_permission: {
         Args: { _permission_nom: string; _user_id: string }
         Returns: boolean
