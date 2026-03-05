@@ -379,6 +379,107 @@ export type Database = {
           },
         ]
       }
+      meeting_templates: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          created_by: string | null
+          extracted_content: string | null
+          file_path: string
+          id: string
+          name: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          extracted_content?: string | null
+          file_path: string
+          id?: string
+          name: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          extracted_content?: string | null
+          file_path?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meetings: {
+        Row: {
+          audio_duration_seconds: number | null
+          audio_file_path: string | null
+          company_id: string | null
+          created_at: string | null
+          created_by: string | null
+          generated_pv: string | null
+          id: string
+          meeting_date: string | null
+          pv_status: string | null
+          session_id: string | null
+          title: string
+          transcription: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_duration_seconds?: number | null
+          audio_file_path?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          generated_pv?: string | null
+          id?: string
+          meeting_date?: string | null
+          pv_status?: string | null
+          session_id?: string | null
+          title: string
+          transcription?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_duration_seconds?: number | null
+          audio_file_path?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          generated_pv?: string | null
+          id?: string
+          meeting_date?: string | null
+          pv_status?: string | null
+          session_id?: string | null
+          title?: string
+          transcription?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           company_id: string | null

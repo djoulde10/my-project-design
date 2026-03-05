@@ -1,1 +1,13 @@
 project_id = "fvxzmmtbptwooznxlfji"
+
+[functions.transcribe-audio]
+verify_jwt = false
+
+[functions.generate-pv]
+verify_jwt = false
+
+[functions.tts-pv]
+verify_jwt = false
+
+[functions.parse-template]
+verify_jwt = false
