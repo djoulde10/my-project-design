@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useCompanyId } from "@/hooks/useCompanyId";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function Documents() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const companyId = useCompanyId();
   const [documents, setDocuments] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
@@ -37,7 +39,7 @@ export default function Documents() {
     if (!file || !form.session_id) return;
     setUploading(true);
 
-    const filePath = `${form.session_id}/${Date.now()}_${file.name}`;
+    const filePath = `${companyId}/${form.session_id}/${Date.now()}_${file.name}`;
     const { error: uploadError } = await supabase.storage.from("session-documents").upload(filePath, file);
 
     if (uploadError) {

@@ -17,10 +17,11 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
-
+import { useCompanyId } from "@/hooks/useCompanyId";
 export default function Meetings() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const companyId = useCompanyId();
   const [meetings, setMeetings] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -106,7 +107,7 @@ export default function Meetings() {
     setCreateOpen(false);
 
     // 1. Upload audio to storage
-    const fileName = `${Date.now()}_${newTitle.replace(/\s+/g, "_")}.${uploadedFile ? uploadedFile.name.split(".").pop() : "webm"}`;
+    const fileName = `${companyId}/${Date.now()}_${newTitle.replace(/\s+/g, "_")}.${uploadedFile ? uploadedFile.name.split(".").pop() : "webm"}`;
     const { error: uploadError } = await supabase.storage
       .from("meeting-audio")
       .upload(fileName, audioSource);
@@ -286,7 +287,7 @@ export default function Meetings() {
     setParsingTemplate(true);
 
     try {
-      const filePath = `${Date.now()}_${templateFile.name}`;
+      const filePath = `${companyId}/${Date.now()}_${templateFile.name}`;
       const { error: upErr } = await supabase.storage.from("pv-templates").upload(filePath, templateFile);
       if (upErr) throw new Error(upErr.message);
 

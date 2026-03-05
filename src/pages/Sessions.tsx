@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useCompanyId } from "@/hooks/useCompanyId";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,7 @@ interface AgendaItemDraft {
 export default function Sessions() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const companyId = useCompanyId();
   const [sessions, setSessions] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
@@ -111,7 +113,7 @@ export default function Sessions() {
       if (agErr || !agendaItem) continue;
 
       for (const file of draft.files) {
-        const filePath = `${session.id}/${agendaItem.id}/${Date.now()}_${file.name}`;
+        const filePath = `${companyId}/${session.id}/${agendaItem.id}/${Date.now()}_${file.name}`;
         const { error: upErr } = await supabase.storage.from("session-documents").upload(filePath, file);
         if (!upErr) {
           await supabase.from("documents").insert([{
