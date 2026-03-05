@@ -12,6 +12,7 @@ import Members from "@/pages/Members";
 import AgendaItems from "@/pages/AgendaItems";
 import Documents from "@/pages/Documents";
 import Minutes from "@/pages/Minutes";
+import Decisions from "@/pages/Decisions";
 import Actions from "@/pages/Actions";
 import Archives from "@/pages/Archives";
 import AuditLog from "@/pages/AuditLog";
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/agenda" element={<ProtectedRoute><AgendaItems /></ProtectedRoute>} />
             <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
             <Route path="/minutes" element={<ProtectedRoute><Minutes /></ProtectedRoute>} />
+            <Route path="/decisions" element={<ProtectedRoute><Decisions /></ProtectedRoute>} />
             <Route path="/actions" element={<ProtectedRoute><Actions /></ProtectedRoute>} />
             <Route path="/archives" element={<ProtectedRoute><Archives /></ProtectedRoute>} />
             <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />

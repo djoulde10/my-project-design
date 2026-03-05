@@ -16,8 +16,10 @@ export type Database = {
     Tables: {
       actions: {
         Row: {
+          company_id: string | null
           completion_date: string | null
           created_at: string
+          decision_id: string | null
           description: string | null
           due_date: string | null
           id: string
@@ -28,8 +30,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           completion_date?: string | null
           created_at?: string
+          decision_id?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -40,8 +44,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           completion_date?: string | null
           created_at?: string
+          decision_id?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -52,6 +58,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "actions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "actions_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "decisions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "actions_responsible_member_id_fkey"
             columns: ["responsible_member_id"]
@@ -70,6 +90,7 @@ export type Database = {
       }
       agenda_items: {
         Row: {
+          company_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -81,6 +102,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -92,6 +114,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -103,6 +126,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "agenda_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "agenda_items_presenter_member_id_fkey"
             columns: ["presenter_member_id"]
@@ -122,6 +152,7 @@ export type Database = {
       audit_log: {
         Row: {
           action: string
+          company_id: string | null
           created_at: string
           details: Json | null
           entity_id: string | null
@@ -131,6 +162,7 @@ export type Database = {
         }
         Insert: {
           action: string
+          company_id?: string | null
           created_at?: string
           details?: Json | null
           entity_id?: string | null
@@ -140,6 +172,7 @@ export type Database = {
         }
         Update: {
           action?: string
+          company_id?: string | null
           created_at?: string
           details?: Json | null
           entity_id?: string | null
@@ -147,11 +180,145 @@ export type Database = {
           id?: string
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          couleur_principale: string | null
+          created_at: string
+          date_expiration: string | null
+          id: string
+          logo_url: string | null
+          nom: string
+          pays: string | null
+          plan_abonnement: string | null
+          secteur: string | null
+          statut: string | null
+          updated_at: string
+        }
+        Insert: {
+          couleur_principale?: string | null
+          created_at?: string
+          date_expiration?: string | null
+          id?: string
+          logo_url?: string | null
+          nom: string
+          pays?: string | null
+          plan_abonnement?: string | null
+          secteur?: string | null
+          statut?: string | null
+          updated_at?: string
+        }
+        Update: {
+          couleur_principale?: string | null
+          created_at?: string
+          date_expiration?: string | null
+          id?: string
+          logo_url?: string | null
+          nom?: string
+          pays?: string | null
+          plan_abonnement?: string | null
+          secteur?: string | null
+          statut?: string | null
+          updated_at?: string
+        }
         Relationships: []
+      }
+      decisions: {
+        Row: {
+          agenda_item_id: string | null
+          company_id: string
+          created_at: string
+          date_effet: string | null
+          id: string
+          numero_decision: string | null
+          responsable_execution: string | null
+          session_id: string
+          statut: string | null
+          texte: string
+          type_vote: string | null
+          updated_at: string
+          vote_abstention: number | null
+          vote_contre: number | null
+          vote_pour: number | null
+        }
+        Insert: {
+          agenda_item_id?: string | null
+          company_id?: string
+          created_at?: string
+          date_effet?: string | null
+          id?: string
+          numero_decision?: string | null
+          responsable_execution?: string | null
+          session_id: string
+          statut?: string | null
+          texte: string
+          type_vote?: string | null
+          updated_at?: string
+          vote_abstention?: number | null
+          vote_contre?: number | null
+          vote_pour?: number | null
+        }
+        Update: {
+          agenda_item_id?: string | null
+          company_id?: string
+          created_at?: string
+          date_effet?: string | null
+          id?: string
+          numero_decision?: string | null
+          responsable_execution?: string | null
+          session_id?: string
+          statut?: string | null
+          texte?: string
+          type_vote?: string | null
+          updated_at?: string
+          vote_abstention?: number | null
+          vote_contre?: number | null
+          vote_pour?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decisions_agenda_item_id_fkey"
+            columns: ["agenda_item_id"]
+            isOneToOne: false
+            referencedRelation: "agenda_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decisions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decisions_responsable_execution_fkey"
+            columns: ["responsable_execution"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decisions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       documents: {
         Row: {
           agenda_item_id: string | null
+          company_id: string | null
           created_at: string
           file_path: string
           file_size: number | null
@@ -160,9 +327,11 @@ export type Database = {
           name: string
           session_id: string
           uploaded_by: string | null
+          version: number
         }
         Insert: {
           agenda_item_id?: string | null
+          company_id?: string | null
           created_at?: string
           file_path: string
           file_size?: number | null
@@ -171,9 +340,11 @@ export type Database = {
           name: string
           session_id: string
           uploaded_by?: string | null
+          version?: number
         }
         Update: {
           agenda_item_id?: string | null
+          company_id?: string | null
           created_at?: string
           file_path?: string
           file_size?: number | null
@@ -182,6 +353,7 @@ export type Database = {
           name?: string
           session_id?: string
           uploaded_by?: string | null
+          version?: number
         }
         Relationships: [
           {
@@ -189,6 +361,13 @@ export type Database = {
             columns: ["agenda_item_id"]
             isOneToOne: false
             referencedRelation: "agenda_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -202,6 +381,7 @@ export type Database = {
       }
       members: {
         Row: {
+          company_id: string | null
           created_at: string
           email: string | null
           full_name: string
@@ -215,6 +395,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           email?: string | null
           full_name: string
@@ -228,6 +409,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
@@ -242,6 +424,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "members_organ_id_fkey"
             columns: ["organ_id"]
             isOneToOne: false
@@ -252,6 +441,7 @@ export type Database = {
       }
       minutes: {
         Row: {
+          company_id: string | null
           content: string | null
           created_at: string
           id: string
@@ -262,6 +452,7 @@ export type Database = {
           validated_at: string | null
         }
         Insert: {
+          company_id?: string | null
           content?: string | null
           created_at?: string
           id?: string
@@ -272,6 +463,7 @@ export type Database = {
           validated_at?: string | null
         }
         Update: {
+          company_id?: string | null
           content?: string | null
           created_at?: string
           id?: string
@@ -283,6 +475,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "minutes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "minutes_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: true
@@ -293,6 +492,7 @@ export type Database = {
       }
       organs: {
         Row: {
+          company_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -301,6 +501,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -309,6 +510,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -316,11 +518,20 @@ export type Database = {
           type?: Database["public"]["Enums"]["organ_type"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
           avatar_url: string | null
+          company_id: string | null
           created_at: string
           full_name: string | null
           id: string
@@ -328,6 +539,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          company_id?: string | null
           created_at?: string
           full_name?: string | null
           id: string
@@ -335,12 +547,21 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          company_id?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       session_attendees: {
         Row: {
@@ -393,11 +614,13 @@ export type Database = {
       }
       sessions: {
         Row: {
+          company_id: string | null
           created_at: string
           created_by: string | null
           id: string
           is_virtual: boolean
           location: string | null
+          numero_session: string | null
           organ_id: string
           session_date: string
           session_type: Database["public"]["Enums"]["session_type"]
@@ -406,11 +629,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
           is_virtual?: boolean
           location?: string | null
+          numero_session?: string | null
           organ_id: string
           session_date: string
           session_type?: Database["public"]["Enums"]["session_type"]
@@ -419,11 +644,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
           is_virtual?: boolean
           location?: string | null
+          numero_session?: string | null
           organ_id?: string
           session_date?: string
           session_type?: Database["public"]["Enums"]["session_type"]
@@ -432,6 +659,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sessions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sessions_organ_id_fkey"
             columns: ["organ_id"]
@@ -534,7 +768,7 @@ export type Database = {
         | "tenue"
         | "cloturee"
         | "archivee"
-      session_type: "ordinaire" | "extraordinaire"
+      session_type: "ordinaire" | "extraordinaire" | "speciale"
       solution_status: "adoptee" | "rejetee" | "ajournee"
     }
     CompositeTypes: {
@@ -676,7 +910,7 @@ export const Constants = {
       organ_type: ["ca", "comite_audit"],
       pv_status: ["brouillon", "valide", "signe"],
       session_status: ["brouillon", "validee", "tenue", "cloturee", "archivee"],
-      session_type: ["ordinaire", "extraordinaire"],
+      session_type: ["ordinaire", "extraordinaire", "speciale"],
       solution_status: ["adoptee", "rejetee", "ajournee"],
     },
   },

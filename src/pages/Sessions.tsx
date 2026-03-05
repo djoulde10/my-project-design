@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const statusColors: Record<string, string> = {
@@ -159,6 +159,12 @@ export default function Sessions() {
     }
   };
 
+  const updateSessionStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from("sessions").update({ status: status as any }).eq("id", id);
+    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    else { toast({ title: "Statut mis à jour" }); fetchSessions(); }
+  };
+
   const caSessions = sessions.filter((s) => (s as any).organs?.type === "ca");
   const auditSessions = sessions.filter((s) => (s as any).organs?.type === "comite_audit");
 
@@ -172,42 +178,90 @@ export default function Sessions() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-8"></TableHead>
+              <TableHead>N° Session</TableHead>
               <TableHead>Session</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Lieu</TableHead>
               <TableHead>Statut</TableHead>
+              <TableHead>Workflow</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {list.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   Aucune session.
                 </TableCell>
               </TableRow>
             ) : (
               list.map((s) => (
-                <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSessionDetails(s.id)}>
-                  <TableCell>
-                    {expandedSession === s.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </TableCell>
-                  <TableCell className="font-medium">{s.title}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
-                      {new Date(s.session_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5 text-sm">
-                      {s.is_virtual ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
-                      {s.location ?? "—"}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={statusColors[s.status] ?? ""}>{statusLabels[s.status] ?? s.status}</Badge>
-                  </TableCell>
-                </TableRow>
+                <>
+                  <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSessionDetails(s.id)}>
+                    <TableCell>
+                      {expandedSession === s.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">{s.numero_session ?? "—"}</TableCell>
+                    <TableCell className="font-medium">{s.title}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
+                        {new Date(s.session_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-sm">
+                        {s.is_virtual ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                        {s.location ?? "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={statusColors[s.status] ?? ""}>{statusLabels[s.status] ?? s.status}</Badge>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      {s.status === "brouillon" && (
+                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "validee")}>Valider</Button>
+                      )}
+                      {s.status === "validee" && (
+                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
+                      )}
+                      {s.status === "tenue" && (
+                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "cloturee")}>Clôturer</Button>
+                      )}
+                      {s.status === "cloturee" && (
+                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                  {expandedSession === s.id && sessionDetails[s.id] && (
+                    <TableRow key={`${s.id}-details`}>
+                      <TableCell colSpan={7} className="bg-muted/30 p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2">Ordre du jour ({sessionDetails[s.id].agendaItems.length})</h4>
+                            {sessionDetails[s.id].agendaItems.map((ai, i) => (
+                              <div key={ai.id} className="text-sm mb-1 flex items-start gap-2">
+                                <Badge variant="outline" className="text-xs shrink-0">{i + 1}</Badge>
+                                <span>{ai.title}</span>
+                                <Badge variant="secondary" className="text-xs ml-auto">{ai.nature}</Badge>
+                              </div>
+                            ))}
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2">Participants ({sessionDetails[s.id].attendees.length})</h4>
+                            {sessionDetails[s.id].attendees.map((att) => (
+                              <div key={att.id} className="text-sm mb-1 flex items-center gap-2">
+                                <span>{(att as any).members?.full_name}</span>
+                                <Badge variant={att.is_present ? "default" : "secondary"} className="text-xs">
+                                  {att.is_present ? "Présent" : "Absent"}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
               ))
             )}
           </TableBody>
@@ -291,7 +345,7 @@ export default function Sessions() {
                         <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="information">Information</SelectItem>
-                          <SelectItem value="decision">Solution</SelectItem>
+                          <SelectItem value="decision">Décision</SelectItem>
                         </SelectContent>
                       </Select>
                       <div className="flex-1">

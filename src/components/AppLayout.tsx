@@ -13,6 +13,7 @@ import {
   LogOut,
   Shield,
   ChevronRight,
+  Gavel,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,8 @@ const navItems = [
   { label: "Membres", icon: Users, path: "/members" },
   { label: "Ordre du jour", icon: FileText, path: "/agenda" },
   { label: "Documents", icon: FolderOpen, path: "/documents" },
-  { label: "PV & Solutions", icon: ClipboardCheck, path: "/minutes" },
+  { label: "Procès-verbaux", icon: ClipboardCheck, path: "/minutes" },
+  { label: "Décisions", icon: Gavel, path: "/decisions" },
   { label: "Suivi des actions", icon: ListTodo, path: "/actions" },
   { label: "Archives", icon: Archive, path: "/archives" },
   { label: "Journal d'audit", icon: Shield, path: "/audit" },
