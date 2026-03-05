@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import NotificationBell from "@/components/NotificationBell";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -96,9 +97,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="flex items-center justify-end px-6 py-3 border-b bg-background">
+          <NotificationBell />
+        </header>
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
