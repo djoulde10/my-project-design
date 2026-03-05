@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CalendarDays, Users, ClipboardCheck, ListTodo, AlertTriangle, CheckCircle2, Clock, TrendingUp, Timer, Target, Gavel } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     sessions: 0, members: 0, decisions: 0, actions: 0, overdueActions: 0,
     upcomingSessions: [] as any[],
@@ -66,10 +68,10 @@ export default function Dashboard() {
   }, []);
 
   const statCards = [
-    { label: "Sessions", value: stats.sessions, icon: CalendarDays, color: "text-primary" },
-    { label: "Membres actifs", value: stats.members, icon: Users, color: "text-emerald-600" },
-    { label: "Décisions", value: stats.decisions, icon: Gavel, color: "text-amber-600" },
-    { label: "Actions", value: stats.actions, icon: ListTodo, color: "text-violet-600" },
+    { label: "Sessions", value: stats.sessions, icon: CalendarDays, color: "text-primary", path: "/sessions" },
+    { label: "Membres actifs", value: stats.members, icon: Users, color: "text-emerald-600", path: "/members" },
+    { label: "Décisions", value: stats.decisions, icon: Gavel, color: "text-amber-600", path: "/decisions" },
+    { label: "Actions", value: stats.actions, icon: ListTodo, color: "text-violet-600", path: "/actions" },
   ];
 
   const totalActions = stats.actions;
@@ -84,7 +86,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat) => (
-          <Card key={stat.label}>
+          <Card key={stat.label} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(stat.path)}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -189,7 +191,7 @@ export default function Dashboard() {
             {stats.upcomingSessions.length > 0 ? (
               <div className="space-y-3">
                 {stats.upcomingSessions.map((s: any) => (
-                  <div key={s.id} className="flex items-center justify-between border-b last:border-0 pb-2 last:pb-0">
+                  <div key={s.id} className="flex items-center justify-between border-b last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1" onClick={() => navigate("/sessions")}>
                     <div>
                       <h4 className="font-medium text-sm">{s.title}</h4>
                       <p className="text-xs text-muted-foreground">
@@ -218,7 +220,7 @@ export default function Dashboard() {
             {stats.recentDecisions.length > 0 ? (
               <div className="space-y-3">
                 {stats.recentDecisions.map((d: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between border-b last:border-0 pb-2 last:pb-0">
+                  <div key={i} className="flex items-center justify-between border-b last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1" onClick={() => navigate("/decisions")}>
                     <div className="flex-1 min-w-0">
                       <p className="font-mono text-xs text-muted-foreground">{d.numero_decision}</p>
                       <p className="text-sm truncate">{d.texte}</p>
@@ -248,7 +250,7 @@ export default function Dashboard() {
             {stats.nearDueActions.length > 0 ? (
               <div className="space-y-3">
                 {stats.nearDueActions.map((a: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between border-b last:border-0 pb-2 last:pb-0">
+                  <div key={i} className="flex items-center justify-between border-b last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1" onClick={() => navigate("/actions")}>
                     <div>
                       <p className="text-sm font-medium">{a.title}</p>
                       <p className="text-xs text-muted-foreground">{(a as any).members?.full_name ?? "Non assigné"}</p>
