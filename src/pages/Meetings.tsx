@@ -14,8 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2, Radio, ClipboardCheck
+  Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2, Radio, ClipboardCheck, History
 } from "lucide-react";
+import MinuteVersionHistory from "@/components/MinuteVersionHistory";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
@@ -80,6 +81,11 @@ export default function Meetings() {
   const [pvForm, setPvForm] = useState<{ session_id: string; content: string; pv_status: PvStatus }>({ session_id: "", content: "", pv_status: "brouillon" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
+
+  // Version history
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [versionHistoryMinuteId, setVersionHistoryMinuteId] = useState<string>("");
+  const [versionHistoryContent, setVersionHistoryContent] = useState<string | null>(null);
 
   // Realtime scribe hook
   const scribe = useScribe({
@@ -411,9 +417,21 @@ export default function Meetings() {
 
   // ========== PV (Minutes) CRUD ==========
   const createPV = async () => {
-    const { error } = await supabase.from("minutes").insert([pvForm]);
+    const { data, error } = await supabase.from("minutes").insert([pvForm]).select().single();
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "PV créé" }); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll(); }
+    else {
+      // Save initial version
+      if (data) {
+        await supabase.from("minute_versions").insert({
+          minute_id: data.id,
+          version_number: 1,
+          content: pvForm.content,
+          summary: "Création initiale",
+          modified_by: user?.id,
+        });
+      }
+      toast({ title: "PV créé" }); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll();
+    }
   };
 
   const updateMinuteStatus = async (id: string, status: PvStatus) => {
@@ -689,9 +707,22 @@ export default function Meetings() {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
-                            Modifier statut
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
+                              Modifier statut
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setVersionHistoryMinuteId(m.id);
+                                setVersionHistoryContent(m.content);
+                                setVersionHistoryOpen(true);
+                              }}
+                            >
+                              <History className="w-4 h-4 mr-1" />Versions
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -903,6 +934,33 @@ export default function Meetings() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <MinuteVersionHistory
+        minuteId={versionHistoryMinuteId}
+        currentContent={versionHistoryContent}
+        open={versionHistoryOpen}
+        onOpenChange={setVersionHistoryOpen}
+        onRestore={async (content) => {
+          // Save current as new version before restoring
+          const { data: currentVersions } = await supabase
+            .from("minute_versions")
+            .select("version_number")
+            .eq("minute_id", versionHistoryMinuteId)
+            .order("version_number", { ascending: false })
+            .limit(1);
+          const nextVersion = ((currentVersions?.[0] as any)?.version_number ?? 0) + 1;
+          
+          await supabase.from("minutes").update({ content }).eq("id", versionHistoryMinuteId);
+          await supabase.from("minute_versions").insert({
+            minute_id: versionHistoryMinuteId,
+            version_number: nextVersion,
+            content,
+            summary: "Restauration d'une ancienne version",
+            modified_by: user?.id,
+          });
+          fetchAll();
+        }}
+      />
     </div>
   );
 }

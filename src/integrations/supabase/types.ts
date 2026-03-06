@@ -543,6 +543,54 @@ export type Database = {
           },
         ]
       }
+      minute_versions: {
+        Row: {
+          company_id: string | null
+          content: string | null
+          created_at: string
+          id: string
+          minute_id: string
+          modified_by: string | null
+          summary: string | null
+          version_number: number
+        }
+        Insert: {
+          company_id?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          minute_id: string
+          modified_by?: string | null
+          summary?: string | null
+          version_number?: number
+        }
+        Update: {
+          company_id?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          minute_id?: string
+          modified_by?: string | null
+          summary?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "minute_versions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "minute_versions_minute_id_fkey"
+            columns: ["minute_id"]
+            isOneToOne: false
+            referencedRelation: "minutes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       minutes: {
         Row: {
           company_id: string | null
