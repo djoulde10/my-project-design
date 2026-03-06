@@ -14,7 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2, Radio, ClipboardCheck, History
+  Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2,
+  ClipboardCheck, History, Edit, Save, FileDown
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
 import { useToast } from "@/hooks/use-toast";
@@ -38,17 +39,10 @@ export default function Meetings() {
   const { toast } = useToast();
   const { user } = useAuth();
   const companyId = useCompanyId();
-  const [meetings, setMeetings] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [minutes, setMinutes] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState("recording");
-
-  // Meeting creation
-  const [createOpen, setCreateOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newSessionId, setNewSessionId] = useState("");
-  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [activeTab, setActiveTab] = useState("pv");
 
   // Realtime transcription state
   const [liveTranscript, setLiveTranscript] = useState("");
@@ -57,6 +51,10 @@ export default function Meetings() {
   const committedTextRef = useRef("");
 
   // Upload mode
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newSessionId, setNewSessionId] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadTranscribing, setUploadTranscribing] = useState(false);
 
@@ -64,9 +62,22 @@ export default function Meetings() {
   const [generating, setGenerating] = useState(false);
   const [ttsLoading, setTtsLoading] = useState(false);
 
-  // Detail view
-  const [viewMeeting, setViewMeeting] = useState<any | null>(null);
-  const [editedPV, setEditedPV] = useState("");
+  // AI PV preview editor (before saving)
+  const [pendingPV, setPendingPV] = useState<{ content: string; sessionId: string; title: string } | null>(null);
+  const [pendingPVContent, setPendingPVContent] = useState("");
+
+  // PV creation dialog (manual)
+  const [pvOpen, setPvOpen] = useState(false);
+  const [pvForm, setPvForm] = useState<{ session_id: string; content: string; pv_status: PvStatus }>({ session_id: "", content: "", pv_status: "brouillon" });
+
+  // PV detail/edit view
+  const [viewMinute, setViewMinute] = useState<any | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+  const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
+
+  // TTS
   const [ttsAudioUrl, setTtsAudioUrl] = useState<string | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
@@ -75,12 +86,6 @@ export default function Meetings() {
   const [templateName, setTemplateName] = useState("");
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [parsingTemplate, setParsingTemplate] = useState(false);
-
-  // PV creation dialog
-  const [pvOpen, setPvOpen] = useState(false);
-  const [pvForm, setPvForm] = useState<{ session_id: string; content: string; pv_status: PvStatus }>({ session_id: "", content: "", pv_status: "brouillon" });
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
 
   // Version history
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
@@ -91,9 +96,7 @@ export default function Meetings() {
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
     commitStrategy: CommitStrategy.VAD,
-    onPartialTranscript: (data) => {
-      setPartialText(data.text || "");
-    },
+    onPartialTranscript: (data) => setPartialText(data.text || ""),
     onCommittedTranscript: (data) => {
       const newText = data.text || "";
       committedTextRef.current += (committedTextRef.current ? " " : "") + newText;
@@ -103,13 +106,11 @@ export default function Meetings() {
   });
 
   const fetchAll = useCallback(async () => {
-    const [meetRes, tplRes, sessRes, minRes] = await Promise.all([
-      supabase.from("meetings").select("*, sessions(title)").order("created_at", { ascending: false }),
+    const [tplRes, sessRes, minRes] = await Promise.all([
       supabase.from("meeting_templates").select("*").order("created_at", { ascending: false }),
       supabase.from("sessions").select("id, title").order("session_date", { ascending: false }),
       supabase.from("minutes").select("*, sessions(title)").order("created_at", { ascending: false }),
     ]);
-    setMeetings(meetRes.data ?? []);
     setTemplates(tplRes.data ?? []);
     setSessions(sessRes.data ?? []);
     setMinutes(minRes.data ?? []);
@@ -121,17 +122,12 @@ export default function Meetings() {
   const startLiveTranscription = async () => {
     try {
       const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
-      if (error || !data?.token) {
-        throw new Error(error?.message || "Impossible d'obtenir le token de transcription");
-      }
+      if (error || !data?.token) throw new Error(error?.message || "Impossible d'obtenir le token");
       committedTextRef.current = "";
       setLiveTranscript("");
       setPartialText("");
       setIsLiveMode(true);
-      await scribe.connect({
-        token: data.token,
-        microphone: { echoCancellation: true, noiseSuppression: true },
-      });
+      await scribe.connect({ token: data.token, microphone: { echoCancellation: true, noiseSuppression: true } });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
       setIsLiveMode(false);
@@ -143,15 +139,19 @@ export default function Meetings() {
     setIsLiveMode(false);
   };
 
-  // ========== GENERATE PV FROM LIVE ==========
-  const generatePVFromLive = async () => {
-    const finalTranscript = committedTextRef.current;
-    if (!finalTranscript) {
-      toast({ title: "Erreur", description: "Aucune transcription disponible", variant: "destructive" });
-      return;
-    }
-    if (scribe.isConnected) await stopLiveTranscription();
+  const resetForm = () => {
+    setUploadedFile(null);
+    setNewTitle("");
+    setNewSessionId("");
+    setSelectedTemplateId("");
+    setLiveTranscript("");
+    setPartialText("");
+    committedTextRef.current = "";
+    setIsLiveMode(false);
+  };
 
+  // ========== GENERATE PV → SHOW IN EDITOR ==========
+  const generateAndPreview = async (transcription: string, title: string, sessionId: string) => {
     setGenerating(true);
     try {
       let templateContent = "";
@@ -159,46 +159,40 @@ export default function Meetings() {
         const tpl = templates.find((t) => t.id === selectedTemplateId);
         if (tpl?.extracted_content) templateContent = tpl.extracted_content;
       }
-
-      // Create meeting record
-      const { data: meeting, error: insertError } = await supabase
-        .from("meetings")
-        .insert({
-          title: newTitle || `Réunion du ${new Date().toLocaleDateString("fr-FR")}`,
-          session_id: newSessionId || null,
-          transcription: finalTranscript,
-          created_by: user?.id,
-          pv_status: "en_cours",
-        })
-        .select()
-        .single();
-      if (insertError || !meeting) throw new Error(insertError?.message);
-
-      toast({ title: "Génération du PV en cours..." });
-
       const { data: pvData, error: pvError } = await supabase.functions.invoke("generate-pv", {
         body: {
-          transcription: finalTranscript,
-          meetingTitle: meeting.title,
+          transcription,
+          meetingTitle: title || `Réunion du ${new Date().toLocaleDateString("fr-FR")}`,
           meetingDate: new Date().toLocaleDateString("fr-FR"),
           templateContent,
         },
       });
       if (pvError) throw new Error(pvError.message);
-
       const generatedPV = pvData?.pv || "";
-      await supabase.from("meetings").update({ generated_pv: generatedPV, pv_status: "brouillon" }).eq("id", meeting.id);
-      toast({ title: "Procès-verbal généré !" });
+      // Show in editor for review
+      setPendingPV({ content: generatedPV, sessionId, title });
+      setPendingPVContent(generatedPV);
+      toast({ title: "PV généré", description: "Relisez et modifiez le contenu avant d'enregistrer." });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
     } finally {
       setGenerating(false);
-      resetForm();
-      fetchAll();
     }
   };
 
-  // ========== CREATE MEETING WITH UPLOADED FILE ==========
+  // Generate from live transcription
+  const generatePVFromLive = async () => {
+    const finalTranscript = committedTextRef.current;
+    if (!finalTranscript) {
+      toast({ title: "Erreur", description: "Aucune transcription disponible", variant: "destructive" });
+      return;
+    }
+    if (scribe.isConnected) await stopLiveTranscription();
+    await generateAndPreview(finalTranscript, newTitle, newSessionId);
+    resetForm();
+  };
+
+  // Generate from uploaded file
   const createWithUploadedFile = async () => {
     if (!uploadedFile || !newTitle) {
       toast({ title: "Erreur", description: "Titre et fichier audio requis", variant: "destructive" });
@@ -213,31 +207,11 @@ export default function Meetings() {
       return;
     }
 
-    const { data: meeting, error: insertError } = await supabase
-      .from("meetings")
-      .insert({
-        title: newTitle,
-        session_id: newSessionId || null,
-        audio_file_path: fileName,
-        created_by: user?.id,
-        pv_status: "en_cours",
-      })
-      .select()
-      .single();
-
-    if (insertError || !meeting) {
-      toast({ title: "Erreur", description: insertError?.message, variant: "destructive" });
-      return;
-    }
-
-    toast({ title: "Réunion créée", description: "Transcription en cours..." });
-    fetchAll();
-
+    toast({ title: "Transcription en cours..." });
     setUploadTranscribing(true);
     try {
       const formData = new FormData();
       formData.append("audio", uploadedFile, fileName);
-
       const tRes = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
         {
@@ -249,59 +223,172 @@ export default function Meetings() {
           body: formData,
         }
       );
-
       if (!tRes.ok) {
         const err = await tRes.json();
         throw new Error(err.error || "Transcription failed");
       }
-
       const transcriptionData = await tRes.json();
       const transcriptionText = transcriptionData.text || "";
-      await supabase.from("meetings").update({ transcription: transcriptionText }).eq("id", meeting.id);
-      toast({ title: "Transcription terminée", description: "Génération du PV en cours..." });
-
       setUploadTranscribing(false);
-      setGenerating(true);
-
-      let templateContent = "";
-      if (selectedTemplateId) {
-        const tpl = templates.find((t) => t.id === selectedTemplateId);
-        if (tpl?.extracted_content) templateContent = tpl.extracted_content;
-      }
-
-      const { data: pvData, error: pvError } = await supabase.functions.invoke("generate-pv", {
-        body: {
-          transcription: transcriptionText,
-          meetingTitle: newTitle,
-          meetingDate: new Date().toLocaleDateString("fr-FR"),
-          templateContent,
-        },
-      });
-      if (pvError) throw new Error(pvError.message);
-
-      const generatedPV = pvData?.pv || "";
-      await supabase.from("meetings").update({ generated_pv: generatedPV, pv_status: "brouillon" }).eq("id", meeting.id);
-      toast({ title: "Procès-verbal généré !" });
+      toast({ title: "Transcription terminée", description: "Génération du PV en cours..." });
+      await generateAndPreview(transcriptionText, newTitle, newSessionId);
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
-      await supabase.from("meetings").update({ pv_status: "erreur" }).eq("id", meeting.id);
     } finally {
       setUploadTranscribing(false);
-      setGenerating(false);
       resetForm();
-      fetchAll();
     }
   };
 
-  const resetForm = () => {
-    setUploadedFile(null);
-    setNewTitle("");
-    setNewSessionId("");
-    setSelectedTemplateId("");
-    setLiveTranscript("");
-    setPartialText("");
-    committedTextRef.current = "";
-    setIsLiveMode(false);
+  // ========== SAVE PENDING PV AS OFFICIAL MINUTE ==========
+  const savePendingPV = async () => {
+    if (!pendingPV) return;
+    const sessionId = pendingPV.sessionId;
+    if (!sessionId) {
+      toast({ title: "Erreur", description: "Veuillez associer une session", variant: "destructive" });
+      return;
+    }
+    const { data, error } = await supabase.from("minutes").insert({
+      session_id: sessionId,
+      content: pendingPVContent,
+      pv_status: "brouillon" as PvStatus,
+    }).select().single();
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (data) {
+      await supabase.from("minute_versions").insert({
+        minute_id: data.id,
+        version_number: 1,
+        content: pendingPVContent,
+        summary: "Génération initiale par IA",
+        modified_by: user?.id,
+      });
+    }
+    toast({ title: "Procès-verbal enregistré" });
+    setPendingPV(null);
+    setPendingPVContent("");
+    fetchAll();
+  };
+
+  // ========== MANUAL PV CREATION ==========
+  const createPV = async () => {
+    const { data, error } = await supabase.from("minutes").insert([pvForm]).select().single();
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (data) {
+      await supabase.from("minute_versions").insert({
+        minute_id: data.id,
+        version_number: 1,
+        content: pvForm.content,
+        summary: "Création initiale",
+        modified_by: user?.id,
+      });
+    }
+    toast({ title: "PV créé" });
+    setPvOpen(false);
+    setPvForm({ session_id: "", content: "", pv_status: "brouillon" });
+    fetchAll();
+  };
+
+  // ========== UPDATE MINUTE CONTENT ==========
+  const saveMinuteEdit = async () => {
+    if (!viewMinute) return;
+    // Get next version number
+    const { data: versions } = await supabase
+      .from("minute_versions")
+      .select("version_number")
+      .eq("minute_id", viewMinute.id)
+      .order("version_number", { ascending: false })
+      .limit(1);
+    const nextVersion = ((versions?.[0] as any)?.version_number ?? 0) + 1;
+
+    const { error } = await supabase.from("minutes").update({ content: editingContent }).eq("id", viewMinute.id);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    await supabase.from("minute_versions").insert({
+      minute_id: viewMinute.id,
+      version_number: nextVersion,
+      content: editingContent,
+      summary: "Modification manuelle",
+      modified_by: user?.id,
+    });
+    toast({ title: "PV sauvegardé" });
+    setViewMinute({ ...viewMinute, content: editingContent });
+    setIsEditing(false);
+    fetchAll();
+  };
+
+  const updateMinuteStatus = async (id: string, status: PvStatus) => {
+    const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
+    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    else { toast({ title: "Statut mis à jour" }); setEditingStatusId(null); fetchAll(); }
+  };
+
+  const deleteMinute = async (id: string) => {
+    await supabase.from("minute_versions").delete().eq("minute_id", id);
+    await supabase.from("minutes").delete().eq("id", id);
+    toast({ title: "PV supprimé" });
+    fetchAll();
+  };
+
+  // ========== EXPORTS ==========
+  const exportPDF = async (minute: any) => {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF();
+    const content = minute.content || "";
+    const title = minute.sessions?.title || "Procès-verbal";
+    const lines = doc.splitTextToSize(content, 170);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(title, 20, 20);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Date: ${new Date(minute.created_at).toLocaleDateString("fr-FR")}`, 20, 30);
+    doc.setDrawColor(200);
+    doc.line(20, 34, 190, 34);
+    doc.setFontSize(11);
+    let y = 42;
+    for (const line of lines) {
+      if (y > 275) { doc.addPage(); y = 20; }
+      doc.text(line, 20, y);
+      y += 6;
+    }
+    doc.save(`PV_${title.replace(/\s+/g, "_")}.pdf`);
+  };
+
+  const exportTXT = (minute: any) => {
+    const content = minute.content || "";
+    const title = minute.sessions?.title || "Procès-verbal";
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `PV_${title.replace(/\s+/g, "_")}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportDOCX = (minute: any) => {
+    const content = minute.content || "";
+    const title = minute.sessions?.title || "Procès-verbal";
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${title}</title></head>
+<body><h1>${title}</h1><p>Date: ${new Date(minute.created_at).toLocaleDateString("fr-FR")}</p><hr/>
+${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
+</body></html>`;
+    const blob = new Blob([html], { type: "application/vnd.ms-word;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `PV_${title.replace(/\s+/g, "_")}.doc`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // ========== TTS ==========
@@ -335,43 +422,7 @@ export default function Meetings() {
     }
   };
 
-  // ========== PDF EXPORT ==========
-  const exportPDF = async (meeting: any) => {
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF();
-    const content = meeting.generated_pv || "";
-    const lines = doc.splitTextToSize(content, 170);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(meeting.title, 20, 20);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Date: ${new Date(meeting.meeting_date || meeting.created_at).toLocaleDateString("fr-FR")}`, 20, 30);
-    doc.setDrawColor(200);
-    doc.line(20, 34, 190, 34);
-    doc.setFontSize(11);
-    let y = 42;
-    for (const line of lines) {
-      if (y > 275) { doc.addPage(); y = 20; }
-      doc.text(line, 20, y);
-      y += 6;
-    }
-    doc.save(`PV_${meeting.title.replace(/\s+/g, "_")}.pdf`);
-  };
-
-  // ========== SAVE EDITED PV ==========
-  const savePV = async () => {
-    if (!viewMeeting) return;
-    const { error } = await supabase.from("meetings").update({ generated_pv: editedPV }).eq("id", viewMeeting.id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else {
-      toast({ title: "PV sauvegardé" });
-      setViewMeeting({ ...viewMeeting, generated_pv: editedPV });
-      fetchAll();
-    }
-  };
-
-  // ========== TEMPLATE UPLOAD ==========
+  // ========== TEMPLATE CRUD ==========
   const uploadTemplate = async () => {
     if (!templateFile || !templateName) return;
     setParsingTemplate(true);
@@ -389,7 +440,7 @@ export default function Meetings() {
         body: { templateId: tpl.id },
       });
       if (parseErr) console.error("Parse error:", parseErr);
-      toast({ title: "Modèle importé", description: parseData?.content ? "Structure analysée avec succès" : "Importé sans analyse" });
+      toast({ title: "Modèle importé", description: parseData?.content ? "Structure analysée" : "Importé sans analyse" });
       setTemplateOpen(false);
       setTemplateName("");
       setTemplateFile(null);
@@ -408,79 +459,117 @@ export default function Meetings() {
     fetchAll();
   };
 
-  const deleteMeeting = async (id: string, audioPath?: string) => {
-    if (audioPath) await supabase.storage.from("meeting-audio").remove([audioPath]);
-    await supabase.from("meetings").delete().eq("id", id);
-    toast({ title: "Réunion supprimée" });
-    fetchAll();
-  };
-
-  // ========== PV (Minutes) CRUD ==========
-  const createPV = async () => {
-    const { data, error } = await supabase.from("minutes").insert([pvForm]).select().single();
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else {
-      // Save initial version
-      if (data) {
-        await supabase.from("minute_versions").insert({
-          minute_id: data.id,
-          version_number: 1,
-          content: pvForm.content,
-          summary: "Création initiale",
-          modified_by: user?.id,
-        });
-      }
-      toast({ title: "PV créé" }); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll();
-    }
-  };
-
-  const updateMinuteStatus = async (id: string, status: PvStatus) => {
-    const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Statut mis à jour" }); setEditingId(null); fetchAll(); }
-  };
-
-  const meetingStatusBadge = (status: string) => {
-    const map: Record<string, string> = {
-      brouillon: "bg-muted text-muted-foreground",
-      en_cours: "bg-primary/10 text-primary",
-      erreur: "bg-destructive/10 text-destructive",
-      valide: "bg-emerald-100 text-emerald-800",
-    };
-    const labels: Record<string, string> = {
-      brouillon: "Brouillon",
-      en_cours: "En cours",
-      erreur: "Erreur",
-      valide: "Validé",
-    };
-    return <Badge className={map[status] ?? map.brouillon}>{labels[status] ?? status}</Badge>;
-  };
-
-  // ========== DETAIL VIEW ==========
-  if (viewMeeting) {
+  // ========== PENDING PV EDITOR (AI preview before save) ==========
+  if (pendingPV) {
     return (
       <div className="p-6 lg:p-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Button variant="ghost" onClick={() => { setViewMeeting(null); setTtsAudioUrl(null); }} className="mb-2">
-              ← Retour
+            <Button variant="ghost" onClick={() => { setPendingPV(null); setPendingPVContent(""); }} className="mb-2">
+              ← Annuler
             </Button>
-            <h1 className="text-2xl font-bold">{viewMeeting.title}</h1>
+            <h1 className="text-2xl font-bold">Révision du procès-verbal généré</h1>
             <p className="text-muted-foreground">
-              {new Date(viewMeeting.meeting_date || viewMeeting.created_at).toLocaleDateString("fr-FR")}
+              Relisez et modifiez le contenu avant de l'enregistrer comme PV officiel.
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => exportPDF(viewMeeting)}>
-              <Download className="w-4 h-4 mr-2" />PDF
+        </div>
+
+        {!pendingPV.sessionId && (
+          <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+            <CardContent className="p-4">
+              <Label className="mb-2 block">Session associée *</Label>
+              <Select value={pendingPV.sessionId} onValueChange={(v) => setPendingPV({ ...pendingPV, sessionId: v })}>
+                <SelectTrigger className="w-full max-w-sm"><SelectValue placeholder="Sélectionnez une session" /></SelectTrigger>
+                <SelectContent>
+                  {sessions.map((s) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Edit className="w-4 h-4" />
+                Éditeur de procès-verbal
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => { setPendingPV(null); setPendingPVContent(""); }}>
+                  Annuler
+                </Button>
+                <Button onClick={savePendingPV} disabled={!pendingPV.sessionId}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Enregistrer le procès-verbal
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              className="min-h-[500px] text-sm font-mono"
+              value={pendingPVContent}
+              onChange={(e) => setPendingPVContent(e.target.value)}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // ========== MINUTE DETAIL VIEW ==========
+  if (viewMinute) {
+    return (
+      <div className="p-6 lg:p-8 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Button variant="ghost" onClick={() => { setViewMinute(null); setTtsAudioUrl(null); setIsEditing(false); }} className="mb-2">
+              ← Retour
             </Button>
+            <h1 className="text-2xl font-bold">{viewMinute.sessions?.title || "Procès-verbal"}</h1>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge className={pvStatusColors[viewMinute.pv_status] ?? "bg-muted text-muted-foreground"}>
+                {pvStatusLabels[viewMinute.pv_status] ?? viewMinute.pv_status}
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                {new Date(viewMinute.created_at).toLocaleDateString("fr-FR")}
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {!isEditing && (
+              <Button variant="outline" onClick={() => { setIsEditing(true); setEditingContent(viewMinute.content || ""); }}>
+                <Edit className="w-4 h-4 mr-2" />Modifier
+              </Button>
+            )}
+            {isEditing && (
+              <>
+                <Button variant="outline" onClick={() => setIsEditing(false)}>Annuler</Button>
+                <Button onClick={saveMinuteEdit}><Save className="w-4 h-4 mr-2" />Sauvegarder</Button>
+              </>
+            )}
+            <Button variant="outline" onClick={() => exportPDF(viewMinute)}><Download className="w-4 h-4 mr-2" />PDF</Button>
+            <Button variant="outline" onClick={() => exportDOCX(viewMinute)}><FileDown className="w-4 h-4 mr-2" />Word</Button>
+            <Button variant="outline" onClick={() => exportTXT(viewMinute)}><FileText className="w-4 h-4 mr-2" />TXT</Button>
             <Button
               variant="outline"
-              onClick={() => playTTS(viewMeeting.generated_pv || "")}
-              disabled={ttsLoading || !viewMeeting.generated_pv}
+              onClick={() => playTTS(viewMinute.content || "")}
+              disabled={ttsLoading || !viewMinute.content}
             >
               {ttsLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Volume2 className="w-4 h-4 mr-2" />}
               Écouter
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setVersionHistoryMinuteId(viewMinute.id);
+                setVersionHistoryContent(viewMinute.content);
+                setVersionHistoryOpen(true);
+              }}
+            >
+              <History className="w-4 h-4 mr-2" />Versions
             </Button>
           </div>
         </div>
@@ -493,32 +582,48 @@ export default function Meetings() {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Transcription</CardTitle></CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[400px]">
-                <p className="text-sm whitespace-pre-wrap">{viewMeeting.transcription || "Aucune transcription"}</p>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Procès-verbal</CardTitle>
-                <Button size="sm" onClick={savePV}>Sauvegarder</Button>
-              </div>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardContent className="p-6">
+            {isEditing ? (
               <Textarea
-                className="min-h-[400px] text-sm font-mono"
-                value={editedPV}
-                onChange={(e) => setEditedPV(e.target.value)}
+                className="min-h-[500px] text-sm font-mono"
+                value={editingContent}
+                onChange={(e) => setEditingContent(e.target.value)}
               />
-            </CardContent>
-          </Card>
-        </div>
+            ) : (
+              <ScrollArea className="h-[500px]">
+                <p className="text-sm whitespace-pre-wrap">{viewMinute.content || "Contenu vide"}</p>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
+
+        <MinuteVersionHistory
+          minuteId={versionHistoryMinuteId}
+          currentContent={versionHistoryContent}
+          open={versionHistoryOpen}
+          onOpenChange={setVersionHistoryOpen}
+          onRestore={async (content) => {
+            const { data: currentVersions } = await supabase
+              .from("minute_versions")
+              .select("version_number")
+              .eq("minute_id", versionHistoryMinuteId)
+              .order("version_number", { ascending: false })
+              .limit(1);
+            const nextVersion = ((currentVersions?.[0] as any)?.version_number ?? 0) + 1;
+            await supabase.from("minutes").update({ content }).eq("id", versionHistoryMinuteId);
+            await supabase.from("minute_versions").insert({
+              minute_id: versionHistoryMinuteId,
+              version_number: nextVersion,
+              content,
+              summary: "Restauration d'une ancienne version",
+              modified_by: user?.id,
+            });
+            setViewMinute({ ...viewMinute, content });
+            setVersionHistoryContent(content);
+            fetchAll();
+          }}
+        />
       </div>
     );
   }
@@ -528,10 +633,10 @@ export default function Meetings() {
     <div className="p-6 lg:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Réunions & Procès-verbaux</h1>
-        <p className="text-muted-foreground">Enregistrement, transcription en temps réel et gestion des procès-verbaux</p>
+        <p className="text-muted-foreground">Enregistrement, transcription et gestion des procès-verbaux</p>
       </div>
 
-      {/* ===== RECORDING SECTION (inspired by screenshot) ===== */}
+      {/* ===== RECORDING SECTION ===== */}
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-2 mb-1">
@@ -539,16 +644,14 @@ export default function Meetings() {
             <h2 className="text-lg font-semibold">Enregistrement de la réunion</h2>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {!isLiveMode ? (
               <Button onClick={startLiveTranscription} className="gap-2">
-                <Mic className="w-4 h-4" />
-                Démarrer l'écoute
+                <Mic className="w-4 h-4" />Démarrer l'écoute
               </Button>
             ) : (
               <Button variant="destructive" onClick={stopLiveTranscription} className="gap-2">
-                <MicOff className="w-4 h-4" />
-                Arrêter l'écoute
+                <MicOff className="w-4 h-4" />Arrêter l'écoute
               </Button>
             )}
 
@@ -576,7 +679,7 @@ export default function Meetings() {
 
           {!isLiveMode && !liveTranscript && (
             <p className="text-sm text-muted-foreground">
-              Cliquez sur "Démarrer l'écoute" pour transcrire la réunion en temps réel. Une fois terminé, l'IA générera automatiquement un procès-verbal structuré.
+              Cliquez sur "Démarrer l'écoute" pour transcrire en temps réel, ou importez un fichier audio.
             </p>
           )}
 
@@ -618,10 +721,10 @@ export default function Meetings() {
         </Card>
       )}
 
-      {/* ===== TABS: PV unifiés, Modèles ===== */}
+      {/* ===== TABS ===== */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="recording" className="gap-2">
+          <TabsTrigger value="pv" className="gap-2">
             <ClipboardCheck className="w-4 h-4" />Procès-verbaux
           </TabsTrigger>
           <TabsTrigger value="templates" className="gap-2">
@@ -630,8 +733,9 @@ export default function Meetings() {
         </TabsList>
 
         {/* ===== UNIFIED PV TAB ===== */}
-        <TabsContent value="recording" className="space-y-6">
+        <TabsContent value="pv" className="space-y-4">
           <div className="flex justify-end gap-2">
+            {/* Import audio dialog */}
             <Dialog open={createOpen} onOpenChange={(open) => {
               setCreateOpen(open);
               if (!open && scribe.isConnected) stopLiveTranscription();
@@ -687,16 +791,18 @@ export default function Meetings() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            {/* Manual PV dialog */}
             <Dialog open={pvOpen} onOpenChange={setPvOpen}>
               <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV manuel</Button></DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle>Rédiger un procès-verbal</DialogTitle></DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Session</Label>
+                    <Label>Session *</Label>
                     <Select value={pvForm.session_id} onValueChange={(v) => setPvForm({ ...pvForm, session_id: v })}>
                       <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
-                      <SelectContent>{sessions.map((s) => (<SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>))}</SelectContent>
+                      <SelectContent>{sessions.map((s) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
@@ -708,9 +814,7 @@ export default function Meetings() {
                     <Select value={pvForm.pv_status} onValueChange={(v) => setPvForm({ ...pvForm, pv_status: v as PvStatus })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {Object.entries(pvStatusLabels).map(([k, v]) => (
-                          <SelectItem key={k} value={k}>{v}</SelectItem>
-                        ))}
+                        {Object.entries(pvStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -723,151 +827,89 @@ export default function Meetings() {
             </Dialog>
           </div>
 
-          {/* Official PV Section */}
-          {minutes.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">PV officiels</h3>
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Session</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {minutes.map((m) => (
-                        <TableRow key={m.id}>
-                          <TableCell className="font-medium">{(m as any).sessions?.title}</TableCell>
-                          <TableCell>
-                            {editingId === m.id ? (
-                              <Select value={editStatus} onValueChange={(v) => { const s = v as PvStatus; setEditStatus(s); updateMinuteStatus(m.id, s); }}>
-                                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(pvStatusLabels).map(([k, v]) => (
-                                    <SelectItem key={k} value={k}>{v}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
-                                {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
-                                Modifier statut
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setVersionHistoryMinuteId(m.id);
-                                  setVersionHistoryContent(m.content);
-                                  setVersionHistoryOpen(true);
-                                }}
-                              >
-                                <History className="w-4 h-4 mr-1" />Versions
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* AI-generated Meetings Section */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">PV générés par IA</h3>
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
+          {/* Unified PV table */}
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Session</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {minutes.length === 0 ? (
                     <TableRow>
-                      <TableHead>Titre</TableHead>
-                      <TableHead>Session</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        <FileText className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                        <p className="font-medium">Aucun procès-verbal</p>
+                        <p className="text-sm">Créez un PV manuellement ou utilisez l'enregistrement IA.</p>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {meetings.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                          Aucun PV généré par IA. Utilisez l'enregistrement en direct ou importez un fichier audio.
+                  ) : (
+                    minutes.map((m) => (
+                      <TableRow key={m.id}>
+                        <TableCell className="font-medium">{(m as any).sessions?.title || "—"}</TableCell>
+                        <TableCell>
+                          {editingStatusId === m.id ? (
+                            <Select value={editStatus} onValueChange={(v) => { setEditStatus(v as PvStatus); updateMinuteStatus(m.id, v as PvStatus); }}>
+                              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(pvStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge
+                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} cursor-pointer`}
+                              onClick={() => { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}
+                            >
+                              {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(m.created_at).toLocaleDateString("fr-FR")}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => { setViewMinute(m); setEditingContent(m.content || ""); }}>
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => exportPDF(m)}>
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setVersionHistoryMinuteId(m.id);
+                                setVersionHistoryContent(m.content);
+                                setVersionHistoryOpen(true);
+                              }}
+                            >
+                              <History className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteMinute(m.id)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      meetings.map((m) => (
-                        <TableRow key={m.id}>
-                          <TableCell className="font-medium">{m.title}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {(m as any).sessions?.title || "—"}
-                          </TableCell>
-                          <TableCell>{meetingStatusBadge(m.pv_status)}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {new Date(m.created_at).toLocaleDateString("fr-FR")}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => { setViewMeeting(m); setEditedPV(m.generated_pv || ""); }}
-                                disabled={!m.generated_pv}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => exportPDF(m)} disabled={!m.generated_pv}>
-                                <Download className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive"
-                                onClick={() => deleteMeeting(m.id, m.audio_file_path)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Empty state when both are empty */}
-          {minutes.length === 0 && meetings.length === 0 && (
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
-                <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                <p className="font-medium">Aucun procès-verbal</p>
-                <p className="text-sm">Créez un PV manuellement ou utilisez l'enregistrement IA ci-dessus.</p>
-              </CardContent>
-            </Card>
-          )}
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* ===== TEMPLATES TAB ===== */}
         <TabsContent value="templates" className="space-y-4">
           <div className="flex justify-between items-start">
             <p className="text-sm text-muted-foreground max-w-lg">
-              Importez des exemples de procès-verbaux pour que l'IA s'inspire de leur structure et style lors de la génération.
+              Importez des exemples de procès-verbaux pour que l'IA s'inspire de leur structure et style.
             </p>
             <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
               <DialogTrigger asChild>
@@ -882,11 +924,7 @@ export default function Meetings() {
                   </div>
                   <div className="space-y-2">
                     <Label>Fichier (PDF, DOCX, TXT)</Label>
-                    <Input
-                      type="file"
-                      accept=".pdf,.docx,.doc,.txt"
-                      onChange={(e) => setTemplateFile(e.target.files?.[0] || null)}
-                    />
+                    <Input type="file" accept=".pdf,.docx,.doc,.txt" onChange={(e) => setTemplateFile(e.target.files?.[0] || null)} />
                   </div>
                 </div>
                 <DialogFooter>
@@ -916,23 +954,14 @@ export default function Meetings() {
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-medium">{t.name}</h3>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(t.created_at).toLocaleDateString("fr-FR")}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleDateString("fr-FR")}</p>
                       </div>
                       <Badge variant={t.extracted_content ? "default" : "secondary"}>
                         {t.extracted_content ? "Analysé" : "En attente"}
                       </Badge>
                     </div>
-                    {t.extracted_content && (
-                      <p className="text-xs text-muted-foreground line-clamp-3">{t.extracted_content}</p>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive w-full"
-                      onClick={() => deleteTemplate(t.id, t.file_path)}
-                    >
+                    {t.extracted_content && <p className="text-xs text-muted-foreground line-clamp-3">{t.extracted_content}</p>}
+                    <Button variant="ghost" size="sm" className="text-destructive w-full" onClick={() => deleteTemplate(t.id, t.file_path)}>
                       <Trash2 className="w-4 h-4 mr-2" />Supprimer
                     </Button>
                   </CardContent>
@@ -943,13 +972,13 @@ export default function Meetings() {
         </TabsContent>
       </Tabs>
 
+      {/* Version history dialog (from main list) */}
       <MinuteVersionHistory
         minuteId={versionHistoryMinuteId}
         currentContent={versionHistoryContent}
         open={versionHistoryOpen}
         onOpenChange={setVersionHistoryOpen}
         onRestore={async (content) => {
-          // Save current as new version before restoring
           const { data: currentVersions } = await supabase
             .from("minute_versions")
             .select("version_number")
@@ -957,7 +986,6 @@ export default function Meetings() {
             .order("version_number", { ascending: false })
             .limit(1);
           const nextVersion = ((currentVersions?.[0] as any)?.version_number ?? 0) + 1;
-          
           await supabase.from("minutes").update({ content }).eq("id", versionHistoryMinuteId);
           await supabase.from("minute_versions").insert({
             minute_id: versionHistoryMinuteId,
