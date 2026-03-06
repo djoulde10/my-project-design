@@ -57,6 +57,7 @@ export default function Meetings() {
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadTranscribing, setUploadTranscribing] = useState(false);
+  const [transcriptionLang, setTranscriptionLang] = useState("fra");
 
   // Processing states
   const [generating, setGenerating] = useState(false);
