@@ -891,9 +891,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             >
                               <History className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteMinute(m.id)}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
