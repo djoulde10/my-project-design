@@ -213,6 +213,7 @@ export default function Meetings() {
     try {
       const formData = new FormData();
       formData.append("audio", uploadedFile, fileName);
+      formData.append("language_code", transcriptionLang);
       const tRes = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
         {
