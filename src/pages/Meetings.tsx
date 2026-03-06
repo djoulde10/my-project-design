@@ -771,6 +771,16 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label>Langue de transcription</Label>
+                    <Select value={transcriptionLang} onValueChange={setTranscriptionLang}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fra">Français</SelectItem>
+                        <SelectItem value="eng">Anglais</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Separator />
                   <div className="space-y-2">
                     <Label>Fichier audio *</Label>
