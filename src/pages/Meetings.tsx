@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,11 +14,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Plus, Mic, MicOff, Upload, FileText, Play, Pause, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2
+  Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2, Radio
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
+
 export default function Meetings() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -33,15 +35,17 @@ export default function Meetings() {
   const [newSessionId, setNewSessionId] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
 
-  // Audio recording
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  // Realtime transcription state
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const [partialText, setPartialText] = useState("");
+  const [isLiveMode, setIsLiveMode] = useState(false);
+  const committedTextRef = useRef("");
+
+  // Upload mode (alternative to live)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const [uploadTranscribing, setUploadTranscribing] = useState(false);
 
   // Processing states
-  const [transcribing, setTranscribing] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [ttsLoading, setTtsLoading] = useState(false);
 
@@ -57,6 +61,21 @@ export default function Meetings() {
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [parsingTemplate, setParsingTemplate] = useState(false);
 
+  // Realtime scribe hook
+  const scribe = useScribe({
+    modelId: "scribe_v2_realtime",
+    commitStrategy: CommitStrategy.VAD,
+    onPartialTranscript: (data) => {
+      setPartialText(data.text || "");
+    },
+    onCommittedTranscript: (data) => {
+      const newText = data.text || "";
+      committedTextRef.current += (committedTextRef.current ? " " : "") + newText;
+      setLiveTranscript(committedTextRef.current);
+      setPartialText("");
+    },
+  });
+
   const fetchAll = useCallback(async () => {
     const [meetRes, tplRes, sessRes] = await Promise.all([
       supabase.from("meetings").select("*, sessions(title)").order("created_at", { ascending: false }),
@@ -70,53 +89,125 @@ export default function Meetings() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // ========== AUDIO RECORDING ==========
-  const startRecording = async () => {
+  // ========== REALTIME RECORDING ==========
+  const startLiveTranscription = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-      
-      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        setRecordedBlob(blob);
-        stream.getTracks().forEach((t) => t.stop());
-      };
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch {
-      toast({ title: "Erreur", description: "Impossible d'accéder au microphone", variant: "destructive" });
+      const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
+      if (error || !data?.token) {
+        throw new Error(error?.message || "Impossible d'obtenir le token de transcription");
+      }
+
+      committedTextRef.current = "";
+      setLiveTranscript("");
+      setPartialText("");
+      setIsLiveMode(true);
+
+      await scribe.connect({
+        token: data.token,
+        microphone: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      setIsLiveMode(false);
     }
   };
 
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    setIsRecording(false);
+  const stopLiveTranscription = async () => {
+    try {
+      await scribe.disconnect();
+    } catch { /* ignore */ }
+    setIsLiveMode(false);
   };
 
-  // ========== CREATE MEETING + PROCESS ==========
-  const createAndProcess = async () => {
-    const audioSource = recordedBlob || uploadedFile;
-    if (!audioSource || !newTitle) {
-      toast({ title: "Erreur", description: "Titre et audio requis", variant: "destructive" });
+  // ========== CREATE MEETING WITH LIVE TRANSCRIPT ==========
+  const createWithLiveTranscript = async () => {
+    const finalTranscript = committedTextRef.current;
+    if (!newTitle || !finalTranscript) {
+      toast({ title: "Erreur", description: "Titre et transcription requis", variant: "destructive" });
+      return;
+    }
+
+    // Stop recording if still active
+    if (scribe.isConnected) {
+      await stopLiveTranscription();
+    }
+
+    setCreateOpen(false);
+
+    // Create meeting record with transcription already done
+    const { data: meeting, error: insertError } = await supabase
+      .from("meetings")
+      .insert({
+        title: newTitle,
+        session_id: newSessionId || null,
+        transcription: finalTranscript,
+        created_by: user?.id,
+        pv_status: "en_cours",
+      })
+      .select()
+      .single();
+
+    if (insertError || !meeting) {
+      toast({ title: "Erreur", description: insertError?.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Réunion créée", description: "Génération du PV en cours..." });
+    fetchAll();
+
+    // Generate PV
+    setGenerating(true);
+    try {
+      let templateContent = "";
+      if (selectedTemplateId) {
+        const tpl = templates.find((t) => t.id === selectedTemplateId);
+        if (tpl?.extracted_content) templateContent = tpl.extracted_content;
+      }
+
+      const { data: pvData, error: pvError } = await supabase.functions.invoke("generate-pv", {
+        body: {
+          transcription: finalTranscript,
+          meetingTitle: newTitle,
+          meetingDate: new Date().toLocaleDateString("fr-FR"),
+          templateContent,
+        },
+      });
+
+      if (pvError) throw new Error(pvError.message);
+
+      const generatedPV = pvData?.pv || "";
+      await supabase.from("meetings").update({ generated_pv: generatedPV, pv_status: "brouillon" }).eq("id", meeting.id);
+      toast({ title: "Procès-verbal généré !" });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      await supabase.from("meetings").update({ pv_status: "erreur" }).eq("id", meeting.id);
+    } finally {
+      setGenerating(false);
+      resetForm();
+      fetchAll();
+    }
+  };
+
+  // ========== CREATE MEETING WITH UPLOADED FILE (batch) ==========
+  const createWithUploadedFile = async () => {
+    if (!uploadedFile || !newTitle) {
+      toast({ title: "Erreur", description: "Titre et fichier audio requis", variant: "destructive" });
       return;
     }
 
     setCreateOpen(false);
 
-    // 1. Upload audio to storage
-    const fileName = `${companyId}/${Date.now()}_${newTitle.replace(/\s+/g, "_")}.${uploadedFile ? uploadedFile.name.split(".").pop() : "webm"}`;
-    const { error: uploadError } = await supabase.storage
-      .from("meeting-audio")
-      .upload(fileName, audioSource);
+    // Upload audio
+    const fileName = `${companyId}/${Date.now()}_${newTitle.replace(/\s+/g, "_")}.${uploadedFile.name.split(".").pop()}`;
+    const { error: uploadError } = await supabase.storage.from("meeting-audio").upload(fileName, uploadedFile);
     if (uploadError) {
       toast({ title: "Erreur upload", description: uploadError.message, variant: "destructive" });
       return;
     }
 
-    // 2. Create meeting record
     const { data: meeting, error: insertError } = await supabase
       .from("meetings")
       .insert({
@@ -137,11 +228,11 @@ export default function Meetings() {
     toast({ title: "Réunion créée", description: "Transcription en cours..." });
     fetchAll();
 
-    // 3. Transcribe with ElevenLabs
-    setTranscribing(true);
+    // Batch transcribe
+    setUploadTranscribing(true);
     try {
       const formData = new FormData();
-      formData.append("audio", audioSource, fileName);
+      formData.append("audio", uploadedFile, fileName);
 
       const tRes = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
@@ -162,15 +253,12 @@ export default function Meetings() {
 
       const transcriptionData = await tRes.json();
       const transcriptionText = transcriptionData.text || "";
-
       await supabase.from("meetings").update({ transcription: transcriptionText }).eq("id", meeting.id);
       toast({ title: "Transcription terminée", description: "Génération du PV en cours..." });
 
-      // 4. Generate PV with Lovable AI
-      setTranscribing(false);
+      setUploadTranscribing(false);
       setGenerating(true);
 
-      // Get template content if selected
       let templateContent = "";
       if (selectedTemplateId) {
         const tpl = templates.find((t) => t.id === selectedTemplateId);
@@ -195,22 +283,28 @@ export default function Meetings() {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
       await supabase.from("meetings").update({ pv_status: "erreur" }).eq("id", meeting.id);
     } finally {
-      setTranscribing(false);
+      setUploadTranscribing(false);
       setGenerating(false);
-      setRecordedBlob(null);
-      setUploadedFile(null);
-      setNewTitle("");
-      setNewSessionId("");
-      setSelectedTemplateId("");
+      resetForm();
       fetchAll();
     }
+  };
+
+  const resetForm = () => {
+    setUploadedFile(null);
+    setNewTitle("");
+    setNewSessionId("");
+    setSelectedTemplateId("");
+    setLiveTranscript("");
+    setPartialText("");
+    committedTextRef.current = "";
+    setIsLiveMode(false);
   };
 
   // ========== TTS ==========
   const playTTS = async (text: string) => {
     setTtsLoading(true);
     try {
-      // Limit text for TTS (ElevenLabs has limits)
       const truncatedText = text.substring(0, 5000);
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tts-pv`,
@@ -224,12 +318,10 @@ export default function Meetings() {
           body: JSON.stringify({ text: truncatedText }),
         }
       );
-
       if (!response.ok) throw new Error("TTS failed");
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       setTtsAudioUrl(audioUrl);
-
       const audio = new Audio(audioUrl);
       audioPlayerRef.current = audio;
       await audio.play();
@@ -246,18 +338,14 @@ export default function Meetings() {
     const doc = new jsPDF();
     const content = meeting.generated_pv || "";
     const lines = doc.splitTextToSize(content, 170);
-
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text(meeting.title, 20, 20);
-
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text(`Date: ${new Date(meeting.meeting_date || meeting.created_at).toLocaleDateString("fr-FR")}`, 20, 30);
-
     doc.setDrawColor(200);
     doc.line(20, 34, 190, 34);
-
     doc.setFontSize(11);
     let y = 42;
     for (const line of lines) {
@@ -265,7 +353,6 @@ export default function Meetings() {
       doc.text(line, 20, y);
       y += 6;
     }
-
     doc.save(`PV_${meeting.title.replace(/\s+/g, "_")}.pdf`);
   };
 
@@ -285,25 +372,20 @@ export default function Meetings() {
   const uploadTemplate = async () => {
     if (!templateFile || !templateName) return;
     setParsingTemplate(true);
-
     try {
       const filePath = `${companyId}/${Date.now()}_${templateFile.name}`;
       const { error: upErr } = await supabase.storage.from("pv-templates").upload(filePath, templateFile);
       if (upErr) throw new Error(upErr.message);
-
       const { data: tpl, error: insErr } = await supabase
         .from("meeting_templates")
         .insert({ name: templateName, file_path: filePath, created_by: user?.id })
         .select()
         .single();
       if (insErr || !tpl) throw new Error(insErr?.message);
-
-      // Parse template with AI
       const { data: parseData, error: parseErr } = await supabase.functions.invoke("parse-template", {
-        body: { filePath, templateId: tpl.id },
+        body: { templateId: tpl.id },
       });
       if (parseErr) console.error("Parse error:", parseErr);
-
       toast({ title: "Modèle importé", description: parseData?.content ? "Structure analysée avec succès" : "Importé sans analyse" });
       setTemplateOpen(false);
       setTemplateName("");
@@ -419,7 +501,7 @@ export default function Meetings() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Réunions & PV intelligents</h1>
-          <p className="text-muted-foreground">Transcription IA et génération automatique de procès-verbaux</p>
+          <p className="text-muted-foreground">Transcription en temps réel et génération automatique de procès-verbaux</p>
         </div>
       </div>
 
@@ -436,11 +518,17 @@ export default function Meetings() {
         {/* ===== MEETINGS TAB ===== */}
         <TabsContent value="meetings" className="space-y-4">
           <div className="flex justify-end">
-            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <Dialog open={createOpen} onOpenChange={(open) => {
+              setCreateOpen(open);
+              if (!open && scribe.isConnected) {
+                stopLiveTranscription();
+              }
+              if (!open) resetForm();
+            }}>
               <DialogTrigger asChild>
                 <Button><Plus className="w-4 h-4 mr-2" />Nouvelle réunion</Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg">
+              <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle>Enregistrer une réunion</DialogTitle></DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -471,40 +559,69 @@ export default function Meetings() {
                   <Separator />
 
                   <div className="space-y-3">
-                    <Label>Audio de la réunion *</Label>
-                    
-                    {/* Recording */}
-                    <div className="flex items-center gap-3">
-                      {!isRecording ? (
-                        <Button variant="outline" onClick={startRecording} disabled={!!recordedBlob}>
-                          <Mic className="w-4 h-4 mr-2" />Enregistrer
-                        </Button>
-                      ) : (
-                        <Button variant="destructive" onClick={stopRecording}>
-                          <MicOff className="w-4 h-4 mr-2" />Arrêter
-                        </Button>
-                      )}
-                      {isRecording && (
-                        <span className="flex items-center gap-2 text-sm text-destructive">
-                          <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-                          Enregistrement en cours...
-                        </span>
-                      )}
-                      {recordedBlob && !isRecording && (
-                        <span className="text-sm text-muted-foreground">✓ Audio enregistré</span>
-                      )}
-                    </div>
+                    <Label>Source audio *</Label>
+
+                    {/* LIVE REALTIME TRANSCRIPTION */}
+                    <Card className={`border-2 transition-colors ${isLiveMode ? "border-destructive bg-destructive/5" : "border-dashed border-muted-foreground/30"}`}>
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Radio className="w-4 h-4 text-primary" />
+                            <span className="font-medium text-sm">Transcription en temps réel</span>
+                          </div>
+                          {!isLiveMode ? (
+                            <Button variant="outline" size="sm" onClick={startLiveTranscription} disabled={!!uploadedFile}>
+                              <Mic className="w-4 h-4 mr-2" />Démarrer
+                            </Button>
+                          ) : (
+                            <Button variant="destructive" size="sm" onClick={stopLiveTranscription}>
+                              <MicOff className="w-4 h-4 mr-2" />Arrêter
+                            </Button>
+                          )}
+                        </div>
+
+                        {isLiveMode && (
+                          <>
+                            <div className="flex items-center gap-2 text-sm text-destructive">
+                              <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+                              Écoute en cours — parlez maintenant...
+                            </div>
+                            <ScrollArea className="h-[150px] rounded-md border bg-muted/30 p-3">
+                              <p className="text-sm whitespace-pre-wrap">
+                                {liveTranscript}
+                                {partialText && (
+                                  <span className="text-muted-foreground italic"> {partialText}</span>
+                                )}
+                                {!liveTranscript && !partialText && (
+                                  <span className="text-muted-foreground">En attente de parole...</span>
+                                )}
+                              </p>
+                            </ScrollArea>
+                          </>
+                        )}
+
+                        {!isLiveMode && liveTranscript && (
+                          <div className="space-y-2">
+                            <Badge variant="secondary">✓ Transcription capturée</Badge>
+                            <ScrollArea className="h-[100px] rounded-md border bg-muted/30 p-3">
+                              <p className="text-sm whitespace-pre-wrap">{liveTranscript}</p>
+                            </ScrollArea>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
 
                     <div className="text-center text-sm text-muted-foreground">ou</div>
 
-                    {/* File upload */}
+                    {/* File upload (batch mode) */}
                     <div>
                       <Input
                         type="file"
                         accept="audio/mp3,audio/wav,audio/m4a,audio/mpeg,audio/webm,audio/*"
+                        disabled={isLiveMode}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (file) { setUploadedFile(file); setRecordedBlob(null); }
+                          if (file) { setUploadedFile(file); setLiveTranscript(""); committedTextRef.current = ""; }
                         }}
                       />
                       {uploadedFile && (
@@ -514,21 +631,29 @@ export default function Meetings() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>
-                  <Button onClick={createAndProcess} disabled={!newTitle || (!recordedBlob && !uploadedFile)}>
-                    <Wand2 className="w-4 h-4 mr-2" />Transcrire & Générer
+                  <Button variant="outline" onClick={() => { setCreateOpen(false); if (scribe.isConnected) stopLiveTranscription(); resetForm(); }}>
+                    Annuler
                   </Button>
+                  {liveTranscript ? (
+                    <Button onClick={createWithLiveTranscript} disabled={!newTitle || !liveTranscript || isLiveMode}>
+                      <Wand2 className="w-4 h-4 mr-2" />Générer le PV
+                    </Button>
+                  ) : (
+                    <Button onClick={createWithUploadedFile} disabled={!newTitle || !uploadedFile}>
+                      <Wand2 className="w-4 h-4 mr-2" />Transcrire & Générer
+                    </Button>
+                  )}
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
 
-          {(transcribing || generating) && (
+          {(uploadTranscribing || generating) && (
             <Card className="border-primary/20 bg-primary/5">
               <CardContent className="p-4 flex items-center gap-3">
                 <Loader2 className="w-5 h-5 animate-spin text-primary" />
                 <span className="text-sm font-medium">
-                  {transcribing ? "Transcription de l'audio en cours..." : "Génération du procès-verbal par l'IA..."}
+                  {uploadTranscribing ? "Transcription de l'audio en cours..." : "Génération du procès-verbal par l'IA..."}
                 </span>
               </CardContent>
             </Card>
