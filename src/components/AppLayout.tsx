@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import NotificationBell from "@/components/NotificationBell";
+import GlobalSearch from "@/components/GlobalSearch";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -98,7 +99,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="flex items-center justify-end px-6 py-3 border-b bg-background">
+        <header className="flex items-center justify-between px-6 py-3 border-b bg-background">
+          <GlobalSearch />
           <NotificationBell />
         </header>
         <main className="flex-1 overflow-auto">
