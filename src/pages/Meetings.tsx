@@ -707,9 +707,22 @@ export default function Meetings() {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
-                            Modifier statut
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
+                              Modifier statut
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setVersionHistoryMinuteId(m.id);
+                                setVersionHistoryContent(m.content);
+                                setVersionHistoryOpen(true);
+                              }}
+                            >
+                              <History className="w-4 h-4 mr-1" />Versions
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
