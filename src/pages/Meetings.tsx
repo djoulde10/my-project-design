@@ -687,7 +687,6 @@ export default function Meetings() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-
             <Dialog open={pvOpen} onOpenChange={setPvOpen}>
               <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV manuel</Button></DialogTrigger>
               <DialogContent className="max-w-2xl">
@@ -724,188 +723,144 @@ export default function Meetings() {
             </Dialog>
           </div>
 
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Session</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {minutes.length === 0 ? (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun PV</TableCell></TableRow>
-                  ) : (
-                    minutes.map((m) => (
-                      <TableRow key={m.id}>
-                        <TableCell className="font-medium">{(m as any).sessions?.title}</TableCell>
-                        <TableCell>
-                          {editingId === m.id ? (
-                            <Select value={editStatus} onValueChange={(v) => { const s = v as PvStatus; setEditStatus(s); updateMinuteStatus(m.id, s); }}>
-                              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(pvStatusLabels).map(([k, v]) => (
-                                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
-                              {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
-                              Modifier statut
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setVersionHistoryMinuteId(m.id);
-                                setVersionHistoryContent(m.content);
-                                setVersionHistoryOpen(true);
-                              }}
-                            >
-                              <History className="w-4 h-4 mr-1" />Versions
-                            </Button>
-                          </div>
+          {/* Official PV Section */}
+          {minutes.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">PV officiels</h3>
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Session</TableHead>
+                        <TableHead>Statut</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {minutes.map((m) => (
+                        <TableRow key={m.id}>
+                          <TableCell className="font-medium">{(m as any).sessions?.title}</TableCell>
+                          <TableCell>
+                            {editingId === m.id ? (
+                              <Select value={editStatus} onValueChange={(v) => { const s = v as PvStatus; setEditStatus(s); updateMinuteStatus(m.id, s); }}>
+                                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(pvStatusLabels).map(([k, v]) => (
+                                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
+                                {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
+                                Modifier statut
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setVersionHistoryMinuteId(m.id);
+                                  setVersionHistoryContent(m.content);
+                                  setVersionHistoryOpen(true);
+                                }}
+                              >
+                                <History className="w-4 h-4 mr-1" />Versions
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* AI-generated Meetings Section */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">PV générés par IA</h3>
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Titre</TableHead>
+                      <TableHead>Session</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {meetings.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                          Aucun PV généré par IA. Utilisez l'enregistrement en direct ou importez un fichier audio.
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ===== MEETINGS TAB ===== */}
-        <TabsContent value="meetings" className="space-y-4">
-          <div className="flex justify-end">
-            <Dialog open={createOpen} onOpenChange={(open) => {
-              setCreateOpen(open);
-              if (!open && scribe.isConnected) stopLiveTranscription();
-              if (!open) resetForm();
-            }}>
-              <DialogTrigger asChild>
-                <Button><Plus className="w-4 h-4 mr-2" />Nouvelle réunion (fichier audio)</Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader><DialogTitle>Importer un fichier audio</DialogTitle></DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Titre de la réunion *</Label>
-                    <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Ex: CA du 15 mars 2026" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Session associée (optionnel)</Label>
-                    <Select value={newSessionId} onValueChange={setNewSessionId}>
-                      <SelectTrigger><SelectValue placeholder="Aucune" /></SelectTrigger>
-                      <SelectContent>
-                        {sessions.map((s) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Modèle de PV (optionnel)</Label>
-                    <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                      <SelectTrigger><SelectValue placeholder="Aucun modèle" /></SelectTrigger>
-                      <SelectContent>
-                        {templates.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label>Fichier audio *</Label>
-                    <Input
-                      type="file"
-                      accept="audio/mp3,audio/wav,audio/m4a,audio/mpeg,audio/webm,audio/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) setUploadedFile(file);
-                      }}
-                    />
-                    {uploadedFile && <p className="text-sm text-muted-foreground">Fichier : {uploadedFile.name}</p>}
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => { setCreateOpen(false); resetForm(); }}>Annuler</Button>
-                  <Button onClick={createWithUploadedFile} disabled={!newTitle || !uploadedFile}>
-                    <Wand2 className="w-4 h-4 mr-2" />Transcrire & Générer
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                    ) : (
+                      meetings.map((m) => (
+                        <TableRow key={m.id}>
+                          <TableCell className="font-medium">{m.title}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {(m as any).sessions?.title || "—"}
+                          </TableCell>
+                          <TableCell>{meetingStatusBadge(m.pv_status)}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(m.created_at).toLocaleDateString("fr-FR")}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => { setViewMeeting(m); setEditedPV(m.generated_pv || ""); }}
+                                disabled={!m.generated_pv}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => exportPDF(m)} disabled={!m.generated_pv}>
+                                <Download className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() => deleteMeeting(m.id, m.audio_file_path)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </div>
 
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Titre</TableHead>
-                    <TableHead>Session</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {meetings.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        Aucune réunion. Utilisez l'enregistrement en direct ci-dessus ou importez un fichier audio.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    meetings.map((m) => (
-                      <TableRow key={m.id}>
-                        <TableCell className="font-medium">{m.title}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {(m as any).sessions?.title || "—"}
-                        </TableCell>
-                        <TableCell>{meetingStatusBadge(m.pv_status)}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(m.created_at).toLocaleDateString("fr-FR")}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => { setViewMeeting(m); setEditedPV(m.generated_pv || ""); }}
-                              disabled={!m.generated_pv}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => exportPDF(m)} disabled={!m.generated_pv}>
-                              <Download className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive"
-                              onClick={() => deleteMeeting(m.id, m.audio_file_path)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          {/* Empty state when both are empty */}
+          {minutes.length === 0 && meetings.length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                <p className="font-medium">Aucun procès-verbal</p>
+                <p className="text-sm">Créez un PV manuellement ou utilisez l'enregistrement IA ci-dessus.</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* ===== TEMPLATES TAB ===== */}
