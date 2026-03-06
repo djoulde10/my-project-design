@@ -37,6 +37,15 @@ serve(async (req) => {
     apiFormData.append("tag_audio_events", "true");
     apiFormData.append("diarize", "true");
 
+    // Restrict transcription to French and English only
+    const languageCode = (formData.get("language_code") as string) || "fra";
+    if (!["fra", "eng"].includes(languageCode)) {
+      return new Response(JSON.stringify({ error: "Only French (fra) and English (eng) are supported." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    apiFormData.append("language_code", languageCode);
+
     const response = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
       method: "POST",
       headers: { "xi-api-key": ELEVENLABS_API_KEY },
