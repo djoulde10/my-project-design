@@ -11,7 +11,7 @@ import Sessions from "@/pages/Sessions";
 import Members from "@/pages/Members";
 import AgendaItems from "@/pages/AgendaItems";
 import Documents from "@/pages/Documents";
-import Minutes from "@/pages/Minutes";
+// Minutes is now merged into Meetings
 import Decisions from "@/pages/Decisions";
 import Meetings from "@/pages/Meetings";
 import Actions from "@/pages/Actions";
