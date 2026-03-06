@@ -25,7 +25,7 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub;
 
-    const { filePath, templateId } = await req.json();
+    const { templateId } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -44,7 +44,7 @@ serve(async (req) => {
 
     const { data: template } = await supabase
       .from("meeting_templates")
-      .select("company_id")
+      .select("company_id, file_path")
       .eq("id", templateId)
       .single();
 
@@ -52,10 +52,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Download the file from storage
+    // Download the file from storage using DB path, not user input
+    const safeFilePath = template.file_path;
     const { data: fileData, error: downloadError } = await supabase.storage
       .from("pv-templates")
-      .download(filePath);
+      .download(safeFilePath);
 
     if (downloadError || !fileData) throw new Error("Failed to download template file");
 
