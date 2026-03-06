@@ -934,6 +934,33 @@ export default function Meetings() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <MinuteVersionHistory
+        minuteId={versionHistoryMinuteId}
+        currentContent={versionHistoryContent}
+        open={versionHistoryOpen}
+        onOpenChange={setVersionHistoryOpen}
+        onRestore={async (content) => {
+          // Save current as new version before restoring
+          const { data: currentVersions } = await supabase
+            .from("minute_versions")
+            .select("version_number")
+            .eq("minute_id", versionHistoryMinuteId)
+            .order("version_number", { ascending: false })
+            .limit(1);
+          const nextVersion = ((currentVersions?.[0] as any)?.version_number ?? 0) + 1;
+          
+          await supabase.from("minutes").update({ content }).eq("id", versionHistoryMinuteId);
+          await supabase.from("minute_versions").insert({
+            minute_id: versionHistoryMinuteId,
+            version_number: nextVersion,
+            content,
+            summary: "Restauration d'une ancienne version",
+            modified_by: user?.id,
+          });
+          fetchAll();
+        }}
+      />
     </div>
   );
 }
