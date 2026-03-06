@@ -417,9 +417,21 @@ export default function Meetings() {
 
   // ========== PV (Minutes) CRUD ==========
   const createPV = async () => {
-    const { error } = await supabase.from("minutes").insert([pvForm]);
+    const { data, error } = await supabase.from("minutes").insert([pvForm]).select().single();
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "PV créé" }); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll(); }
+    else {
+      // Save initial version
+      if (data) {
+        await supabase.from("minute_versions").insert({
+          minute_id: data.id,
+          version_number: 1,
+          content: pvForm.content,
+          summary: "Création initiale",
+          modified_by: user?.id,
+        });
+      }
+      toast({ title: "PV créé" }); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll();
+    }
   };
 
   const updateMinuteStatus = async (id: string, status: PvStatus) => {
