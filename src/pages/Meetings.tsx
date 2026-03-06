@@ -14,11 +14,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2, Radio
+  Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2, Radio, ClipboardCheck
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
+
+// PV status helpers
+const pvStatusLabels: Record<string, string> = {
+  brouillon: "Brouillon",
+  valide: "Validé",
+  signe: "Signé",
+};
+const pvStatusColors: Record<string, string> = {
+  brouillon: "bg-muted text-muted-foreground",
+  valide: "bg-primary/10 text-primary",
+  signe: "bg-emerald-100 text-emerald-800",
+};
+type PvStatus = "brouillon" | "valide" | "signe";
 
 export default function Meetings() {
   const { toast } = useToast();
@@ -27,7 +40,8 @@ export default function Meetings() {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState("meetings");
+  const [minutes, setMinutes] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState("recording");
 
   // Meeting creation
   const [createOpen, setCreateOpen] = useState(false);
@@ -41,7 +55,7 @@ export default function Meetings() {
   const [isLiveMode, setIsLiveMode] = useState(false);
   const committedTextRef = useRef("");
 
-  // Upload mode (alternative to live)
+  // Upload mode
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadTranscribing, setUploadTranscribing] = useState(false);
 
@@ -61,6 +75,12 @@ export default function Meetings() {
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [parsingTemplate, setParsingTemplate] = useState(false);
 
+  // PV creation dialog
+  const [pvOpen, setPvOpen] = useState(false);
+  const [pvForm, setPvForm] = useState<{ session_id: string; content: string; pv_status: PvStatus }>({ session_id: "", content: "", pv_status: "brouillon" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
+
   // Realtime scribe hook
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
@@ -77,14 +97,16 @@ export default function Meetings() {
   });
 
   const fetchAll = useCallback(async () => {
-    const [meetRes, tplRes, sessRes] = await Promise.all([
+    const [meetRes, tplRes, sessRes, minRes] = await Promise.all([
       supabase.from("meetings").select("*, sessions(title)").order("created_at", { ascending: false }),
       supabase.from("meeting_templates").select("*").order("created_at", { ascending: false }),
       supabase.from("sessions").select("id, title").order("session_date", { ascending: false }),
+      supabase.from("minutes").select("*, sessions(title)").order("created_at", { ascending: false }),
     ]);
     setMeetings(meetRes.data ?? []);
     setTemplates(tplRes.data ?? []);
     setSessions(sessRes.data ?? []);
+    setMinutes(minRes.data ?? []);
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
@@ -96,18 +118,13 @@ export default function Meetings() {
       if (error || !data?.token) {
         throw new Error(error?.message || "Impossible d'obtenir le token de transcription");
       }
-
       committedTextRef.current = "";
       setLiveTranscript("");
       setPartialText("");
       setIsLiveMode(true);
-
       await scribe.connect({
         token: data.token,
-        microphone: {
-          echoCancellation: true,
-          noiseSuppression: true,
-        },
+        microphone: { echoCancellation: true, noiseSuppression: true },
       });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
@@ -116,49 +133,19 @@ export default function Meetings() {
   };
 
   const stopLiveTranscription = async () => {
-    try {
-      await scribe.disconnect();
-    } catch { /* ignore */ }
+    try { await scribe.disconnect(); } catch { /* ignore */ }
     setIsLiveMode(false);
   };
 
-  // ========== CREATE MEETING WITH LIVE TRANSCRIPT ==========
-  const createWithLiveTranscript = async () => {
+  // ========== GENERATE PV FROM LIVE ==========
+  const generatePVFromLive = async () => {
     const finalTranscript = committedTextRef.current;
-    if (!newTitle || !finalTranscript) {
-      toast({ title: "Erreur", description: "Titre et transcription requis", variant: "destructive" });
+    if (!finalTranscript) {
+      toast({ title: "Erreur", description: "Aucune transcription disponible", variant: "destructive" });
       return;
     }
+    if (scribe.isConnected) await stopLiveTranscription();
 
-    // Stop recording if still active
-    if (scribe.isConnected) {
-      await stopLiveTranscription();
-    }
-
-    setCreateOpen(false);
-
-    // Create meeting record with transcription already done
-    const { data: meeting, error: insertError } = await supabase
-      .from("meetings")
-      .insert({
-        title: newTitle,
-        session_id: newSessionId || null,
-        transcription: finalTranscript,
-        created_by: user?.id,
-        pv_status: "en_cours",
-      })
-      .select()
-      .single();
-
-    if (insertError || !meeting) {
-      toast({ title: "Erreur", description: insertError?.message, variant: "destructive" });
-      return;
-    }
-
-    toast({ title: "Réunion créée", description: "Génération du PV en cours..." });
-    fetchAll();
-
-    // Generate PV
     setGenerating(true);
     try {
       let templateContent = "";
@@ -167,15 +154,30 @@ export default function Meetings() {
         if (tpl?.extracted_content) templateContent = tpl.extracted_content;
       }
 
+      // Create meeting record
+      const { data: meeting, error: insertError } = await supabase
+        .from("meetings")
+        .insert({
+          title: newTitle || `Réunion du ${new Date().toLocaleDateString("fr-FR")}`,
+          session_id: newSessionId || null,
+          transcription: finalTranscript,
+          created_by: user?.id,
+          pv_status: "en_cours",
+        })
+        .select()
+        .single();
+      if (insertError || !meeting) throw new Error(insertError?.message);
+
+      toast({ title: "Génération du PV en cours..." });
+
       const { data: pvData, error: pvError } = await supabase.functions.invoke("generate-pv", {
         body: {
           transcription: finalTranscript,
-          meetingTitle: newTitle,
+          meetingTitle: meeting.title,
           meetingDate: new Date().toLocaleDateString("fr-FR"),
           templateContent,
         },
       });
-
       if (pvError) throw new Error(pvError.message);
 
       const generatedPV = pvData?.pv || "";
@@ -183,7 +185,6 @@ export default function Meetings() {
       toast({ title: "Procès-verbal généré !" });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
-      await supabase.from("meetings").update({ pv_status: "erreur" }).eq("id", meeting.id);
     } finally {
       setGenerating(false);
       resetForm();
@@ -191,16 +192,14 @@ export default function Meetings() {
     }
   };
 
-  // ========== CREATE MEETING WITH UPLOADED FILE (batch) ==========
+  // ========== CREATE MEETING WITH UPLOADED FILE ==========
   const createWithUploadedFile = async () => {
     if (!uploadedFile || !newTitle) {
       toast({ title: "Erreur", description: "Titre et fichier audio requis", variant: "destructive" });
       return;
     }
-
     setCreateOpen(false);
 
-    // Upload audio
     const fileName = `${companyId}/${Date.now()}_${newTitle.replace(/\s+/g, "_")}.${uploadedFile.name.split(".").pop()}`;
     const { error: uploadError } = await supabase.storage.from("meeting-audio").upload(fileName, uploadedFile);
     if (uploadError) {
@@ -228,7 +227,6 @@ export default function Meetings() {
     toast({ title: "Réunion créée", description: "Transcription en cours..." });
     fetchAll();
 
-    // Batch transcribe
     setUploadTranscribing(true);
     try {
       const formData = new FormData();
@@ -273,7 +271,6 @@ export default function Meetings() {
           templateContent,
         },
       });
-
       if (pvError) throw new Error(pvError.message);
 
       const generatedPV = pvData?.pv || "";
@@ -412,7 +409,20 @@ export default function Meetings() {
     fetchAll();
   };
 
-  const statusBadge = (status: string) => {
+  // ========== PV (Minutes) CRUD ==========
+  const createPV = async () => {
+    const { error } = await supabase.from("minutes").insert([pvForm]);
+    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    else { toast({ title: "PV créé" }); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll(); }
+  };
+
+  const updateMinuteStatus = async (id: string, status: PvStatus) => {
+    const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
+    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    else { toast({ title: "Statut mis à jour" }); setEditingId(null); fetchAll(); }
+  };
+
+  const meetingStatusBadge = (status: string) => {
     const map: Record<string, string> = {
       brouillon: "bg-muted text-muted-foreground",
       en_cours: "bg-primary/10 text-primary",
@@ -498,44 +508,218 @@ export default function Meetings() {
   // ========== MAIN VIEW ==========
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Réunions & PV intelligents</h1>
-          <p className="text-muted-foreground">Transcription en temps réel et génération automatique de procès-verbaux</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold">Réunions & Procès-verbaux</h1>
+        <p className="text-muted-foreground">Enregistrement, transcription en temps réel et gestion des procès-verbaux</p>
       </div>
 
+      {/* ===== RECORDING SECTION (inspired by screenshot) ===== */}
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Mic className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Enregistrement de la réunion</h2>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {!isLiveMode ? (
+              <Button onClick={startLiveTranscription} className="gap-2">
+                <Mic className="w-4 h-4" />
+                Démarrer l'écoute
+              </Button>
+            ) : (
+              <Button variant="destructive" onClick={stopLiveTranscription} className="gap-2">
+                <MicOff className="w-4 h-4" />
+                Arrêter l'écoute
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              onClick={generatePVFromLive}
+              disabled={!liveTranscript || isLiveMode || generating}
+              className="gap-2"
+            >
+              {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+              Générer le PV
+            </Button>
+
+            {templates.length > 0 && (
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Modèle (optionnel)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {!isLiveMode && !liveTranscript && (
+            <p className="text-sm text-muted-foreground">
+              Cliquez sur "Démarrer l'écoute" pour transcrire la réunion en temps réel. Une fois terminé, l'IA générera automatiquement un procès-verbal structuré.
+            </p>
+          )}
+
+          {isLiveMode && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+                Écoute en cours — parlez maintenant...
+              </div>
+              <ScrollArea className="h-[150px] rounded-md border bg-muted/30 p-3">
+                <p className="text-sm whitespace-pre-wrap">
+                  {liveTranscript}
+                  {partialText && <span className="text-muted-foreground italic"> {partialText}</span>}
+                  {!liveTranscript && !partialText && <span className="text-muted-foreground">En attente de parole...</span>}
+                </p>
+              </ScrollArea>
+            </div>
+          )}
+
+          {!isLiveMode && liveTranscript && (
+            <div className="space-y-2">
+              <Badge variant="secondary">✓ Transcription capturée</Badge>
+              <ScrollArea className="h-[120px] rounded-md border bg-muted/30 p-3">
+                <p className="text-sm whitespace-pre-wrap">{liveTranscript}</p>
+              </ScrollArea>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {(uploadTranscribing || generating) && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <span className="text-sm font-medium">
+              {uploadTranscribing ? "Transcription de l'audio en cours..." : "Génération du procès-verbal par l'IA..."}
+            </span>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ===== TABS: PV, Réunions IA, Modèles ===== */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="meetings">
-            <FileText className="w-4 h-4 mr-2" />Réunions
+          <TabsTrigger value="recording" className="gap-2">
+            <ClipboardCheck className="w-4 h-4" />Procès-verbaux
           </TabsTrigger>
-          <TabsTrigger value="templates">
-            <BookOpen className="w-4 h-4 mr-2" />Modèles de PV
+          <TabsTrigger value="meetings" className="gap-2">
+            <FileText className="w-4 h-4" />Réunions IA
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="gap-2">
+            <BookOpen className="w-4 h-4" />Modèles de PV
           </TabsTrigger>
         </TabsList>
+
+        {/* ===== PV TAB ===== */}
+        <TabsContent value="recording" className="space-y-4">
+          <div className="flex justify-end">
+            <Dialog open={pvOpen} onOpenChange={setPvOpen}>
+              <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV</Button></DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>Rédiger un procès-verbal</DialogTitle></DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Session</Label>
+                    <Select value={pvForm.session_id} onValueChange={(v) => setPvForm({ ...pvForm, session_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                      <SelectContent>{sessions.map((s) => (<SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>))}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Contenu du PV</Label>
+                    <Textarea className="min-h-[200px]" value={pvForm.content} onChange={(e) => setPvForm({ ...pvForm, content: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Statut</Label>
+                    <Select value={pvForm.pv_status} onValueChange={(v) => setPvForm({ ...pvForm, pv_status: v as PvStatus })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(pvStatusLabels).map(([k, v]) => (
+                          <SelectItem key={k} value={k}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setPvOpen(false)}>Annuler</Button>
+                  <Button onClick={createPV} disabled={!pvForm.session_id}>Enregistrer</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Session</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {minutes.length === 0 ? (
+                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun PV</TableCell></TableRow>
+                  ) : (
+                    minutes.map((m) => (
+                      <TableRow key={m.id}>
+                        <TableCell className="font-medium">{(m as any).sessions?.title}</TableCell>
+                        <TableCell>
+                          {editingId === m.id ? (
+                            <Select value={editStatus} onValueChange={(v) => { const s = v as PvStatus; setEditStatus(s); updateMinuteStatus(m.id, s); }}>
+                              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(pvStatusLabels).map(([k, v]) => (
+                                  <SelectItem key={k} value={k}>{v}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
+                              {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
+                            Modifier statut
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* ===== MEETINGS TAB ===== */}
         <TabsContent value="meetings" className="space-y-4">
           <div className="flex justify-end">
             <Dialog open={createOpen} onOpenChange={(open) => {
               setCreateOpen(open);
-              if (!open && scribe.isConnected) {
-                stopLiveTranscription();
-              }
+              if (!open && scribe.isConnected) stopLiveTranscription();
               if (!open) resetForm();
             }}>
               <DialogTrigger asChild>
-                <Button><Plus className="w-4 h-4 mr-2" />Nouvelle réunion</Button>
+                <Button><Plus className="w-4 h-4 mr-2" />Nouvelle réunion (fichier audio)</Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
-                <DialogHeader><DialogTitle>Enregistrer une réunion</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>Importer un fichier audio</DialogTitle></DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Titre de la réunion *</Label>
                     <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Ex: CA du 15 mars 2026" />
                   </div>
-
                   <div className="space-y-2">
                     <Label>Session associée (optionnel)</Label>
                     <Select value={newSessionId} onValueChange={setNewSessionId}>
@@ -545,7 +729,6 @@ export default function Meetings() {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div className="space-y-2">
                     <Label>Modèle de PV (optionnel)</Label>
                     <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
@@ -555,109 +738,29 @@ export default function Meetings() {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <Separator />
-
-                  <div className="space-y-3">
-                    <Label>Source audio *</Label>
-
-                    {/* LIVE REALTIME TRANSCRIPTION */}
-                    <Card className={`border-2 transition-colors ${isLiveMode ? "border-destructive bg-destructive/5" : "border-dashed border-muted-foreground/30"}`}>
-                      <CardContent className="p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Radio className="w-4 h-4 text-primary" />
-                            <span className="font-medium text-sm">Transcription en temps réel</span>
-                          </div>
-                          {!isLiveMode ? (
-                            <Button variant="outline" size="sm" onClick={startLiveTranscription} disabled={!!uploadedFile}>
-                              <Mic className="w-4 h-4 mr-2" />Démarrer
-                            </Button>
-                          ) : (
-                            <Button variant="destructive" size="sm" onClick={stopLiveTranscription}>
-                              <MicOff className="w-4 h-4 mr-2" />Arrêter
-                            </Button>
-                          )}
-                        </div>
-
-                        {isLiveMode && (
-                          <>
-                            <div className="flex items-center gap-2 text-sm text-destructive">
-                              <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-                              Écoute en cours — parlez maintenant...
-                            </div>
-                            <ScrollArea className="h-[150px] rounded-md border bg-muted/30 p-3">
-                              <p className="text-sm whitespace-pre-wrap">
-                                {liveTranscript}
-                                {partialText && (
-                                  <span className="text-muted-foreground italic"> {partialText}</span>
-                                )}
-                                {!liveTranscript && !partialText && (
-                                  <span className="text-muted-foreground">En attente de parole...</span>
-                                )}
-                              </p>
-                            </ScrollArea>
-                          </>
-                        )}
-
-                        {!isLiveMode && liveTranscript && (
-                          <div className="space-y-2">
-                            <Badge variant="secondary">✓ Transcription capturée</Badge>
-                            <ScrollArea className="h-[100px] rounded-md border bg-muted/30 p-3">
-                              <p className="text-sm whitespace-pre-wrap">{liveTranscript}</p>
-                            </ScrollArea>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-
-                    <div className="text-center text-sm text-muted-foreground">ou</div>
-
-                    {/* File upload (batch mode) */}
-                    <div>
-                      <Input
-                        type="file"
-                        accept="audio/mp3,audio/wav,audio/m4a,audio/mpeg,audio/webm,audio/*"
-                        disabled={isLiveMode}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) { setUploadedFile(file); setLiveTranscript(""); committedTextRef.current = ""; }
-                        }}
-                      />
-                      {uploadedFile && (
-                        <p className="text-sm text-muted-foreground mt-1">Fichier : {uploadedFile.name}</p>
-                      )}
-                    </div>
+                  <div className="space-y-2">
+                    <Label>Fichier audio *</Label>
+                    <Input
+                      type="file"
+                      accept="audio/mp3,audio/wav,audio/m4a,audio/mpeg,audio/webm,audio/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setUploadedFile(file);
+                      }}
+                    />
+                    {uploadedFile && <p className="text-sm text-muted-foreground">Fichier : {uploadedFile.name}</p>}
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => { setCreateOpen(false); if (scribe.isConnected) stopLiveTranscription(); resetForm(); }}>
-                    Annuler
+                  <Button variant="outline" onClick={() => { setCreateOpen(false); resetForm(); }}>Annuler</Button>
+                  <Button onClick={createWithUploadedFile} disabled={!newTitle || !uploadedFile}>
+                    <Wand2 className="w-4 h-4 mr-2" />Transcrire & Générer
                   </Button>
-                  {liveTranscript ? (
-                    <Button onClick={createWithLiveTranscript} disabled={!newTitle || !liveTranscript || isLiveMode}>
-                      <Wand2 className="w-4 h-4 mr-2" />Générer le PV
-                    </Button>
-                  ) : (
-                    <Button onClick={createWithUploadedFile} disabled={!newTitle || !uploadedFile}>
-                      <Wand2 className="w-4 h-4 mr-2" />Transcrire & Générer
-                    </Button>
-                  )}
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
-
-          {(uploadTranscribing || generating) && (
-            <Card className="border-primary/20 bg-primary/5">
-              <CardContent className="p-4 flex items-center gap-3">
-                <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                <span className="text-sm font-medium">
-                  {uploadTranscribing ? "Transcription de l'audio en cours..." : "Génération du procès-verbal par l'IA..."}
-                </span>
-              </CardContent>
-            </Card>
-          )}
 
           <Card>
             <CardContent className="p-0">
@@ -675,7 +778,7 @@ export default function Meetings() {
                   {meetings.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        Aucune réunion. Cliquez sur "Nouvelle réunion" pour commencer.
+                        Aucune réunion. Utilisez l'enregistrement en direct ci-dessus ou importez un fichier audio.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -685,7 +788,7 @@ export default function Meetings() {
                         <TableCell className="text-sm text-muted-foreground">
                           {(m as any).sessions?.title || "—"}
                         </TableCell>
-                        <TableCell>{statusBadge(m.pv_status)}</TableCell>
+                        <TableCell>{meetingStatusBadge(m.pv_status)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(m.created_at).toLocaleDateString("fr-FR")}
                         </TableCell>
