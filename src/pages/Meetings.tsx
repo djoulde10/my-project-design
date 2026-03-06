@@ -82,6 +82,11 @@ export default function Meetings() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
 
+  // Version history
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [versionHistoryMinuteId, setVersionHistoryMinuteId] = useState<string>("");
+  const [versionHistoryContent, setVersionHistoryContent] = useState<string | null>(null);
+
   // Realtime scribe hook
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
