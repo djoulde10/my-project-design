@@ -57,6 +57,7 @@ export default function Meetings() {
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadTranscribing, setUploadTranscribing] = useState(false);
+  const [transcriptionLang, setTranscriptionLang] = useState("fra");
 
   // Processing states
   const [generating, setGenerating] = useState(false);
@@ -212,6 +213,7 @@ export default function Meetings() {
     try {
       const formData = new FormData();
       formData.append("audio", uploadedFile, fileName);
+      formData.append("language_code", transcriptionLang);
       const tRes = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
         {
@@ -769,6 +771,16 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label>Langue de transcription</Label>
+                    <Select value={transcriptionLang} onValueChange={setTranscriptionLang}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fra">Français</SelectItem>
+                        <SelectItem value="eng">Anglais</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Separator />
                   <div className="space-y-2">
                     <Label>Fichier audio *</Label>
@@ -890,9 +902,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                               }}
                             >
                               <History className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteMinute(m.id)}>
-                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
