@@ -618,25 +618,78 @@ export default function Meetings() {
         </Card>
       )}
 
-      {/* ===== TABS: PV, Réunions IA, Modèles ===== */}
+      {/* ===== TABS: PV unifiés, Modèles ===== */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="recording" className="gap-2">
             <ClipboardCheck className="w-4 h-4" />Procès-verbaux
-          </TabsTrigger>
-          <TabsTrigger value="meetings" className="gap-2">
-            <FileText className="w-4 h-4" />Réunions IA
           </TabsTrigger>
           <TabsTrigger value="templates" className="gap-2">
             <BookOpen className="w-4 h-4" />Modèles de PV
           </TabsTrigger>
         </TabsList>
 
-        {/* ===== PV TAB ===== */}
-        <TabsContent value="recording" className="space-y-4">
-          <div className="flex justify-end">
+        {/* ===== UNIFIED PV TAB ===== */}
+        <TabsContent value="recording" className="space-y-6">
+          <div className="flex justify-end gap-2">
+            <Dialog open={createOpen} onOpenChange={(open) => {
+              setCreateOpen(open);
+              if (!open && scribe.isConnected) stopLiveTranscription();
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button variant="outline"><Upload className="w-4 h-4 mr-2" />Importer un audio</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>Importer un fichier audio</DialogTitle></DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Titre de la réunion *</Label>
+                    <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Ex: CA du 15 mars 2026" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Session associée (optionnel)</Label>
+                    <Select value={newSessionId} onValueChange={setNewSessionId}>
+                      <SelectTrigger><SelectValue placeholder="Aucune" /></SelectTrigger>
+                      <SelectContent>
+                        {sessions.map((s) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Modèle de PV (optionnel)</Label>
+                    <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                      <SelectTrigger><SelectValue placeholder="Aucun modèle" /></SelectTrigger>
+                      <SelectContent>
+                        {templates.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Separator />
+                  <div className="space-y-2">
+                    <Label>Fichier audio *</Label>
+                    <Input
+                      type="file"
+                      accept="audio/mp3,audio/wav,audio/m4a,audio/mpeg,audio/webm,audio/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setUploadedFile(file);
+                      }}
+                    />
+                    {uploadedFile && <p className="text-sm text-muted-foreground">Fichier : {uploadedFile.name}</p>}
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => { setCreateOpen(false); resetForm(); }}>Annuler</Button>
+                  <Button onClick={createWithUploadedFile} disabled={!newTitle || !uploadedFile}>
+                    <Wand2 className="w-4 h-4 mr-2" />Transcrire & Générer
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             <Dialog open={pvOpen} onOpenChange={setPvOpen}>
-              <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV</Button></DialogTrigger>
+              <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV manuel</Button></DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle>Rédiger un procès-verbal</DialogTitle></DialogHeader>
                 <div className="space-y-4">
