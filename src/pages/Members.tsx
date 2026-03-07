@@ -170,6 +170,7 @@ export default function Members() {
                 <TableHead>Qualité</TableHead>
                 <TableHead>Mandat</TableHead>
                 <TableHead>Statut</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
