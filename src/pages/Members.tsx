@@ -203,6 +203,7 @@ export default function Members() {
                         <Pencil className="w-4 h-4" />
                       </Button>
                     </TableCell>
+                  </TableRow>
                 ))
               )}
             </TableBody>
