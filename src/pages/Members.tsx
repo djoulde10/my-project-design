@@ -198,7 +198,11 @@ export default function Members() {
                         {m.is_active ? "Actif" : "Inactif"}
                       </Badge>
                     </TableCell>
-                  </TableRow>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(m)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
                 ))
               )}
             </TableBody>
