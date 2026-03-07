@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, User } from "lucide-react";
+import { Plus, User, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const qualityLabels: Record<string, string> = {
@@ -21,15 +21,18 @@ const qualityLabels: Record<string, string> = {
 
 const qualityOptions = ["pca", "administrateur", "president_comite", "secretariat_juridique", "autre"] as const;
 
+const emptyForm = {
+  organ_id: "", full_name: "", quality: "autre" as "pca" | "administrateur" | "president_comite" | "secretariat_juridique" | "autre",
+  mandate_start: "", mandate_end: "", email: "", phone: "",
+};
+
 export default function Members() {
   const { toast } = useToast();
   const [members, setMembers] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    organ_id: "", full_name: "", quality: "autre" as "pca" | "administrateur" | "president_comite" | "secretariat_juridique" | "autre",
-    mandate_start: "", mandate_end: "", email: "", phone: "",
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
   const fetchMembers = async () => {
     const { data } = await supabase.from("members").select("*, organs(name)").order("full_name");
@@ -43,19 +46,51 @@ export default function Members() {
 
   useEffect(() => { fetchMembers(); fetchOrgans(); }, []);
 
-  const handleCreate = async () => {
-    const { error } = await supabase.from("members").insert([{
+  const parseErrorMessage = (msg: string): string => {
+    if (msg.includes("Limite atteinte")) {
+      // Extract the readable part from the DB trigger error
+      const match = msg.match(/Limite atteinte[^"]*/);
+      return match ? match[0] : "Cette fonction est déjà occupée dans cet organe pour cette période de mandat.";
+    }
+    return msg;
+  };
+
+  const handleSave = async () => {
+    const payload = {
       ...form,
       mandate_end: form.mandate_end || null,
-    }]);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    };
+
+    let error;
+    if (editingId) {
+      ({ error } = await supabase.from("members").update(payload).eq("id", editingId));
     } else {
-      toast({ title: "Membre ajouté" });
+      ({ error } = await supabase.from("members").insert([payload]));
+    }
+
+    if (error) {
+      toast({ title: "Erreur", description: parseErrorMessage(error.message), variant: "destructive" });
+    } else {
+      toast({ title: editingId ? "Membre modifié" : "Membre ajouté" });
       setOpen(false);
-      setForm({ organ_id: "", full_name: "", quality: "autre", mandate_start: "", mandate_end: "", email: "", phone: "" });
+      setEditingId(null);
+      setForm(emptyForm);
       fetchMembers();
     }
+  };
+
+  const openEdit = (m: any) => {
+    setEditingId(m.id);
+    setForm({
+      organ_id: m.organ_id,
+      full_name: m.full_name,
+      quality: m.quality,
+      mandate_start: m.mandate_start ?? "",
+      mandate_end: m.mandate_end ?? "",
+      email: m.email ?? "",
+      phone: m.phone ?? "",
+    });
+    setOpen(true);
   };
 
   return (
@@ -65,12 +100,12 @@ export default function Members() {
           <h1 className="text-2xl font-bold">Membres</h1>
           <p className="text-muted-foreground">Gestion des membres des organes</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditingId(null); setForm(emptyForm); } }}>
           <DialogTrigger asChild>
             <Button><Plus className="w-4 h-4 mr-2" />Nouveau membre</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Ajouter un membre</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editingId ? "Modifier le membre" : "Ajouter un membre"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Organe</Label>
@@ -118,8 +153,8 @@ export default function Members() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-              <Button onClick={handleCreate} disabled={!form.organ_id || !form.full_name || !form.mandate_start}>Ajouter</Button>
+              <Button variant="outline" onClick={() => { setOpen(false); setEditingId(null); setForm(emptyForm); }}>Annuler</Button>
+              <Button onClick={handleSave} disabled={!form.organ_id || !form.full_name || !form.mandate_start}>{editingId ? "Enregistrer" : "Ajouter"}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -135,11 +170,12 @@ export default function Members() {
                 <TableHead>Qualité</TableHead>
                 <TableHead>Mandat</TableHead>
                 <TableHead>Statut</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {members.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Aucun membre</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucun membre</TableCell></TableRow>
               ) : (
                 members.map((m) => (
                   <TableRow key={m.id}>
@@ -161,6 +197,11 @@ export default function Members() {
                       <Badge variant={m.is_active ? "default" : "secondary"}>
                         {m.is_active ? "Actif" : "Inactif"}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(m)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
