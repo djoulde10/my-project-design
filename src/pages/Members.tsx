@@ -21,15 +21,18 @@ const qualityLabels: Record<string, string> = {
 
 const qualityOptions = ["pca", "administrateur", "president_comite", "secretariat_juridique", "autre"] as const;
 
+const emptyForm = {
+  organ_id: "", full_name: "", quality: "autre" as "pca" | "administrateur" | "president_comite" | "secretariat_juridique" | "autre",
+  mandate_start: "", mandate_end: "", email: "", phone: "",
+};
+
 export default function Members() {
   const { toast } = useToast();
   const [members, setMembers] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    organ_id: "", full_name: "", quality: "autre" as "pca" | "administrateur" | "president_comite" | "secretariat_juridique" | "autre",
-    mandate_start: "", mandate_end: "", email: "", phone: "",
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
   const fetchMembers = async () => {
     const { data } = await supabase.from("members").select("*, organs(name)").order("full_name");
