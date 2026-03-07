@@ -153,8 +153,8 @@ export default function Members() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-              <Button onClick={handleCreate} disabled={!form.organ_id || !form.full_name || !form.mandate_start}>Ajouter</Button>
+              <Button variant="outline" onClick={() => { setOpen(false); setEditingId(null); setForm(emptyForm); }}>Annuler</Button>
+              <Button onClick={handleSave} disabled={!form.organ_id || !form.full_name || !form.mandate_start}>{editingId ? "Enregistrer" : "Ajouter"}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
