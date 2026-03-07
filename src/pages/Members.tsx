@@ -46,19 +46,51 @@ export default function Members() {
 
   useEffect(() => { fetchMembers(); fetchOrgans(); }, []);
 
-  const handleCreate = async () => {
-    const { error } = await supabase.from("members").insert([{
+  const parseErrorMessage = (msg: string): string => {
+    if (msg.includes("Limite atteinte")) {
+      // Extract the readable part from the DB trigger error
+      const match = msg.match(/Limite atteinte[^"]*/);
+      return match ? match[0] : "Cette fonction est déjà occupée dans cet organe pour cette période de mandat.";
+    }
+    return msg;
+  };
+
+  const handleSave = async () => {
+    const payload = {
       ...form,
       mandate_end: form.mandate_end || null,
-    }]);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    };
+
+    let error;
+    if (editingId) {
+      ({ error } = await supabase.from("members").update(payload).eq("id", editingId));
     } else {
-      toast({ title: "Membre ajouté" });
+      ({ error } = await supabase.from("members").insert([payload]));
+    }
+
+    if (error) {
+      toast({ title: "Erreur", description: parseErrorMessage(error.message), variant: "destructive" });
+    } else {
+      toast({ title: editingId ? "Membre modifié" : "Membre ajouté" });
       setOpen(false);
-      setForm({ organ_id: "", full_name: "", quality: "autre", mandate_start: "", mandate_end: "", email: "", phone: "" });
+      setEditingId(null);
+      setForm(emptyForm);
       fetchMembers();
     }
+  };
+
+  const openEdit = (m: any) => {
+    setEditingId(m.id);
+    setForm({
+      organ_id: m.organ_id,
+      full_name: m.full_name,
+      quality: m.quality,
+      mandate_start: m.mandate_start ?? "",
+      mandate_end: m.mandate_end ?? "",
+      email: m.email ?? "",
+      phone: m.phone ?? "",
+    });
+    setOpen(true);
   };
 
   return (
