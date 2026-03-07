@@ -100,12 +100,12 @@ export default function Members() {
           <h1 className="text-2xl font-bold">Membres</h1>
           <p className="text-muted-foreground">Gestion des membres des organes</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditingId(null); setForm(emptyForm); } }}>
           <DialogTrigger asChild>
             <Button><Plus className="w-4 h-4 mr-2" />Nouveau membre</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Ajouter un membre</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editingId ? "Modifier le membre" : "Ajouter un membre"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Organe</Label>
