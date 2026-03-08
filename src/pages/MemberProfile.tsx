@@ -148,6 +148,59 @@ export default function MemberProfile() {
                   <p className="font-medium">{member.phone || "—"}</p>
                 </div>
               </div>
+
+              {(member.titre_poste || member.organisation || member.nationalite || member.date_naissance || member.adresse || member.linkedin_url || member.bio) && (
+                <>
+                  <Separator className="my-4" />
+                  <h3 className="text-base font-semibold mb-3">Informations complémentaires</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {member.titre_poste && (
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Titre / Poste</p>
+                        <p className="font-medium flex items-center gap-2"><Briefcase className="w-4 h-4 text-muted-foreground" />{member.titre_poste}</p>
+                      </div>
+                    )}
+                    {member.organisation && (
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Organisation</p>
+                        <p className="font-medium">{member.organisation}</p>
+                      </div>
+                    )}
+                    {member.nationalite && (
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Nationalité</p>
+                        <p className="font-medium flex items-center gap-2"><Globe className="w-4 h-4 text-muted-foreground" />{member.nationalite}</p>
+                      </div>
+                    )}
+                    {member.date_naissance && (
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Date de naissance</p>
+                        <p className="font-medium">{new Date(member.date_naissance).toLocaleDateString("fr-FR")}</p>
+                      </div>
+                    )}
+                    {member.adresse && (
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Adresse</p>
+                        <p className="font-medium flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" />{member.adresse}</p>
+                      </div>
+                    )}
+                    {member.linkedin_url && (
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">LinkedIn</p>
+                        <a href={member.linkedin_url} target="_blank" rel="noopener noreferrer" className="font-medium flex items-center gap-2 text-primary hover:underline">
+                          <Linkedin className="w-4 h-4" />Voir le profil
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                  {member.bio && (
+                    <div className="mt-4 space-y-1">
+                      <p className="text-sm text-muted-foreground">Biographie</p>
+                      <p className="text-sm whitespace-pre-wrap">{member.bio}</p>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
