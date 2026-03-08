@@ -1,0 +1,2 @@
+ALTER TABLE public.documents ADD COLUMN category text NOT NULL DEFAULT 'autre';
+COMMENT ON COLUMN public.documents.category IS 'Document category: pv, politique, rapport, juridique, presentation, autre';
