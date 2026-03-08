@@ -485,47 +485,68 @@ export type Database = {
       }
       members: {
         Row: {
+          adresse: string | null
+          bio: string | null
           company_id: string | null
           created_at: string
+          date_naissance: string | null
           email: string | null
           full_name: string
           id: string
           is_active: boolean
+          linkedin_url: string | null
           mandate_end: string | null
           mandate_start: string | null
+          nationalite: string | null
           organ_id: string
+          organisation: string | null
           phone: string | null
           quality: Database["public"]["Enums"]["member_quality"]
+          titre_poste: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          adresse?: string | null
+          bio?: string | null
           company_id?: string | null
           created_at?: string
+          date_naissance?: string | null
           email?: string | null
           full_name: string
           id?: string
           is_active?: boolean
+          linkedin_url?: string | null
           mandate_end?: string | null
           mandate_start?: string | null
+          nationalite?: string | null
           organ_id: string
+          organisation?: string | null
           phone?: string | null
           quality?: Database["public"]["Enums"]["member_quality"]
+          titre_poste?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          adresse?: string | null
+          bio?: string | null
           company_id?: string | null
           created_at?: string
+          date_naissance?: string | null
           email?: string | null
           full_name?: string
           id?: string
           is_active?: boolean
+          linkedin_url?: string | null
           mandate_end?: string | null
           mandate_start?: string | null
+          nationalite?: string | null
           organ_id?: string
+          organisation?: string | null
           phone?: string | null
           quality?: Database["public"]["Enums"]["member_quality"]
+          titre_poste?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -953,6 +974,44 @@ export type Database = {
             columns: ["organ_id"]
             isOneToOne: false
             referencedRelation: "organs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signatures: {
+        Row: {
+          company_id: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          ip_address: string | null
+          signed_at: string
+          signed_by: string
+        }
+        Insert: {
+          company_id?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          signed_at?: string
+          signed_by: string
+        }
+        Update: {
+          company_id?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          signed_at?: string
+          signed_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signatures_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
