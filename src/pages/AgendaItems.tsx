@@ -172,14 +172,46 @@ export default function AgendaItems() {
     }
   };
 
+  // Filtering
+  const filtered = items.filter((item) => {
+    const matchSession = selectedSession === "all" || item.session_id === selectedSession;
+    const matchSearch = !search || item.title.toLowerCase().includes(search.toLowerCase()) || (item as any).sessions?.title?.toLowerCase().includes(search.toLowerCase());
+    return matchSession && matchSearch;
+  });
+
+  // Group by session
+  const groupedBySession: Record<string, { sessionTitle: string; items: any[] }> = {};
+  filtered.forEach((item) => {
+    const sTitle = (item as any).sessions?.title ?? "Sans session";
+    if (!groupedBySession[item.session_id]) {
+      groupedBySession[item.session_id] = { sessionTitle: sTitle, items: [] };
+    }
+    groupedBySession[item.session_id].items.push(item);
+  });
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Ordre du jour</h1>
-          <p className="text-muted-foreground">Points d'ordre du jour des sessions</p>
+          <h1 className="text-2xl font-bold">Générateur d'ordre du jour</h1>
+          <p className="text-muted-foreground">Créez et organisez les points d'ordre du jour par session</p>
         </div>
         <Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" />Nouveau point</Button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <Select value={selectedSession} onValueChange={setSelectedSession}>
+          <SelectTrigger className="w-[250px]"><SelectValue placeholder="Filtrer par session" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les sessions</SelectItem>
+            {sessions.map((s) => (<SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Create / Edit Dialog */}
