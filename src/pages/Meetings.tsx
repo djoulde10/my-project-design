@@ -93,6 +93,10 @@ export default function Meetings() {
   const [versionHistoryMinuteId, setVersionHistoryMinuteId] = useState<string>("");
   const [versionHistoryContent, setVersionHistoryContent] = useState<string | null>(null);
 
+  // Signatures
+  const [minuteSignatures, setMinuteSignatures] = useState<any[]>([]);
+  const [signing, setSigning] = useState(false);
+
   // Realtime scribe hook
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
