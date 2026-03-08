@@ -61,7 +61,39 @@ export default function Decisions() {
     setDecisions(decRes.data ?? []);
     setSessions(sessRes.data ?? []);
     setMembers(memRes.data ?? []);
+
+    // Fetch all decision signatures
+    const { data: sigs } = await supabase
+      .from("signatures")
+      .select("*, profiles:signed_by(full_name)")
+      .eq("entity_type", "decision")
+      .order("signed_at");
+    const grouped: Record<string, any[]> = {};
+    (sigs ?? []).forEach((s: any) => {
+      if (!grouped[s.entity_id]) grouped[s.entity_id] = [];
+      grouped[s.entity_id].push(s);
+    });
+    setSignatures(grouped);
   };
+
+  const signDecision = async (decisionId: string) => {
+    setSigningId(decisionId);
+    const { error } = await supabase.from("signatures").insert({
+      entity_type: "decision",
+      entity_id: decisionId,
+      signed_by: user?.id,
+    });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Décision signée" });
+      fetchAll();
+    }
+    setSigningId(null);
+  };
+
+  const userSignedDecision = (decisionId: string) =>
+    (signatures[decisionId] ?? []).some((s: any) => s.signed_by === user?.id);
 
   useEffect(() => { fetchAll(); }, []);
 
