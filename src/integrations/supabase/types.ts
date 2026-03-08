@@ -899,6 +899,7 @@ export type Database = {
           id: string
           is_virtual: boolean
           location: string | null
+          meeting_link: string | null
           numero_session: string | null
           organ_id: string
           session_date: string
@@ -914,6 +915,7 @@ export type Database = {
           id?: string
           is_virtual?: boolean
           location?: string | null
+          meeting_link?: string | null
           numero_session?: string | null
           organ_id: string
           session_date: string
@@ -929,6 +931,7 @@ export type Database = {
           id?: string
           is_virtual?: boolean
           location?: string | null
+          meeting_link?: string | null
           numero_session?: string | null
           organ_id?: string
           session_date?: string

@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Upload, FileIcon, Download, Trash2, Paperclip } from "lucide-react";
+import { Plus, Pencil, Upload, FileIcon, Download, Trash2, Paperclip, Search, GripVertical } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
 const emptyForm = {
@@ -37,6 +38,8 @@ export default function AgendaItems() {
   const [docName, setDocName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [itemDocs, setItemDocs] = useState<Record<string, any[]>>({});
+  const [search, setSearch] = useState("");
+  const [selectedSession, setSelectedSession] = useState<string>("all");
 
   const fetchAll = async () => {
     const [itemsRes, sessionsRes, membersRes] = await Promise.all([
@@ -169,14 +172,46 @@ export default function AgendaItems() {
     }
   };
 
+  // Filtering
+  const filtered = items.filter((item) => {
+    const matchSession = selectedSession === "all" || item.session_id === selectedSession;
+    const matchSearch = !search || item.title.toLowerCase().includes(search.toLowerCase()) || (item as any).sessions?.title?.toLowerCase().includes(search.toLowerCase());
+    return matchSession && matchSearch;
+  });
+
+  // Group by session
+  const groupedBySession: Record<string, { sessionTitle: string; items: any[] }> = {};
+  filtered.forEach((item) => {
+    const sTitle = (item as any).sessions?.title ?? "Sans session";
+    if (!groupedBySession[item.session_id]) {
+      groupedBySession[item.session_id] = { sessionTitle: sTitle, items: [] };
+    }
+    groupedBySession[item.session_id].items.push(item);
+  });
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Ordre du jour</h1>
-          <p className="text-muted-foreground">Points d'ordre du jour des sessions</p>
+          <h1 className="text-2xl font-bold">Générateur d'ordre du jour</h1>
+          <p className="text-muted-foreground">Créez et organisez les points d'ordre du jour par session</p>
         </div>
         <Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" />Nouveau point</Button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <Select value={selectedSession} onValueChange={setSelectedSession}>
+          <SelectTrigger className="w-[250px]"><SelectValue placeholder="Filtrer par session" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les sessions</SelectItem>
+            {sessions.map((s) => (<SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Create / Edit Dialog */}
@@ -266,80 +301,75 @@ export default function AgendaItems() {
         </DialogContent>
       </Dialog>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>Titre</TableHead>
-                <TableHead>Session</TableHead>
-                <TableHead>Nature</TableHead>
-                <TableHead>Présentateur</TableHead>
-                <TableHead>Documents</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucun point d'ODJ</TableCell></TableRow>
-              ) : (
-                items.map((item, i) => {
-                  const docs = itemDocs[item.id] ?? [];
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-mono text-muted-foreground">{i + 1}</TableCell>
-                      <TableCell className="font-medium">{item.title}</TableCell>
-                      <TableCell className="text-sm">{(item as any).sessions?.title}</TableCell>
-                      <TableCell>
-                        <Badge variant={item.nature === "decision" ? "default" : "secondary"}>
-                          {item.nature === "decision" ? "Décision" : "Information"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">{(item as any).members?.full_name ?? "—"}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          {docs.length === 0 ? (
-                            <span className="text-xs text-muted-foreground">Aucun</span>
-                          ) : (
-                            docs.map((doc) => (
+      {Object.entries(groupedBySession).length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">Aucun point d'ordre du jour trouvé</CardContent>
+        </Card>
+      ) : (
+        Object.entries(groupedBySession).map(([sessionId, group]) => (
+          <Card key={sessionId}>
+            <CardContent className="p-0">
+              <div className="px-4 py-3 border-b bg-muted/30">
+                <h3 className="font-semibold text-sm">{group.sessionTitle}</h3>
+                <p className="text-xs text-muted-foreground">{group.items.length} point(s)</p>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Titre</TableHead>
+                    <TableHead>Nature</TableHead>
+                    <TableHead>Présentateur</TableHead>
+                    <TableHead>Documents</TableHead>
+                    <TableHead className="w-24">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {group.items.map((item, i) => {
+                    const docs = itemDocs[item.id] ?? [];
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-mono text-muted-foreground">{i + 1}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{item.title}</p>
+                            {item.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={item.nature === "decision" ? "default" : "secondary"}>
+                            {item.nature === "decision" ? "Décision" : "Information"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">{(item as any).members?.full_name ?? "—"}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            {docs.length === 0 ? (
+                              <span className="text-xs text-muted-foreground">Aucun</span>
+                            ) : docs.map((doc) => (
                               <div key={doc.id} className="flex items-center gap-1 text-xs">
                                 <FileIcon className="w-3 h-3 text-primary" />
-                                <button
-                                  className="hover:underline text-primary truncate max-w-[120px]"
-                                  onClick={() => handleDocDownload(doc)}
-                                >
-                                  {doc.name}
-                                </button>
-                                <button
-                                  className="text-destructive hover:text-destructive/80"
-                                  onClick={() => handleDocDelete(doc)}
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
+                                <button className="hover:underline text-primary truncate max-w-[120px]" onClick={() => handleDocDownload(doc)}>{doc.name}</button>
+                                <button className="text-destructive hover:text-destructive/80" onClick={() => handleDocDelete(doc)}><Trash2 className="w-3 h-3" /></button>
                               </div>
-                            ))
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(item)} title="Modifier">
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => openDocDialog(item)} title="Attacher un document">
-                            <Paperclip className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => openEdit(item)} title="Modifier"><Pencil className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => openDocDialog(item)} title="Attacher un document"><Paperclip className="w-4 h-4" /></Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ))
+      )}
     </div>
   );
 }

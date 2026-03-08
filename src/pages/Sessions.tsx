@@ -12,8 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
 
 const statusColors: Record<string, string> = {
   brouillon: "bg-muted text-muted-foreground",
@@ -45,7 +46,7 @@ export default function Sessions() {
 
   const [form, setForm] = useState({
     organ_id: "", title: "", session_type: "ordinaire" as "ordinaire" | "extraordinaire",
-    session_date: "", location: "", is_virtual: false,
+    session_date: "", location: "", is_virtual: false, meeting_link: "",
   });
   const [agendaDrafts, setAgendaDrafts] = useState<AgendaItemDraft[]>([]);
 
@@ -92,9 +93,12 @@ export default function Sessions() {
   };
 
   const handleCreate = async () => {
-    const { data: session, error } = await supabase.from("sessions").insert([{
-      ...form, created_by: user?.id,
-    }]).select().single();
+    const payload = {
+      ...form,
+      meeting_link: form.meeting_link || null,
+      created_by: user?.id,
+    };
+    const { data: session, error } = await supabase.from("sessions").insert([payload]).select().single();
     if (error || !session) {
       toast({ title: "Erreur", description: error?.message, variant: "destructive" });
       return;
@@ -138,7 +142,7 @@ export default function Sessions() {
 
     toast({ title: "Session créée avec succès" });
     setOpen(false);
-    setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false });
+    setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
     setAgendaDrafts([]);
     fetchSessions();
   };
@@ -165,6 +169,83 @@ export default function Sessions() {
     const { error } = await supabase.from("sessions").update({ status: status as any }).eq("id", id);
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
     else { toast({ title: "Statut mis à jour" }); fetchSessions(); }
+  };
+
+  const generateBoardPacket = async (session: any) => {
+    toast({ title: "Génération du Board Packet..." });
+
+    // Fetch full session data
+    const [agRes, attRes, docsRes] = await Promise.all([
+      supabase.from("agenda_items").select("*, members(full_name)").eq("session_id", session.id).order("order_index"),
+      supabase.from("session_attendees").select("*, members(full_name, quality, email)").eq("session_id", session.id),
+      supabase.from("documents").select("*").eq("session_id", session.id).order("created_at"),
+    ]);
+
+    const agendaItems = agRes.data ?? [];
+    const attendees = attRes.data ?? [];
+    const docs = docsRes.data ?? [];
+
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    let y = 20;
+
+    const addLine = (text: string, size = 11, bold = false) => {
+      if (y > 270) { pdf.addPage(); y = 20; }
+      pdf.setFontSize(size);
+      pdf.setFont("helvetica", bold ? "bold" : "normal");
+      const lines = pdf.splitTextToSize(text, pageWidth - 40);
+      pdf.text(lines, 20, y);
+      y += lines.length * (size * 0.5) + 2;
+    };
+
+    const addSpacer = (h = 6) => { y += h; };
+
+    // Title page
+    pdf.setFontSize(22);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("BOARD PACKET", pageWidth / 2, 50, { align: "center" });
+    pdf.setFontSize(16);
+    pdf.text(session.title, pageWidth / 2, 65, { align: "center" });
+    pdf.setFontSize(12);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(new Date(session.session_date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }), pageWidth / 2, 78, { align: "center" });
+    if (session.location) pdf.text(`Lieu : ${session.location}`, pageWidth / 2, 90, { align: "center" });
+    if (session.meeting_link) pdf.text(`Lien : ${session.meeting_link}`, pageWidth / 2, 100, { align: "center" });
+    pdf.text(`Organe : ${session.organs?.name ?? "—"}`, pageWidth / 2, 112, { align: "center" });
+    pdf.text(`N° ${session.numero_session ?? "—"}`, pageWidth / 2, 122, { align: "center" });
+
+    // Participants
+    pdf.addPage();
+    y = 20;
+    addLine("PARTICIPANTS", 16, true);
+    addSpacer();
+    attendees.forEach((att: any, i: number) => {
+      addLine(`${i + 1}. ${att.members?.full_name ?? "—"} — ${att.members?.quality ?? ""} ${att.members?.email ? `(${att.members.email})` : ""}`, 10);
+    });
+
+    // Agenda
+    addSpacer(10);
+    addLine("ORDRE DU JOUR", 16, true);
+    addSpacer();
+    agendaItems.forEach((item: any, i: number) => {
+      addLine(`${i + 1}. ${item.title}`, 12, true);
+      if (item.description) addLine(item.description, 10);
+      addLine(`Nature : ${item.nature === "decision" ? "Décision" : "Information"} | Présentateur : ${item.members?.full_name ?? "—"}`, 9);
+      addSpacer(4);
+    });
+
+    // Documents list
+    if (docs.length > 0) {
+      addSpacer(10);
+      addLine("DOCUMENTS ASSOCIÉS", 16, true);
+      addSpacer();
+      docs.forEach((doc: any, i: number) => {
+        addLine(`${i + 1}. ${doc.name} (${doc.mime_type ?? "fichier"})`, 10);
+      });
+    }
+
+    pdf.save(`Board_Packet_${session.numero_session ?? session.id}.pdf`);
+    toast({ title: "Board Packet généré !" });
   };
 
   const caSessions = sessions.filter((s) => (s as any).organs?.type === "ca");
@@ -220,18 +301,23 @@ export default function Sessions() {
                       <Badge className={statusColors[s.status] ?? ""}>{statusLabels[s.status] ?? s.status}</Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      {s.status === "brouillon" && (
-                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "validee")}>Valider</Button>
-                      )}
-                      {s.status === "validee" && (
-                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
-                      )}
-                      {s.status === "tenue" && (
-                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "cloturee")}>Clôturer</Button>
-                      )}
-                      {s.status === "cloturee" && (
-                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {s.status === "brouillon" && (
+                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "validee")}>Valider</Button>
+                        )}
+                        {s.status === "validee" && (
+                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
+                        )}
+                        {s.status === "tenue" && (
+                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "cloturee")}>Clôturer</Button>
+                        )}
+                        {s.status === "cloturee" && (
+                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
+                        )}
+                        <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le Board Packet">
+                          <Package className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                   {expandedSession === s.id && sessionDetails[s.id] && (
@@ -256,10 +342,18 @@ export default function Sessions() {
                                 <Badge variant={att.is_present ? "default" : "secondary"} className="text-xs">
                                   {att.is_present ? "Présent" : "Absent"}
                                 </Badge>
-                              </div>
-                            ))}
+                          </div>
+                        ))}
                           </div>
                         </div>
+                        {s.meeting_link && (
+                          <div className="mt-3 pt-3 border-t">
+                            <a href={s.meeting_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+                              <Video className="w-4 h-4" />
+                              Rejoindre la réunion en ligne
+                            </a>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   )}
@@ -322,6 +416,13 @@ export default function Sessions() {
               <div className="space-y-2">
                 <Label>Lieu</Label>
                 <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Salle de réunion / Lien visio" />
+              </div>
+              <div className="space-y-2">
+                <Label>Lien de réunion en ligne (Teams, Zoom...)</Label>
+                <div className="flex items-center gap-2">
+                  <Link className="w-4 h-4 text-muted-foreground" />
+                  <Input value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} placeholder="https://teams.microsoft.com/..." />
+                </div>
               </div>
 
               {/* Agenda items */}
