@@ -33,6 +33,7 @@ const voteLabels: Record<string, string> = {
 
 export default function Decisions() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [decisions, setDecisions] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
