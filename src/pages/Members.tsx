@@ -161,6 +161,42 @@ export default function Members() {
                   <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </div>
               </div>
+
+              <Separator className="my-2" />
+              <p className="text-sm font-medium text-muted-foreground">Informations complémentaires</p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Titre / Poste</Label>
+                  <Input value={form.titre_poste} onChange={(e) => setForm({ ...form, titre_poste: e.target.value })} placeholder="Directeur Général..." />
+                </div>
+                <div className="space-y-2">
+                  <Label>Organisation</Label>
+                  <Input value={form.organisation} onChange={(e) => setForm({ ...form, organisation: e.target.value })} placeholder="Entreprise..." />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Date de naissance</Label>
+                  <Input type="date" value={form.date_naissance} onChange={(e) => setForm({ ...form, date_naissance: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nationalité</Label>
+                  <Input value={form.nationalite} onChange={(e) => setForm({ ...form, nationalite: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Adresse</Label>
+                <Input value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>LinkedIn</Label>
+                <Input value={form.linkedin_url} onChange={(e) => setForm({ ...form, linkedin_url: e.target.value })} placeholder="https://linkedin.com/in/..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Biographie</Label>
+                <Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} placeholder="Parcours professionnel..." className="min-h-[80px]" />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => { setOpen(false); setEditingId(null); setForm(emptyForm); }}>Annuler</Button>
