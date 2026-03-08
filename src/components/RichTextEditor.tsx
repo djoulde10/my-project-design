@@ -29,6 +29,7 @@ export default function RichTextEditor({
   minHeight = "200px",
 }: RichTextEditorProps) {
   const editor = useEditor({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
@@ -47,7 +48,7 @@ export default function RichTextEditor({
         HTMLAttributes: { class: "text-primary underline cursor-pointer" },
       }),
       Placeholder.configure({ placeholder }),
-    ],
+    ] as any,
     content: content || "",
     onUpdate: ({ editor: e }) => {
       onChange(e.getHTML());
