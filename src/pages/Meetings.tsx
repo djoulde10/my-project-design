@@ -631,14 +631,10 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
         <Card>
           <CardContent className="p-6">
             {isEditing ? (
-              <Textarea
-                className="min-h-[500px] text-sm font-mono"
-                value={editingContent}
-                onChange={(e) => setEditingContent(e.target.value)}
-              />
+              <RichTextEditor content={editingContent} onChange={setEditingContent} minHeight="500px" />
             ) : (
               <ScrollArea className="h-[500px]">
-                <p className="text-sm whitespace-pre-wrap">{viewMinute.content || "Contenu vide"}</p>
+                <div className="text-sm prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: viewMinute.content || "<p>Contenu vide</p>" }} />
               </ScrollArea>
             )}
           </CardContent>
