@@ -38,6 +38,8 @@ export default function AgendaItems() {
   const [docName, setDocName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [itemDocs, setItemDocs] = useState<Record<string, any[]>>({});
+  const [search, setSearch] = useState("");
+  const [selectedSession, setSelectedSession] = useState<string>("all");
 
   const fetchAll = async () => {
     const [itemsRes, sessionsRes, membersRes] = await Promise.all([
