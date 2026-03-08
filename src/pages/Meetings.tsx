@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -515,11 +515,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </div>
           </CardHeader>
           <CardContent>
-            <Textarea
-              className="min-h-[500px] text-sm font-mono"
-              value={pendingPVContent}
-              onChange={(e) => setPendingPVContent(e.target.value)}
-            />
+            <RichTextEditor content={pendingPVContent} onChange={setPendingPVContent} minHeight="500px" />
           </CardContent>
         </Card>
       </div>
@@ -635,14 +631,10 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
         <Card>
           <CardContent className="p-6">
             {isEditing ? (
-              <Textarea
-                className="min-h-[500px] text-sm font-mono"
-                value={editingContent}
-                onChange={(e) => setEditingContent(e.target.value)}
-              />
+              <RichTextEditor content={editingContent} onChange={setEditingContent} minHeight="500px" />
             ) : (
               <ScrollArea className="h-[500px]">
-                <p className="text-sm whitespace-pre-wrap">{viewMinute.content || "Contenu vide"}</p>
+                <div className="text-sm prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: viewMinute.content || "<p>Contenu vide</p>" }} />
               </ScrollArea>
             )}
           </CardContent>
@@ -889,7 +881,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                   </div>
                   <div className="space-y-2">
                     <Label>Contenu du PV</Label>
-                    <Textarea className="min-h-[200px]" value={pvForm.content} onChange={(e) => setPvForm({ ...pvForm, content: e.target.value })} />
+                    <RichTextEditor content={pvForm.content} onChange={(html) => setPvForm({ ...pvForm, content: html })} minHeight="200px" />
                   </div>
                   <div className="space-y-2">
                     <Label>Statut</Label>
