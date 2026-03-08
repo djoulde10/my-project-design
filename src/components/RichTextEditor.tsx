@@ -213,7 +213,7 @@ export default function RichTextEditor({
       </div>
 
       {/* Bubble Menu for inline formatting */}
-      <BubbleMenu editor={editor} tippyOptions={{ duration: 150 }} className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg">
+      <BubbleMenu editor={editor} className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg">
         <BubbleButton
           active={editor.isActive("bold")}
           onClick={() => editor.chain().focus().toggleBold().run()}
