@@ -25,6 +25,7 @@ const qualityOptions = ["pca", "administrateur", "president_comite", "secretaria
 const emptyForm = {
   organ_id: "", full_name: "", quality: "autre" as "pca" | "administrateur" | "president_comite" | "secretariat_juridique" | "autre",
   mandate_start: "", mandate_end: "", email: "", phone: "",
+  titre_poste: "", organisation: "", bio: "", linkedin_url: "", adresse: "", date_naissance: "", nationalite: "",
 };
 
 export default function Members() {
