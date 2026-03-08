@@ -122,6 +122,7 @@ export default function Meetings() {
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => { if (viewMinute?.id) fetchSignatures(viewMinute.id); }, [viewMinute?.id]);
 
   // ========== REALTIME RECORDING ==========
   const startLiveTranscription = async () => {
