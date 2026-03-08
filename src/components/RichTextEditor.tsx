@@ -1,4 +1,5 @@
-import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
@@ -29,7 +30,6 @@ export default function RichTextEditor({
   minHeight = "200px",
 }: RichTextEditorProps) {
   const editor = useEditor({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
@@ -213,7 +213,7 @@ export default function RichTextEditor({
       </div>
 
       {/* Bubble Menu for inline formatting */}
-      <BubbleMenu editor={editor} tippyOptions={{ duration: 150 }} className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg">
+      <BubbleMenu editor={editor} className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg">
         <BubbleButton
           active={editor.isActive("bold")}
           onClick={() => editor.chain().focus().toggleBold().run()}
