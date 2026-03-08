@@ -648,6 +648,28 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           </CardContent>
         </Card>
 
+        {/* Signatures */}
+        {minuteSignatures.length > 0 && (
+          <Card>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><PenTool className="w-4 h-4" />Signatures ({minuteSignatures.length})</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {minuteSignatures.map((sig: any) => (
+                  <div key={sig.id} className="flex items-center justify-between text-sm border-b pb-2 last:border-0">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span className="font-medium">{(sig as any).profiles?.full_name ?? "Utilisateur"}</span>
+                    </div>
+                    <span className="text-muted-foreground text-xs">
+                      {new Date(sig.signed_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <MinuteVersionHistory
           minuteId={versionHistoryMinuteId}
           currentContent={versionHistoryContent}
