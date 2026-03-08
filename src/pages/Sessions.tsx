@@ -301,18 +301,23 @@ export default function Sessions() {
                       <Badge className={statusColors[s.status] ?? ""}>{statusLabels[s.status] ?? s.status}</Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      {s.status === "brouillon" && (
-                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "validee")}>Valider</Button>
-                      )}
-                      {s.status === "validee" && (
-                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
-                      )}
-                      {s.status === "tenue" && (
-                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "cloturee")}>Clôturer</Button>
-                      )}
-                      {s.status === "cloturee" && (
-                        <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {s.status === "brouillon" && (
+                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "validee")}>Valider</Button>
+                        )}
+                        {s.status === "validee" && (
+                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
+                        )}
+                        {s.status === "tenue" && (
+                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "cloturee")}>Clôturer</Button>
+                        )}
+                        {s.status === "cloturee" && (
+                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
+                        )}
+                        <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le Board Packet">
+                          <Package className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                   {expandedSession === s.id && sessionDetails[s.id] && (
