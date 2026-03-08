@@ -333,6 +333,7 @@ export default function Sessions() {
                   <Link className="w-4 h-4 text-muted-foreground" />
                   <Input value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} placeholder="https://teams.microsoft.com/..." />
                 </div>
+              </div>
 
               {/* Agenda items */}
               <div className="border-t pt-4 space-y-3">
