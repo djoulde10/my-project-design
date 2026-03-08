@@ -504,6 +504,16 @@ export default function Sessions() {
           {renderSessionsTable(auditSessions)}
         </TabsContent>
       </Tabs>
+
+      {manageAttendeesSession && (
+        <SessionAttendeeManager
+          open={!!manageAttendeesSession}
+          onOpenChange={(open) => { if (!open) setManageAttendeesSession(null); }}
+          sessionId={manageAttendeesSession.id}
+          organId={manageAttendeesSession.organId}
+          onUpdated={() => loadSessionDetails(manageAttendeesSession.id)}
+        />
+      )}
     </div>
   );
 }
