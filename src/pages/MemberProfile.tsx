@@ -74,6 +74,7 @@ export default function MemberProfile() {
             <div className="flex-1 space-y-3">
               <div>
                 <h1 className="text-2xl font-bold">{member.full_name}</h1>
+                {member.titre_poste && <p className="text-muted-foreground">{member.titre_poste}{member.organisation ? ` — ${member.organisation}` : ""}</p>}
                 <Badge className="mt-1">{qualityLabels[member.quality] ?? member.quality}</Badge>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
