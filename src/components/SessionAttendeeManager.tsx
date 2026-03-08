@@ -46,7 +46,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
     const [attRes, memRes] = await Promise.all([
       supabase
         .from("session_attendees")
-        .select("*, members(full_name, quality)")
+        .select("*, members!session_attendees_member_id_fkey(full_name, quality)")
         .eq("session_id", sessionId),
       supabase
         .from("members")
