@@ -38,6 +38,8 @@ export default function Decisions() {
   const [sessions, setSessions] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
+  const [signatures, setSignatures] = useState<Record<string, any[]>>({});
+  const [signingId, setSigningId] = useState<string | null>(null);
   const [form, setForm] = useState({
     session_id: "",
     texte: "",
