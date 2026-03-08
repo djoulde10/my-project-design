@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Gavel } from "lucide-react";
+import { Plus, Gavel, PenTool, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const statutLabels: Record<string, string> = {
@@ -32,10 +33,13 @@ const voteLabels: Record<string, string> = {
 
 export default function Decisions() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [decisions, setDecisions] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
+  const [signatures, setSignatures] = useState<Record<string, any[]>>({});
+  const [signingId, setSigningId] = useState<string | null>(null);
   const [form, setForm] = useState({
     session_id: "",
     texte: "",
@@ -57,7 +61,39 @@ export default function Decisions() {
     setDecisions(decRes.data ?? []);
     setSessions(sessRes.data ?? []);
     setMembers(memRes.data ?? []);
+
+    // Fetch all decision signatures
+    const { data: sigs } = await supabase
+      .from("signatures")
+      .select("*, profiles:signed_by(full_name)")
+      .eq("entity_type", "decision")
+      .order("signed_at");
+    const grouped: Record<string, any[]> = {};
+    (sigs ?? []).forEach((s: any) => {
+      if (!grouped[s.entity_id]) grouped[s.entity_id] = [];
+      grouped[s.entity_id].push(s);
+    });
+    setSignatures(grouped);
   };
+
+  const signDecision = async (decisionId: string) => {
+    setSigningId(decisionId);
+    const { error } = await supabase.from("signatures").insert({
+      entity_type: "decision",
+      entity_id: decisionId,
+      signed_by: user?.id,
+    });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Décision signée" });
+      fetchAll();
+    }
+    setSigningId(null);
+  };
+
+  const userSignedDecision = (decisionId: string) =>
+    (signatures[decisionId] ?? []).some((s: any) => s.signed_by === user?.id);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -205,30 +241,44 @@ export default function Decisions() {
                 <TableHead>Responsable</TableHead>
                 <TableHead>Date effet</TableHead>
                 <TableHead>Statut</TableHead>
+                <TableHead>Signature</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {decisions.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucune décision</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucune décision</TableCell></TableRow>
               ) : (
-                decisions.map((d) => (
-                  <TableRow key={d.id}>
-                    <TableCell className="font-mono text-sm font-medium">{d.numero_decision ?? "—"}</TableCell>
-                    <TableCell className="text-sm">{(d as any).sessions?.numero_session ?? (d as any).sessions?.title}</TableCell>
-                    <TableCell className="max-w-xs truncate text-sm">{d.texte}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{voteLabels[d.type_vote] ?? d.type_vote}</Badge>
-                      <span className="text-xs text-muted-foreground ml-1">
-                        ({d.vote_pour}/{d.vote_contre}/{d.vote_abstention})
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm">{(d as any).members?.full_name ?? "—"}</TableCell>
-                    <TableCell className="text-sm">{d.date_effet ? new Date(d.date_effet).toLocaleDateString("fr-FR") : "—"}</TableCell>
-                    <TableCell>
-                      <Badge className={statutColors[d.statut] ?? ""}>{statutLabels[d.statut] ?? d.statut}</Badge>
-                    </TableCell>
-                  </TableRow>
-                ))
+                decisions.map((d) => {
+                  const sigs = signatures[d.id] ?? [];
+                  const signed = userSignedDecision(d.id);
+                  return (
+                    <TableRow key={d.id}>
+                      <TableCell className="font-mono text-sm font-medium">{d.numero_decision ?? "—"}</TableCell>
+                      <TableCell className="text-sm">{(d as any).sessions?.numero_session ?? (d as any).sessions?.title}</TableCell>
+                      <TableCell className="max-w-xs truncate text-sm">{d.texte}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{voteLabels[d.type_vote] ?? d.type_vote}</Badge>
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({d.vote_pour}/{d.vote_contre}/{d.vote_abstention})
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm">{(d as any).members?.full_name ?? "—"}</TableCell>
+                      <TableCell className="text-sm">{d.date_effet ? new Date(d.date_effet).toLocaleDateString("fr-FR") : "—"}</TableCell>
+                      <TableCell>
+                        <Badge className={statutColors[d.statut] ?? ""}>{statutLabels[d.statut] ?? d.statut}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {signed ? (
+                          <Badge className="bg-emerald-100 text-emerald-800 gap-1"><CheckCircle2 className="w-3 h-3" />Signé ({sigs.length})</Badge>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => signDecision(d.id)} disabled={signingId === d.id}>
+                            <PenTool className="w-3 h-3 mr-1" />{signingId === d.id ? "..." : "Signer"}
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

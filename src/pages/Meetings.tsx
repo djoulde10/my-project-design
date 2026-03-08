@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2,
-  ClipboardCheck, History, Edit, Save, FileDown
+  ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
 import { useToast } from "@/hooks/use-toast";
@@ -93,6 +93,10 @@ export default function Meetings() {
   const [versionHistoryMinuteId, setVersionHistoryMinuteId] = useState<string>("");
   const [versionHistoryContent, setVersionHistoryContent] = useState<string | null>(null);
 
+  // Signatures
+  const [minuteSignatures, setMinuteSignatures] = useState<any[]>([]);
+  const [signing, setSigning] = useState(false);
+
   // Realtime scribe hook
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
@@ -118,6 +122,7 @@ export default function Meetings() {
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => { if (viewMinute?.id) fetchSignatures(viewMinute.id); }, [viewMinute?.id]);
 
   // ========== REALTIME RECORDING ==========
   const startLiveTranscription = async () => {
@@ -521,6 +526,41 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
     );
   }
 
+  // Fetch signatures when viewing a minute
+  const fetchSignatures = async (minuteId: string) => {
+    const { data } = await supabase
+      .from("signatures")
+      .select("*, profiles:signed_by(full_name)")
+      .eq("entity_type", "minute")
+      .eq("entity_id", minuteId)
+      .order("signed_at", { ascending: false });
+    setMinuteSignatures(data ?? []);
+  };
+
+  const signMinute = async (minuteId: string) => {
+    setSigning(true);
+    const { error } = await supabase.from("signatures").insert({
+      entity_type: "minute",
+      entity_id: minuteId,
+      signed_by: user?.id,
+    });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Procès-verbal signé avec succès" });
+      await fetchSignatures(minuteId);
+      // Also update PV status to "signe" if validated
+      if (viewMinute?.pv_status === "valide") {
+        await supabase.from("minutes").update({ pv_status: "signe", signed_at: new Date().toISOString() }).eq("id", minuteId);
+        setViewMinute({ ...viewMinute, pv_status: "signe", signed_at: new Date().toISOString() });
+        fetchAll();
+      }
+    }
+    setSigning(false);
+  };
+
+  const userHasSigned = (minuteId: string) => minuteSignatures.some((s) => s.signed_by === user?.id && s.entity_id === minuteId);
+
   // ========== MINUTE DETAIL VIEW ==========
   if (viewMinute) {
     return (
@@ -573,6 +613,14 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             >
               <History className="w-4 h-4 mr-2" />Versions
             </Button>
+            {!isEditing && viewMinute.pv_status !== "brouillon" && !userHasSigned(viewMinute.id) && (
+              <Button onClick={() => signMinute(viewMinute.id)} disabled={signing}>
+                <PenTool className="w-4 h-4 mr-2" />{signing ? "Signature..." : "Signer"}
+              </Button>
+            )}
+            {userHasSigned(viewMinute.id) && (
+              <Badge className="bg-emerald-100 text-emerald-800 gap-1"><CheckCircle2 className="w-3 h-3" />Signé</Badge>
+            )}
           </div>
         </div>
 
@@ -599,6 +647,28 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             )}
           </CardContent>
         </Card>
+
+        {/* Signatures */}
+        {minuteSignatures.length > 0 && (
+          <Card>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><PenTool className="w-4 h-4" />Signatures ({minuteSignatures.length})</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {minuteSignatures.map((sig: any) => (
+                  <div key={sig.id} className="flex items-center justify-between text-sm border-b pb-2 last:border-0">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span className="font-medium">{(sig as any).profiles?.full_name ?? "Utilisateur"}</span>
+                    </div>
+                    <span className="text-muted-foreground text-xs">
+                      {new Date(sig.signed_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <MinuteVersionHistory
           minuteId={versionHistoryMinuteId}

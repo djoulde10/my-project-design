@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,6 +27,7 @@ const qualityOptions = ["pca", "administrateur", "president_comite", "secretaria
 const emptyForm = {
   organ_id: "", full_name: "", quality: "autre" as "pca" | "administrateur" | "president_comite" | "secretariat_juridique" | "autre",
   mandate_start: "", mandate_end: "", email: "", phone: "",
+  titre_poste: "", organisation: "", bio: "", linkedin_url: "", adresse: "", date_naissance: "", nationalite: "",
 };
 
 export default function Members() {
@@ -91,6 +94,13 @@ export default function Members() {
       mandate_end: m.mandate_end ?? "",
       email: m.email ?? "",
       phone: m.phone ?? "",
+      titre_poste: m.titre_poste ?? "",
+      organisation: m.organisation ?? "",
+      bio: m.bio ?? "",
+      linkedin_url: m.linkedin_url ?? "",
+      adresse: m.adresse ?? "",
+      date_naissance: m.date_naissance ?? "",
+      nationalite: m.nationalite ?? "",
     });
     setOpen(true);
   };
@@ -106,7 +116,7 @@ export default function Members() {
           <DialogTrigger asChild>
             <Button><Plus className="w-4 h-4 mr-2" />Nouveau membre</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editingId ? "Modifier le membre" : "Ajouter un membre"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -152,6 +162,42 @@ export default function Members() {
                   <Label>Téléphone</Label>
                   <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </div>
+              </div>
+
+              <Separator className="my-2" />
+              <p className="text-sm font-medium text-muted-foreground">Informations complémentaires</p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Titre / Poste</Label>
+                  <Input value={form.titre_poste} onChange={(e) => setForm({ ...form, titre_poste: e.target.value })} placeholder="Directeur Général..." />
+                </div>
+                <div className="space-y-2">
+                  <Label>Organisation</Label>
+                  <Input value={form.organisation} onChange={(e) => setForm({ ...form, organisation: e.target.value })} placeholder="Entreprise..." />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Date de naissance</Label>
+                  <Input type="date" value={form.date_naissance} onChange={(e) => setForm({ ...form, date_naissance: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nationalité</Label>
+                  <Input value={form.nationalite} onChange={(e) => setForm({ ...form, nationalite: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Adresse</Label>
+                <Input value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>LinkedIn</Label>
+                <Input value={form.linkedin_url} onChange={(e) => setForm({ ...form, linkedin_url: e.target.value })} placeholder="https://linkedin.com/in/..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Biographie</Label>
+                <Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} placeholder="Parcours professionnel..." className="min-h-[80px]" />
               </div>
             </div>
             <DialogFooter>
