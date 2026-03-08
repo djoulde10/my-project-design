@@ -327,6 +327,12 @@ export default function Sessions() {
                 <Label>Lieu</Label>
                 <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Salle de réunion / Lien visio" />
               </div>
+              <div className="space-y-2">
+                <Label>Lien de réunion en ligne (Teams, Zoom...)</Label>
+                <div className="flex items-center gap-2">
+                  <Link className="w-4 h-4 text-muted-foreground" />
+                  <Input value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} placeholder="https://teams.microsoft.com/..." />
+                </div>
 
               {/* Agenda items */}
               <div className="border-t pt-4 space-y-3">
