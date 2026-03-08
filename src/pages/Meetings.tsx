@@ -525,6 +525,41 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
     );
   }
 
+  // Fetch signatures when viewing a minute
+  const fetchSignatures = async (minuteId: string) => {
+    const { data } = await supabase
+      .from("signatures")
+      .select("*, profiles:signed_by(full_name)")
+      .eq("entity_type", "minute")
+      .eq("entity_id", minuteId)
+      .order("signed_at", { ascending: false });
+    setMinuteSignatures(data ?? []);
+  };
+
+  const signMinute = async (minuteId: string) => {
+    setSigning(true);
+    const { error } = await supabase.from("signatures").insert({
+      entity_type: "minute",
+      entity_id: minuteId,
+      signed_by: user?.id,
+    });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Procès-verbal signé avec succès" });
+      await fetchSignatures(minuteId);
+      // Also update PV status to "signe" if validated
+      if (viewMinute?.pv_status === "valide") {
+        await supabase.from("minutes").update({ pv_status: "signe", signed_at: new Date().toISOString() }).eq("id", minuteId);
+        setViewMinute({ ...viewMinute, pv_status: "signe", signed_at: new Date().toISOString() });
+        fetchAll();
+      }
+    }
+    setSigning(false);
+  };
+
+  const userHasSigned = (minuteId: string) => minuteSignatures.some((s) => s.signed_by === user?.id && s.entity_id === minuteId);
+
   // ========== MINUTE DETAIL VIEW ==========
   if (viewMinute) {
     return (
