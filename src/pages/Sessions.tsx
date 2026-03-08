@@ -12,8 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import SessionAttendeeManager from "@/components/SessionAttendeeManager";
 import jsPDF from "jspdf";
 
 const statusColors: Record<string, string> = {
@@ -43,6 +44,7 @@ export default function Sessions() {
   const [open, setOpen] = useState(false);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [sessionDetails, setSessionDetails] = useState<Record<string, { agendaItems: any[]; attendees: any[] }>>({});
+  const [manageAttendeesSession, setManageAttendeesSession] = useState<{ id: string; organId: string } | null>(null);
 
   const [form, setForm] = useState({
     organ_id: "", title: "", session_type: "ordinaire" as "ordinaire" | "extraordinaire",
@@ -153,16 +155,18 @@ export default function Sessions() {
       return;
     }
     setExpandedSession(sessionId);
-    if (!sessionDetails[sessionId]) {
-      const [agRes, attRes] = await Promise.all([
-        supabase.from("agenda_items").select("*, documents(*)").eq("session_id", sessionId).order("order_index"),
-        supabase.from("session_attendees").select("*, members(full_name, quality)").eq("session_id", sessionId),
-      ]);
-      setSessionDetails((prev) => ({
-        ...prev,
-        [sessionId]: { agendaItems: agRes.data ?? [], attendees: attRes.data ?? [] },
-      }));
-    }
+    await loadSessionDetails(sessionId);
+  };
+
+  const loadSessionDetails = async (sessionId: string) => {
+    const [agRes, attRes] = await Promise.all([
+      supabase.from("agenda_items").select("*, documents(*)").eq("session_id", sessionId).order("order_index"),
+      supabase.from("session_attendees").select("*, members!session_attendees_member_id_fkey(full_name, quality)").eq("session_id", sessionId),
+    ]);
+    setSessionDetails((prev) => ({
+      ...prev,
+      [sessionId]: { agendaItems: agRes.data ?? [], attendees: attRes.data ?? [] },
+    }));
   };
 
   const updateSessionStatus = async (id: string, status: string) => {
@@ -335,15 +339,20 @@ export default function Sessions() {
                             ))}
                           </div>
                           <div>
-                            <h4 className="font-semibold text-sm mb-2">Participants ({sessionDetails[s.id].attendees.length})</h4>
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-semibold text-sm">Participants ({sessionDetails[s.id].attendees.length})</h4>
+                              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setManageAttendeesSession({ id: s.id, organId: s.organ_id }); }}>
+                                <Users className="w-3.5 h-3.5 mr-1" />Gérer
+                              </Button>
+                            </div>
                             {sessionDetails[s.id].attendees.map((att) => (
                               <div key={att.id} className="text-sm mb-1 flex items-center gap-2">
                                 <span>{(att as any).members?.full_name}</span>
                                 <Badge variant={att.is_present ? "default" : "secondary"} className="text-xs">
                                   {att.is_present ? "Présent" : "Absent"}
                                 </Badge>
-                          </div>
-                        ))}
+                              </div>
+                            ))}
                           </div>
                         </div>
                         {s.meeting_link && (
@@ -495,6 +504,16 @@ export default function Sessions() {
           {renderSessionsTable(auditSessions)}
         </TabsContent>
       </Tabs>
+
+      {manageAttendeesSession && (
+        <SessionAttendeeManager
+          open={!!manageAttendeesSession}
+          onOpenChange={(open) => { if (!open) setManageAttendeesSession(null); }}
+          sessionId={manageAttendeesSession.id}
+          organId={manageAttendeesSession.organId}
+          onUpdated={() => loadSessionDetails(manageAttendeesSession.id)}
+        />
+      )}
     </div>
   );
 }
