@@ -92,6 +92,13 @@ export default function Members() {
       mandate_end: m.mandate_end ?? "",
       email: m.email ?? "",
       phone: m.phone ?? "",
+      titre_poste: m.titre_poste ?? "",
+      organisation: m.organisation ?? "",
+      bio: m.bio ?? "",
+      linkedin_url: m.linkedin_url ?? "",
+      adresse: m.adresse ?? "",
+      date_naissance: m.date_naissance ?? "",
+      nationalite: m.nationalite ?? "",
     });
     setOpen(true);
   };
