@@ -318,6 +318,7 @@ export type Database = {
       documents: {
         Row: {
           agenda_item_id: string | null
+          category: string
           company_id: string | null
           created_at: string
           file_path: string
@@ -331,6 +332,7 @@ export type Database = {
         }
         Insert: {
           agenda_item_id?: string | null
+          category?: string
           company_id?: string | null
           created_at?: string
           file_path: string
@@ -344,6 +346,7 @@ export type Database = {
         }
         Update: {
           agenda_item_id?: string | null
+          category?: string
           company_id?: string | null
           created_at?: string
           file_path?: string

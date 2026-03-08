@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, User, Pencil } from "lucide-react";
+import { Plus, User, Pencil, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const qualityLabels: Record<string, string> = {
@@ -28,6 +29,7 @@ const emptyForm = {
 
 export default function Members() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [members, setMembers] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
@@ -199,9 +201,14 @@ export default function Members() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(m)}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => navigate(`/members/${m.id}`)}>
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(m)}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
