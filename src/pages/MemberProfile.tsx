@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, User, Mail, Phone, Calendar, Building, FileText, Download, Shield } from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, Calendar, Building, FileText, Download, Shield, Briefcase, Globe, MapPin, Linkedin } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 const qualityLabels: Record<string, string> = {
   pca: "Président du Conseil d'Administration",
