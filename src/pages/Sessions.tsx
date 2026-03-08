@@ -93,9 +93,12 @@ export default function Sessions() {
   };
 
   const handleCreate = async () => {
-    const { data: session, error } = await supabase.from("sessions").insert([{
-      ...form, created_by: user?.id,
-    }]).select().single();
+    const payload = {
+      ...form,
+      meeting_link: form.meeting_link || null,
+      created_by: user?.id,
+    };
+    const { data: session, error } = await supabase.from("sessions").insert([payload]).select().single();
     if (error || !session) {
       toast({ title: "Erreur", description: error?.message, variant: "destructive" });
       return;
