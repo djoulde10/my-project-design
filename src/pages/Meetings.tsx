@@ -881,7 +881,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                   </div>
                   <div className="space-y-2">
                     <Label>Contenu du PV</Label>
-                    <Textarea className="min-h-[200px]" value={pvForm.content} onChange={(e) => setPvForm({ ...pvForm, content: e.target.value })} />
+                    <RichTextEditor content={pvForm.content} onChange={(html) => setPvForm({ ...pvForm, content: html })} minHeight="200px" />
                   </div>
                   <div className="space-y-2">
                     <Label>Statut</Label>
