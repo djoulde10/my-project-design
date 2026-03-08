@@ -155,16 +155,18 @@ export default function Sessions() {
       return;
     }
     setExpandedSession(sessionId);
-    if (!sessionDetails[sessionId]) {
-      const [agRes, attRes] = await Promise.all([
-        supabase.from("agenda_items").select("*, documents(*)").eq("session_id", sessionId).order("order_index"),
-        supabase.from("session_attendees").select("*, members(full_name, quality)").eq("session_id", sessionId),
-      ]);
-      setSessionDetails((prev) => ({
-        ...prev,
-        [sessionId]: { agendaItems: agRes.data ?? [], attendees: attRes.data ?? [] },
-      }));
-    }
+    await loadSessionDetails(sessionId);
+  };
+
+  const loadSessionDetails = async (sessionId: string) => {
+    const [agRes, attRes] = await Promise.all([
+      supabase.from("agenda_items").select("*, documents(*)").eq("session_id", sessionId).order("order_index"),
+      supabase.from("session_attendees").select("*, members!session_attendees_member_id_fkey(full_name, quality)").eq("session_id", sessionId),
+    ]);
+    setSessionDetails((prev) => ({
+      ...prev,
+      [sessionId]: { agendaItems: agRes.data ?? [], attendees: attRes.data ?? [] },
+    }));
   };
 
   const updateSessionStatus = async (id: string, status: string) => {
