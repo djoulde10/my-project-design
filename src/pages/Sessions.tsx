@@ -46,7 +46,7 @@ export default function Sessions() {
 
   const [form, setForm] = useState({
     organ_id: "", title: "", session_type: "ordinaire" as "ordinaire" | "extraordinaire",
-    session_date: "", location: "", is_virtual: false,
+    session_date: "", location: "", is_virtual: false, meeting_link: "",
   });
   const [agendaDrafts, setAgendaDrafts] = useState<AgendaItemDraft[]>([]);
 
