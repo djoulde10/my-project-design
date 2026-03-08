@@ -18,6 +18,7 @@ import Actions from "@/pages/Actions";
 import Archives from "@/pages/Archives";
 import AuditLog from "@/pages/AuditLog";
 import UserManagement from "@/pages/UserManagement";
+import MemberProfile from "@/pages/MemberProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
