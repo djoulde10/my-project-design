@@ -116,7 +116,7 @@ export default function Members() {
           <DialogTrigger asChild>
             <Button><Plus className="w-4 h-4 mr-2" />Nouveau membre</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editingId ? "Modifier le membre" : "Ajouter un membre"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
