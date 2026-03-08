@@ -515,11 +515,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </div>
           </CardHeader>
           <CardContent>
-            <Textarea
-              className="min-h-[500px] text-sm font-mono"
-              value={pendingPVContent}
-              onChange={(e) => setPendingPVContent(e.target.value)}
-            />
+            <RichTextEditor content={pendingPVContent} onChange={setPendingPVContent} minHeight="500px" />
           </CardContent>
         </Card>
       </div>
