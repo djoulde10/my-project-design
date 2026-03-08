@@ -613,6 +613,14 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             >
               <History className="w-4 h-4 mr-2" />Versions
             </Button>
+            {!isEditing && viewMinute.pv_status !== "brouillon" && !userHasSigned(viewMinute.id) && (
+              <Button onClick={() => signMinute(viewMinute.id)} disabled={signing}>
+                <PenTool className="w-4 h-4 mr-2" />{signing ? "Signature..." : "Signer"}
+              </Button>
+            )}
+            {userHasSigned(viewMinute.id) && (
+              <Badge className="bg-emerald-100 text-emerald-800 gap-1"><CheckCircle2 className="w-3 h-3" />Signé</Badge>
+            )}
           </div>
         </div>
 
