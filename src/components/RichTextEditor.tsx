@@ -1,12 +1,15 @@
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
+import Placeholder from "@tiptap/extension-placeholder";
 import { useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import {
-  Bold, Italic, List, ListOrdered, Link as LinkIcon, Unlink, RemoveFormatting,
+  Bold, Italic, Underline as UnderlineIcon, List, ListOrdered,
+  Link as LinkIcon, Unlink, RemoveFormatting, Heading1, Heading2, Heading3,
+  Pilcrow, Undo2, Redo2, Quote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,32 +29,49 @@ export default function RichTextEditor({
   minHeight = "200px",
 }: RichTextEditorProps) {
   const editor = useEditor({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
       }),
+      Underline,
       Link.configure({
         openOnClick: false,
         HTMLAttributes: { class: "text-primary underline cursor-pointer" },
       }),
-    ],
+      Placeholder.configure({ placeholder }),
+    ] as any,
     content: content || "",
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+    onUpdate: ({ editor: e }) => {
+      onChange(e.getHTML());
     },
     editorProps: {
       attributes: {
         class: cn(
-          "prose prose-sm max-w-none focus:outline-none px-3 py-2",
-          "prose-headings:font-semibold prose-h1:text-xl prose-h2:text-lg prose-h3:text-base",
-          "prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0",
+          "prose prose-sm max-w-none focus:outline-none px-4 py-3",
+          "prose-headings:font-semibold prose-headings:text-foreground",
+          "prose-h1:text-xl prose-h1:mb-3 prose-h1:mt-4",
+          "prose-h2:text-lg prose-h2:mb-2 prose-h2:mt-3",
+          "prose-h3:text-base prose-h3:mb-2 prose-h3:mt-3",
+          "prose-p:my-1.5 prose-p:leading-relaxed",
+          "prose-ul:my-2 prose-ul:pl-6 prose-ol:my-2 prose-ol:pl-6",
+          "prose-li:my-0.5",
+          "prose-blockquote:border-l-4 prose-blockquote:border-primary/30 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground",
+          "prose-a:text-primary prose-a:underline",
         ),
         style: `min-height: ${minHeight}`,
       },
     },
   });
 
-  // Sync external content changes
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
       editor.commands.setContent(content || "");
@@ -72,94 +92,159 @@ export default function RichTextEditor({
 
   if (!editor) return null;
 
-  const currentLevel = editor.isActive("heading", { level: 1 })
-    ? "h1"
-    : editor.isActive("heading", { level: 2 })
-    ? "h2"
-    : editor.isActive("heading", { level: 3 })
-    ? "h3"
-    : "p";
-
   return (
-    <div className={cn("rounded-md border border-input bg-background", className)}>
+    <div className={cn("rounded-lg border border-input bg-background overflow-hidden shadow-sm transition-shadow focus-within:shadow-md focus-within:ring-1 focus-within:ring-ring/30", className)}>
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-input px-2 py-1.5 bg-muted/30">
-        <Select
-          value={currentLevel}
-          onValueChange={(v) => {
-            if (v === "p") editor.chain().focus().setParagraph().run();
-            else editor.chain().focus().toggleHeading({ level: parseInt(v[1]) as 1 | 2 | 3 }).run();
-          }}
-        >
-          <SelectTrigger className="h-8 w-[140px] text-xs border-none bg-transparent shadow-none">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="p">Paragraphe</SelectItem>
-            <SelectItem value="h1">Titre</SelectItem>
-            <SelectItem value="h2">Sous-titre</SelectItem>
-            <SelectItem value="h3">Titre 3</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-input px-1.5 py-1 bg-muted/40">
+        {/* Text style group */}
+        <ToolbarButton
+          active={editor.isActive("paragraph") && !editor.isActive("heading")}
+          onClick={() => editor.chain().focus().setParagraph().run()}
+          icon={<Pilcrow className="w-4 h-4" />}
+          label="Paragraphe"
+        />
+        <ToolbarButton
+          active={editor.isActive("heading", { level: 1 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          icon={<Heading1 className="w-4 h-4" />}
+          label="Titre 1"
+        />
+        <ToolbarButton
+          active={editor.isActive("heading", { level: 2 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          icon={<Heading2 className="w-4 h-4" />}
+          label="Titre 2"
+        />
+        <ToolbarButton
+          active={editor.isActive("heading", { level: 3 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          icon={<Heading3 className="w-4 h-4" />}
+          label="Titre 3"
+        />
 
-        <Separator orientation="vertical" className="mx-1 h-5" />
+        <Separator orientation="vertical" className="mx-0.5 h-6" />
 
+        {/* Formatting group */}
         <ToolbarButton
           active={editor.isActive("bold")}
           onClick={() => editor.chain().focus().toggleBold().run()}
           icon={<Bold className="w-4 h-4" />}
-          title="Gras"
+          label="Gras (Ctrl+B)"
         />
         <ToolbarButton
           active={editor.isActive("italic")}
           onClick={() => editor.chain().focus().toggleItalic().run()}
           icon={<Italic className="w-4 h-4" />}
-          title="Italique"
+          label="Italique (Ctrl+I)"
+        />
+        <ToolbarButton
+          active={editor.isActive("underline")}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          icon={<UnderlineIcon className="w-4 h-4" />}
+          label="Souligné (Ctrl+U)"
         />
 
-        <Separator orientation="vertical" className="mx-1 h-5" />
+        <Separator orientation="vertical" className="mx-0.5 h-6" />
 
+        {/* List group */}
         <ToolbarButton
           active={editor.isActive("bulletList")}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           icon={<List className="w-4 h-4" />}
-          title="Liste à puces"
+          label="Liste à puces"
         />
         <ToolbarButton
           active={editor.isActive("orderedList")}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           icon={<ListOrdered className="w-4 h-4" />}
-          title="Liste numérotée"
+          label="Liste numérotée"
+        />
+        <ToolbarButton
+          active={editor.isActive("blockquote")}
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          icon={<Quote className="w-4 h-4" />}
+          label="Citation"
         />
 
-        <Separator orientation="vertical" className="mx-1 h-5" />
+        <Separator orientation="vertical" className="mx-0.5 h-6" />
 
+        {/* Link group */}
         <ToolbarButton
           active={editor.isActive("link")}
           onClick={setLink}
           icon={<LinkIcon className="w-4 h-4" />}
-          title="Insérer un lien"
+          label="Insérer un lien"
         />
         <ToolbarButton
           active={false}
           onClick={() => editor.chain().focus().unsetLink().run()}
           icon={<Unlink className="w-4 h-4" />}
-          title="Supprimer le lien"
+          label="Supprimer le lien"
           disabled={!editor.isActive("link")}
         />
 
-        <Separator orientation="vertical" className="mx-1 h-5" />
+        <Separator orientation="vertical" className="mx-0.5 h-6" />
 
+        {/* Utility group */}
         <ToolbarButton
           active={false}
           onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
           icon={<RemoveFormatting className="w-4 h-4" />}
-          title="Supprimer le formatage"
+          label="Supprimer le formatage"
+        />
+
+        <div className="flex-1" />
+
+        {/* Undo/Redo */}
+        <ToolbarButton
+          active={false}
+          onClick={() => editor.chain().focus().undo().run()}
+          icon={<Undo2 className="w-4 h-4" />}
+          label="Annuler (Ctrl+Z)"
+          disabled={!editor.can().undo()}
+        />
+        <ToolbarButton
+          active={false}
+          onClick={() => editor.chain().focus().redo().run()}
+          icon={<Redo2 className="w-4 h-4" />}
+          label="Rétablir (Ctrl+Y)"
+          disabled={!editor.can().redo()}
         />
       </div>
 
+      {/* Bubble Menu for inline formatting */}
+      <BubbleMenu editor={editor} tippyOptions={{ duration: 150 }} className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg">
+        <BubbleButton
+          active={editor.isActive("bold")}
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          icon={<Bold className="w-3.5 h-3.5" />}
+        />
+        <BubbleButton
+          active={editor.isActive("italic")}
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          icon={<Italic className="w-3.5 h-3.5" />}
+        />
+        <BubbleButton
+          active={editor.isActive("underline")}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          icon={<UnderlineIcon className="w-3.5 h-3.5" />}
+        />
+        <BubbleButton
+          active={editor.isActive("link")}
+          onClick={setLink}
+          icon={<LinkIcon className="w-3.5 h-3.5" />}
+        />
+      </BubbleMenu>
+
       {/* Editor */}
       <EditorContent editor={editor} />
+
+      {/* Footer status */}
+      <div className="flex items-center justify-end border-t border-input px-3 py-1 bg-muted/20">
+        <span className="text-[11px] text-muted-foreground">
+          {editor.storage.characterCount?.characters?.() ?? editor.getText().length} caractères
+        </span>
+      </div>
     </div>
   );
 }
@@ -168,29 +253,60 @@ function ToolbarButton({
   active,
   onClick,
   icon,
-  title,
+  label,
   disabled = false,
 }: {
   active: boolean;
   onClick: () => void;
   icon: React.ReactNode;
-  title: string;
+  label: string;
   disabled?: boolean;
 }) {
   return (
-    <Button
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "inline-flex items-center justify-center rounded-md h-8 w-8 text-sm transition-colors",
+            "hover:bg-accent hover:text-accent-foreground",
+            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+            "disabled:opacity-40 disabled:pointer-events-none",
+            active && "bg-accent text-accent-foreground shadow-sm",
+          )}
+          onClick={onClick}
+          disabled={disabled}
+        >
+          {icon}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="text-xs">
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function BubbleButton({
+  active,
+  onClick,
+  icon,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+}) {
+  return (
+    <button
       type="button"
-      variant="ghost"
-      size="sm"
       className={cn(
-        "h-8 w-8 p-0",
+        "inline-flex items-center justify-center rounded h-7 w-7 text-sm transition-colors",
+        "hover:bg-accent hover:text-accent-foreground",
         active && "bg-accent text-accent-foreground",
       )}
       onClick={onClick}
-      title={title}
-      disabled={disabled}
     >
       {icon}
-    </Button>
+    </button>
   );
 }
