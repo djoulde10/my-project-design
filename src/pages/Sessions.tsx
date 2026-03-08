@@ -342,10 +342,18 @@ export default function Sessions() {
                                 <Badge variant={att.is_present ? "default" : "secondary"} className="text-xs">
                                   {att.is_present ? "Présent" : "Absent"}
                                 </Badge>
-                              </div>
-                            ))}
+                          </div>
+                        ))}
                           </div>
                         </div>
+                        {s.meeting_link && (
+                          <div className="mt-3 pt-3 border-t">
+                            <a href={s.meeting_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+                              <Video className="w-4 h-4" />
+                              Rejoindre la réunion en ligne
+                            </a>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   )}
