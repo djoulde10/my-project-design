@@ -234,7 +234,7 @@ export default function Decisions() {
           <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow>
-                <TableHead>N° Décision</TableHead>
+                <TableHead>N° Résolution</TableHead>
                 <TableHead>Session</TableHead>
                 <TableHead>Texte</TableHead>
                 <TableHead>Vote</TableHead>
