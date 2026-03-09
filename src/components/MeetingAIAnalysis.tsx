@@ -243,7 +243,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
         </CardHeader>
         <CardContent className="space-y-3">
           {analysis.decisions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucune décision identifiée dans ce procès-verbal.</p>
+            <p className="text-sm text-muted-foreground">Aucune résolution identifiée dans ce procès-verbal.</p>
           ) : (
             analysis.decisions.map((d, i) => {
               const status = decisionStatuses[i] || "pending";
