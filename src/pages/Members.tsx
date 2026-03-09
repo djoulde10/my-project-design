@@ -38,6 +38,8 @@ export default function Members() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [searchText, setSearchText] = useState("");
+  const [filterOrgan, setFilterOrgan] = useState("all");
 
   const fetchMembers = async () => {
     const { data } = await supabase.from("members").select("*, organs(name)").order("full_name");
