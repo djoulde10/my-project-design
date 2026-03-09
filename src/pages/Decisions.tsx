@@ -163,7 +163,6 @@ export default function Decisions() {
             <DialogTrigger asChild>
               <Button><Plus className="w-4 h-4 mr-2" />Nouvelle résolution</Button>
             </DialogTrigger>
-          </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>Enregistrer une résolution</DialogTitle></DialogHeader>
             <div className="space-y-4">
