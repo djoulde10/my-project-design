@@ -67,7 +67,7 @@ Règles :
 - Les résolutions doivent être clairement formulées, avec le type de vote si mentionné
 - Les actions doivent inclure un responsable et une échéance si identifiés dans le texte
 - Le résumé exécutif doit être concis (3-5 paragraphes max)
-- Les suggestions d'ordre du jour doivent se baser sur les actions non terminées, les décisions nécessitant un suivi et les sujets récurrents
+- Les suggestions d'ordre du jour doivent se baser sur les actions non terminées, les résolutions nécessitant un suivi et les sujets récurrents
 - Toutes les extractions sont des SUGGESTIONS qui devront être validées par un humain${previousContext}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
