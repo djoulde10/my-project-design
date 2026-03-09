@@ -15,9 +15,10 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2,
-  ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2
+  ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2, Brain
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
+import MeetingAIAnalysis from "@/components/MeetingAIAnalysis";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
@@ -42,6 +43,7 @@ export default function Meetings() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [minutes, setMinutes] = useState<any[]>([]);
+  const [members, setMembers] = useState<{ id: string; full_name: string }[]>([]);
   const [activeTab, setActiveTab] = useState("pv");
 
   // Realtime transcription state
@@ -111,14 +113,16 @@ export default function Meetings() {
   });
 
   const fetchAll = useCallback(async () => {
-    const [tplRes, sessRes, minRes] = await Promise.all([
+    const [tplRes, sessRes, minRes, memRes] = await Promise.all([
       supabase.from("meeting_templates").select("*").order("created_at", { ascending: false }),
       supabase.from("sessions").select("id, title").order("session_date", { ascending: false }),
       supabase.from("minutes").select("*, sessions(title)").order("created_at", { ascending: false }),
+      supabase.from("members").select("id, full_name").eq("is_active", true).order("full_name"),
     ]);
     setTemplates(tplRes.data ?? []);
     setSessions(sessRes.data ?? []);
     setMinutes(minRes.data ?? []);
+    setMembers(memRes.data ?? []);
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
@@ -518,6 +522,18 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             <RichTextEditor content={pendingPVContent} onChange={setPendingPVContent} minHeight="500px" />
           </CardContent>
         </Card>
+
+        {/* AI Analysis in preview - only if session is set */}
+        {pendingPV.sessionId && pendingPVContent && (
+          <MeetingAIAnalysis
+            minuteId="preview"
+            sessionId={pendingPV.sessionId}
+            pvContent={pendingPVContent}
+            members={members}
+            onDecisionCreated={() => fetchAll()}
+            onActionCreated={() => fetchAll()}
+          />
+        )}
       </div>
     );
   }
@@ -639,6 +655,18 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             )}
           </CardContent>
         </Card>
+
+        {/* AI Analysis */}
+        {viewMinute.session_id && viewMinute.content && (
+          <MeetingAIAnalysis
+            minuteId={viewMinute.id}
+            sessionId={viewMinute.session_id}
+            pvContent={viewMinute.content}
+            members={members}
+            onDecisionCreated={() => fetchAll()}
+            onActionCreated={() => fetchAll()}
+          />
+        )}
 
         {/* Signatures */}
         {minuteSignatures.length > 0 && (
