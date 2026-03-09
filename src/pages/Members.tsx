@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, User, Pencil, Eye } from "lucide-react";
+import { Plus, User, Pencil, Eye, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const qualityLabels: Record<string, string> = {
@@ -38,6 +38,8 @@ export default function Members() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [searchText, setSearchText] = useState("");
+  const [filterOrgan, setFilterOrgan] = useState("all");
 
   const fetchMembers = async () => {
     const { data } = await supabase.from("members").select("*, organs(name)").order("full_name");
@@ -207,6 +209,20 @@ export default function Members() {
           </DialogContent>
         </Dialog>
       </div>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Rechercher un membre..." value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+        </div>
+        <Select value={filterOrgan} onValueChange={setFilterOrgan}>
+          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Tous les organes" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les organes</SelectItem>
+            {organs.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <Card>
         <CardContent className="p-0 overflow-x-auto">
@@ -222,10 +238,16 @@ export default function Members() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucun membre</TableCell></TableRow>
-              ) : (
-                members.map((m) => (
+              {(() => {
+                const filtered = members.filter((m) => {
+                  if (searchText && !m.full_name?.toLowerCase().includes(searchText.toLowerCase())) return false;
+                  if (filterOrgan !== "all" && m.organ_id !== filterOrgan) return false;
+                  return true;
+                });
+                if (filtered.length === 0) return (
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucun membre</TableCell></TableRow>
+                );
+                return filtered.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -257,8 +279,8 @@ export default function Members() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
+                ));
+              })()}
             </TableBody>
           </Table>
         </CardContent>

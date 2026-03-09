@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,8 @@ export default function Actions() {
   const [form, setForm] = useState({
     decision_id: "", title: "", description: "", responsible_member_id: "", due_date: "",
   });
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchText, setSearchText] = useState("");
 
   const fetchAll = async () => {
     const [actRes, decRes, memRes] = await Promise.all([
@@ -153,8 +156,9 @@ export default function Actions() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {Object.entries(statusConfig).map(([key, cfg]) => {
           const count = actions.filter((a) => a.status === key).length;
+          const isActive = filterStatus === key;
           return (
-            <Card key={key}>
+            <Card key={key} className={cn("cursor-pointer transition-all hover:shadow-md", isActive && "ring-2 ring-primary")} onClick={() => setFilterStatus(isActive ? "all" : key)}>
               <CardContent className="p-4 flex items-center gap-3">
                 <cfg.icon className="w-5 h-5" />
                 <div>
@@ -165,6 +169,11 @@ export default function Actions() {
             </Card>
           );
         })}
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Input placeholder="Rechercher une action..." value={searchText} onChange={(e) => setSearchText(e.target.value)} />
       </div>
 
       <Card>
@@ -181,10 +190,16 @@ export default function Actions() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {actions.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucune action</TableCell></TableRow>
-              ) : (
-                actions.map((a) => {
+              {(() => {
+                const filtered = actions.filter((a) => {
+                  if (filterStatus !== "all" && a.status !== filterStatus) return false;
+                  if (searchText && !a.title?.toLowerCase().includes(searchText.toLowerCase())) return false;
+                  return true;
+                });
+                if (filtered.length === 0) return (
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucune action</TableCell></TableRow>
+                );
+                return filtered.map((a) => {
                   const cfg = statusConfig[a.status] ?? statusConfig.en_cours;
                   return (
                     <TableRow key={a.id}>
@@ -204,8 +219,8 @@ export default function Actions() {
                       </TableCell>
                     </TableRow>
                   );
-                })
-              )}
+                });
+              })()}
             </TableBody>
           </Table>
         </CardContent>
