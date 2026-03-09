@@ -237,7 +237,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Vote className="w-4 h-4" />
-            Décisions suggérées
+            Résolutions suggérées
             <Badge variant="outline">{analysis.decisions.length}</Badge>
           </CardTitle>
         </CardHeader>
