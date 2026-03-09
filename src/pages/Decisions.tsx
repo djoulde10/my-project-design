@@ -123,8 +123,8 @@ export default function Decisions() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2"><Gavel className="w-5 h-5 sm:w-6 sm:h-6" />Décisions</h1>
-          <p className="text-sm text-muted-foreground">Gestion des décisions issues des sessions</p>
+      <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2"><Gavel className="w-5 h-5 sm:w-6 sm:h-6" />Résolutions</h1>
+          <p className="text-sm text-muted-foreground">Gestion des résolutions issues des sessions</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
