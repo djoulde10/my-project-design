@@ -252,8 +252,9 @@ export default function Decisions() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {Object.entries(statutLabels).map(([key, label]) => {
           const count = decisions.filter((d) => d.statut === key).length;
+          const isActive = filterStatut === key;
           return (
-            <Card key={key}>
+            <Card key={key} className={cn("cursor-pointer transition-all hover:shadow-md", isActive && "ring-2 ring-primary")} onClick={() => setFilterStatut(isActive ? "all" : key)}>
               <CardContent className="p-4 flex items-center gap-3">
                 <div>
                   <p className="text-2xl font-bold">{count}</p>
@@ -263,6 +264,11 @@ export default function Decisions() {
             </Card>
           );
         })}
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Input placeholder="Rechercher une résolution..." value={searchText} onChange={(e) => setSearchText(e.target.value)} />
       </div>
 
       <Card>
