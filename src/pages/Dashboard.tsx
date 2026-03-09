@@ -47,6 +47,7 @@ export default function Dashboard() {
         supabase.from("minutes").select("id", { count: "exact", head: true }).eq("pv_status", "brouillon"),
         supabase.from("conflict_of_interests").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("sessions").select("session_date").order("session_date", { ascending: false }).limit(100),
+        supabase.from("approval_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
       ]);
 
       let avgDays = 0;
