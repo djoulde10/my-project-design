@@ -357,7 +357,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       {/* Edit Decision Dialog */}
       <Dialog open={!!editDecision} onOpenChange={(open) => !open && setEditDecision(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Modifier la décision</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Modifier la résolution</DialogTitle></DialogHeader>
           {editDecision && (
             <div className="space-y-4">
               <div className="space-y-2">
