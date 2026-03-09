@@ -327,8 +327,8 @@ export default function Decisions() {
                       </TableCell>
                     </TableRow>
                   );
-                })
-              )}
+                });
+              })()}
             </TableBody>
           </Table>
         </CardContent>
