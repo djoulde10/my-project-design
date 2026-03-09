@@ -288,10 +288,16 @@ export default function Decisions() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {decisions.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucune résolution</TableCell></TableRow>
-              ) : (
-                decisions.map((d) => {
+              {(() => {
+                const filtered = decisions.filter((d) => {
+                  if (filterStatut !== "all" && d.statut !== filterStatut) return false;
+                  if (searchText && !d.texte?.toLowerCase().includes(searchText.toLowerCase()) && !d.numero_decision?.toLowerCase().includes(searchText.toLowerCase())) return false;
+                  return true;
+                });
+                if (filtered.length === 0) return (
+                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucune résolution</TableCell></TableRow>
+                );
+                return filtered.map((d) => {
                   const sigs = signatures[d.id] ?? [];
                   const signed = userSignedDecision(d.id);
                   return (
