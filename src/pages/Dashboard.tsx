@@ -22,6 +22,7 @@ export default function Dashboard() {
     nearDueActions: [] as any[],
     pendingPVs: 0,
     activeConflicts: 0,
+    pendingApprovals: 0,
     sessionsByMonth: [] as { month: string; count: number }[],
   });
 
