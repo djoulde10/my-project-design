@@ -147,7 +147,7 @@ export default function Decisions() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Texte de la décision</Label>
+                <Label>Texte de la résolution</Label>
                 <Textarea className="min-h-[100px]" value={form.texte} onChange={(e) => setForm({ ...form, texte: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
