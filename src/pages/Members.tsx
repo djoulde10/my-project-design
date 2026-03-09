@@ -279,8 +279,8 @@ export default function Members() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
+                ));
+              })()}
             </TableBody>
           </Table>
         </CardContent>
