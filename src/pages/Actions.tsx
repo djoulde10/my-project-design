@@ -75,7 +75,7 @@ export default function Actions() {
             <DialogHeader><DialogTitle>Créer une action</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Décision source</Label>
+                <Label>Résolution source</Label>
                 <Select value={form.decision_id} onValueChange={(v) => setForm({ ...form, decision_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                   <SelectContent>
