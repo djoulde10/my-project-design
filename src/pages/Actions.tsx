@@ -222,7 +222,6 @@ export default function Actions() {
                 });
               })()}
             </TableBody>
-            </TableBody>
           </Table>
         </CardContent>
       </Card>
