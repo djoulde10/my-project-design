@@ -31,7 +31,7 @@ export default function Dashboard() {
       const now = new Date().toISOString();
       const nearDueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-      const [sessionsRes, membersRes, decisionsRes, actionsRes, overdueRes, upcomingRes, completedRes, cancelledRes, inProgressRes, actionsWithDatesRes, recentDecisionsRes, nearDueRes, pendingPVRes, conflictsRes, sessionsAllRes] = await Promise.all([
+      const [sessionsRes, membersRes, decisionsRes, actionsRes, overdueRes, upcomingRes, completedRes, cancelledRes, inProgressRes, actionsWithDatesRes, recentDecisionsRes, nearDueRes, pendingPVRes, conflictsRes, sessionsAllRes, pendingApprovalsRes] = await Promise.all([
         supabase.from("sessions").select("id", { count: "exact", head: true }),
         supabase.from("members").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("decisions").select("id", { count: "exact", head: true }),
