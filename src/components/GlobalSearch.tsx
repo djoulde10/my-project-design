@@ -54,7 +54,7 @@ const categoryConfig: Record<
   minutes: { label: "Procès-verbaux", icon: ClipboardCheck, color: "text-emerald-600" },
   documents: { label: "Documents", icon: FolderOpen, color: "text-amber-600" },
   agenda_items: { label: "Ordres du jour", icon: FileText, color: "text-sky-600" },
-  decisions: { label: "Décisions", icon: Gavel, color: "text-rose-600" },
+  decisions: { label: "Résolutions", icon: Gavel, color: "text-rose-600" },
   actions: { label: "Actions", icon: ListTodo, color: "text-primary" },
   members: { label: "Membres", icon: Users, color: "text-teal-600" },
 };
@@ -208,7 +208,7 @@ export default function GlobalSearch() {
             const { data } = await qb;
             return (data ?? []).map((r) => ({
               id: r.id,
-              title: r.numero_decision ?? "Décision",
+              title: r.numero_decision ?? "Résolution",
               subtitle: r.texte?.substring(0, 80),
               date: r.created_at,
               category: "decisions" as const,

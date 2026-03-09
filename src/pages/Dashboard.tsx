@@ -70,7 +70,7 @@ export default function Dashboard() {
   const statCards = [
     { label: "Sessions", value: stats.sessions, icon: CalendarDays, color: "text-primary", path: "/sessions" },
     { label: "Membres actifs", value: stats.members, icon: Users, color: "text-emerald-600", path: "/members" },
-    { label: "Décisions", value: stats.decisions, icon: Gavel, color: "text-amber-600", path: "/decisions" },
+    { label: "Résolutions", value: stats.decisions, icon: Gavel, color: "text-amber-600", path: "/decisions" },
     { label: "Actions", value: stats.actions, icon: ListTodo, color: "text-violet-600", path: "/actions" },
   ];
 
@@ -208,12 +208,12 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Décisions récentes */}
+        {/* Résolutions récentes */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Gavel className="w-5 h-5 text-amber-600" />
-              Décisions récentes
+              Résolutions récentes
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -233,7 +233,7 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm">Aucune décision</p>
+              <p className="text-muted-foreground text-sm">Aucune résolution</p>
             )}
           </CardContent>
         </Card>
@@ -295,7 +295,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-2 text-center">
               <div className="bg-muted rounded-lg p-3">
                 <p className="text-2xl font-bold text-primary">{stats.decisions}</p>
-                <p className="text-xs text-muted-foreground">Décisions prises</p>
+                <p className="text-xs text-muted-foreground">Résolutions prises</p>
               </div>
               <div className="bg-muted rounded-lg p-3">
                 <p className="text-2xl font-bold text-emerald-600">{stats.completedActions}</p>

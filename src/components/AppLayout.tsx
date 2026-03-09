@@ -33,7 +33,7 @@ const navItems = [
   { label: "Ordre du jour", icon: FileText, path: "/agenda" },
   { label: "Documents", icon: FolderOpen, path: "/documents" },
   { label: "Réunions & PV", icon: Mic, path: "/meetings" },
-  { label: "Décisions", icon: Gavel, path: "/decisions" },
+  { label: "Résolutions", icon: Gavel, path: "/decisions" },
   { label: "Suivi des actions", icon: ListTodo, path: "/actions" },
   { label: "Archives", icon: Archive, path: "/archives" },
   { label: "Journal d'audit", icon: Shield, path: "/audit" },

@@ -42,7 +42,7 @@ Le procès-verbal doit inclure :
 2. **Participants** : Liste des présents identifiés dans la transcription
 3. **Ordre du jour** : Points discutés
 4. **Discussions** : Résumé structuré de chaque point abordé
-5. **Décisions prises** : Toutes les décisions avec les résultats de vote si mentionnés
+5. **Résolutions prises** : Toutes les résolutions avec les résultats de vote si mentionnés
 6. **Actions à réaliser** : Tâches assignées avec responsable et délai si mentionnés
 7. **Clôture** : Heure de clôture et prochaine réunion si mentionnée
 

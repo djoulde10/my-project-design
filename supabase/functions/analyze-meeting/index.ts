@@ -64,10 +64,10 @@ serve(async (req) => {
 Tu dois analyser le contenu d'un procès-verbal et extraire des informations structurées. Tu DOIS appeler la fonction "extract_meeting_analysis" avec les résultats.
 
 Règles :
-- Les décisions doivent être clairement formulées, avec le type de vote si mentionné
+- Les résolutions doivent être clairement formulées, avec le type de vote si mentionné
 - Les actions doivent inclure un responsable et une échéance si identifiés dans le texte
 - Le résumé exécutif doit être concis (3-5 paragraphes max)
-- Les suggestions d'ordre du jour doivent se baser sur les actions non terminées, les décisions nécessitant un suivi et les sujets récurrents
+- Les suggestions d'ordre du jour doivent se baser sur les actions non terminées, les résolutions nécessitant un suivi et les sujets récurrents
 - Toutes les extractions sont des SUGGESTIONS qui devront être validées par un humain${previousContext}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -87,7 +87,7 @@ Règles :
             type: "function",
             function: {
               name: "extract_meeting_analysis",
-              description: "Extraire l'analyse structurée d'un procès-verbal de réunion",
+              description: "Extraire l'analyse structurée d'un procès-verbal de réunion (résolutions, actions, résumé)",
               parameters: {
                 type: "object",
                 properties: {
@@ -97,11 +97,11 @@ Règles :
                   },
                   decisions: {
                     type: "array",
-                    description: "Liste des décisions identifiées",
+                    description: "Liste des résolutions identifiées",
                     items: {
                       type: "object",
                       properties: {
-                        text: { type: "string", description: "Texte de la décision" },
+                        text: { type: "string", description: "Texte de la résolution" },
                         vote_type: { type: "string", description: "Type de vote: unanimite, majorite, autre", enum: ["unanimite", "majorite", "autre"] },
                         vote_pour: { type: "number", description: "Nombre de votes pour (si mentionné)" },
                         vote_contre: { type: "number", description: "Nombre de votes contre (si mentionné)" },

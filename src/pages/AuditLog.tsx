@@ -42,7 +42,7 @@ const entityLabels: Record<string, string> = {
   actions: "Actions",
   members: "Membres",
   session_attendees: "Participants",
-  decisions: "Décisions",
+  decisions: "Résolutions",
   organs: "Organes",
   signatures: "Signatures",
   meetings: "Réunions",

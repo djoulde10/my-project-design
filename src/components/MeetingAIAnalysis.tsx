@@ -125,7 +125,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       });
       if (error) throw error;
       setDecisionStatuses(prev => ({ ...prev, [index]: "accepted" }));
-      toast({ title: "Décision enregistrée" });
+      toast({ title: "Résolution enregistrée" });
       onDecisionCreated?.();
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
@@ -158,7 +158,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
           <div>
             <h3 className="font-semibold text-lg">Analyse IA du procès-verbal</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              L'IA analysera le contenu pour extraire les décisions, actions, un résumé exécutif et des suggestions pour la prochaine réunion.
+              L'IA analysera le contenu pour extraire les résolutions, actions, un résumé exécutif et des suggestions pour la prochaine réunion.
             </p>
           </div>
           <Button onClick={runAnalysis} className="gap-2">
@@ -237,13 +237,13 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Vote className="w-4 h-4" />
-            Décisions suggérées
+            Résolutions suggérées
             <Badge variant="outline">{analysis.decisions.length}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {analysis.decisions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucune décision identifiée dans ce procès-verbal.</p>
+            <p className="text-sm text-muted-foreground">Aucune résolution identifiée dans ce procès-verbal.</p>
           ) : (
             analysis.decisions.map((d, i) => {
               const status = decisionStatuses[i] || "pending";
@@ -357,11 +357,11 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       {/* Edit Decision Dialog */}
       <Dialog open={!!editDecision} onOpenChange={(open) => !open && setEditDecision(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Modifier la décision</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Modifier la résolution</DialogTitle></DialogHeader>
           {editDecision && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Texte de la décision</label>
+                <label className="text-sm font-medium">Texte de la résolution</label>
                 <Textarea
                   value={editDecision.data.text}
                   onChange={(e) => setEditDecision({ ...editDecision, data: { ...editDecision.data, text: e.target.value } })}

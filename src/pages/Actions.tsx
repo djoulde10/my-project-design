@@ -67,7 +67,7 @@ export default function Actions() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">Suivi des actions</h1>
-          <p className="text-sm text-muted-foreground">Actions issues des décisions</p>
+          <p className="text-sm text-muted-foreground">Actions issues des résolutions</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
@@ -75,7 +75,7 @@ export default function Actions() {
             <DialogHeader><DialogTitle>Créer une action</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Décision source</Label>
+                <Label>Résolution source</Label>
                 <Select value={form.decision_id} onValueChange={(v) => setForm({ ...form, decision_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                   <SelectContent>
@@ -141,7 +141,7 @@ export default function Actions() {
             <TableHeader>
               <TableRow>
                 <TableHead>Action</TableHead>
-                <TableHead>Décision</TableHead>
+                <TableHead>Résolution</TableHead>
                 <TableHead>Responsable</TableHead>
                 <TableHead>Échéance</TableHead>
                 <TableHead>Statut</TableHead>

@@ -86,7 +86,7 @@ export default function Decisions() {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Décision signée" });
+      toast({ title: "Résolution signée" });
       fetchAll();
     }
     setSigningId(null);
@@ -112,7 +112,7 @@ export default function Decisions() {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Décision créée" });
+      toast({ title: "Résolution créée" });
       setOpen(false);
       setForm({ session_id: "", texte: "", type_vote: "unanimite", responsable_execution: "", date_effet: "", statut: "adoptee", vote_pour: 0, vote_contre: 0, vote_abstention: 0 });
       fetchAll();
@@ -123,15 +123,15 @@ export default function Decisions() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2"><Gavel className="w-5 h-5 sm:w-6 sm:h-6" />Décisions</h1>
-          <p className="text-sm text-muted-foreground">Gestion des décisions issues des sessions</p>
+      <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2"><Gavel className="w-5 h-5 sm:w-6 sm:h-6" />Résolutions</h1>
+          <p className="text-sm text-muted-foreground">Gestion des résolutions issues des sessions</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Nouvelle décision</Button>
+            <Button><Plus className="w-4 h-4 mr-2" />Nouvelle résolution</Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
-            <DialogHeader><DialogTitle>Enregistrer une décision</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Enregistrer une résolution</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Session</Label>
@@ -147,7 +147,7 @@ export default function Decisions() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Texte de la décision</Label>
+                <Label>Texte de la résolution</Label>
                 <Textarea className="min-h-[100px]" value={form.texte} onChange={(e) => setForm({ ...form, texte: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -234,7 +234,7 @@ export default function Decisions() {
           <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow>
-                <TableHead>N° Décision</TableHead>
+                <TableHead>N° Résolution</TableHead>
                 <TableHead>Session</TableHead>
                 <TableHead>Texte</TableHead>
                 <TableHead>Vote</TableHead>
@@ -246,7 +246,7 @@ export default function Decisions() {
             </TableHeader>
             <TableBody>
               {decisions.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucune décision</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucune résolution</TableCell></TableRow>
               ) : (
                 decisions.map((d) => {
                   const sigs = signatures[d.id] ?? [];
