@@ -238,10 +238,16 @@ export default function Members() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucun membre</TableCell></TableRow>
-              ) : (
-                members.map((m) => (
+              {(() => {
+                const filtered = members.filter((m) => {
+                  if (searchText && !m.full_name?.toLowerCase().includes(searchText.toLowerCase())) return false;
+                  if (filterOrgan !== "all" && m.organ_id !== filterOrgan) return false;
+                  return true;
+                });
+                if (filtered.length === 0) return (
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucun membre</TableCell></TableRow>
+                );
+                return filtered.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
