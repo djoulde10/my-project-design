@@ -156,8 +156,9 @@ export default function Actions() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {Object.entries(statusConfig).map(([key, cfg]) => {
           const count = actions.filter((a) => a.status === key).length;
+          const isActive = filterStatus === key;
           return (
-            <Card key={key}>
+            <Card key={key} className={cn("cursor-pointer transition-all hover:shadow-md", isActive && "ring-2 ring-primary")} onClick={() => setFilterStatus(isActive ? "all" : key)}>
               <CardContent className="p-4 flex items-center gap-3">
                 <cfg.icon className="w-5 h-5" />
                 <div>
@@ -168,6 +169,11 @@ export default function Actions() {
             </Card>
           );
         })}
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Input placeholder="Rechercher une action..." value={searchText} onChange={(e) => setSearchText(e.target.value)} />
       </div>
 
       <Card>
