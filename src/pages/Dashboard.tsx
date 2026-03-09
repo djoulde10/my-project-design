@@ -70,7 +70,7 @@ export default function Dashboard() {
   const statCards = [
     { label: "Sessions", value: stats.sessions, icon: CalendarDays, color: "text-primary", path: "/sessions" },
     { label: "Membres actifs", value: stats.members, icon: Users, color: "text-emerald-600", path: "/members" },
-    { label: "Décisions", value: stats.decisions, icon: Gavel, color: "text-amber-600", path: "/decisions" },
+    { label: "Résolutions", value: stats.decisions, icon: Gavel, color: "text-amber-600", path: "/decisions" },
     { label: "Actions", value: stats.actions, icon: ListTodo, color: "text-violet-600", path: "/actions" },
   ];
 
