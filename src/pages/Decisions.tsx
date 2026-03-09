@@ -42,6 +42,8 @@ export default function Decisions() {
   const [open, setOpen] = useState(false);
   const [signatures, setSignatures] = useState<Record<string, any[]>>({});
   const [signingId, setSigningId] = useState<string | null>(null);
+  const [filterStatut, setFilterStatut] = useState<string>("all");
+  const [searchText, setSearchText] = useState("");
   const [form, setForm] = useState({
     session_id: "",
     texte: "",

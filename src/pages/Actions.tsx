@@ -30,6 +30,8 @@ export default function Actions() {
   const [form, setForm] = useState({
     decision_id: "", title: "", description: "", responsible_member_id: "", due_date: "",
   });
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchText, setSearchText] = useState("");
 
   const fetchAll = async () => {
     const [actRes, decRes, memRes] = await Promise.all([
