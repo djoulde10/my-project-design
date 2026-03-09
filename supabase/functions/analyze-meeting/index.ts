@@ -101,7 +101,7 @@ Règles :
                     items: {
                       type: "object",
                       properties: {
-                        text: { type: "string", description: "Texte de la décision" },
+                        text: { type: "string", description: "Texte de la résolution" },
                         vote_type: { type: "string", description: "Type de vote: unanimite, majorite, autre", enum: ["unanimite", "majorite", "autre"] },
                         vote_pour: { type: "number", description: "Nombre de votes pour (si mentionné)" },
                         vote_contre: { type: "number", description: "Nombre de votes contre (si mentionné)" },
