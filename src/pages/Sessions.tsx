@@ -377,10 +377,10 @@ export default function Sessions() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Sessions</h1>
-          <p className="text-muted-foreground">Gérez les sessions du CA et du Comité d'Audit</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Sessions</h1>
+          <p className="text-sm text-muted-foreground">Gérez les sessions du CA et du Comité d'Audit</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>

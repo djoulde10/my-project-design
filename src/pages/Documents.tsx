@@ -209,8 +209,8 @@ export default function Documents() {
 
       {/* Documents table */}
       <Card>
-        <CardContent className="p-0">
-          <Table>
+        <CardContent className="p-0 overflow-x-auto">
+          <Table className="min-w-[750px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Document</TableHead>
