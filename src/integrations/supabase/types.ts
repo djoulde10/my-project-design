@@ -723,6 +723,7 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string
+          email_sent: boolean
           id: string
           is_read: boolean
           link: string | null
@@ -734,6 +735,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          email_sent?: boolean
           id?: string
           is_read?: boolean
           link?: string | null
@@ -745,6 +747,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          email_sent?: boolean
           id?: string
           is_read?: boolean
           link?: string | null
