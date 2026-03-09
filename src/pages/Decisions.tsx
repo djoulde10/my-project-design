@@ -128,9 +128,41 @@ export default function Decisions() {
       <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2"><Gavel className="w-5 h-5 sm:w-6 sm:h-6" />Résolutions</h1>
           <p className="text-sm text-muted-foreground">Gestion des résolutions issues des sessions</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Nouvelle résolution</Button>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline"><Download className="w-4 h-4 mr-2" />Exporter</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => {
+                const headers = ["N° Résolution", "Session", "Texte", "Vote", "Pour/Contre/Abst.", "Responsable", "Date effet", "Statut"];
+                const rows = decisions.map((d: any) => [
+                  d.numero_decision ?? "—", d.sessions?.numero_session ?? d.sessions?.title ?? "—", d.texte,
+                  voteLabels[d.type_vote] ?? d.type_vote, `${d.vote_pour}/${d.vote_contre}/${d.vote_abstention}`,
+                  d.members?.full_name ?? "—", d.date_effet ? new Date(d.date_effet).toLocaleDateString("fr-FR") : "—",
+                  statutLabels[d.statut] ?? d.statut,
+                ]);
+                exportTableToPDF("Résolutions", headers, rows, "resolutions.pdf");
+              }}>
+                <Download className="w-4 h-4 mr-2" />Export PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                const headers = ["N° Résolution", "Session", "Texte", "Type vote", "Pour", "Contre", "Abstention", "Responsable", "Date effet", "Statut"];
+                const rows = decisions.map((d: any) => [
+                  d.numero_decision ?? "", d.sessions?.numero_session ?? d.sessions?.title ?? "", d.texte,
+                  voteLabels[d.type_vote] ?? d.type_vote, String(d.vote_pour), String(d.vote_contre), String(d.vote_abstention),
+                  d.members?.full_name ?? "", d.date_effet ?? "", statutLabels[d.statut] ?? d.statut,
+                ]);
+                exportTableToCSV(headers, rows, "resolutions.csv");
+              }}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel (CSV)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button><Plus className="w-4 h-4 mr-2" />Nouvelle résolution</Button>
+            </DialogTrigger>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>Enregistrer une résolution</DialogTitle></DialogHeader>
