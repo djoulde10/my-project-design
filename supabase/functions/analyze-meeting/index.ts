@@ -64,7 +64,7 @@ serve(async (req) => {
 Tu dois analyser le contenu d'un procès-verbal et extraire des informations structurées. Tu DOIS appeler la fonction "extract_meeting_analysis" avec les résultats.
 
 Règles :
-- Les décisions doivent être clairement formulées, avec le type de vote si mentionné
+- Les résolutions doivent être clairement formulées, avec le type de vote si mentionné
 - Les actions doivent inclure un responsable et une échéance si identifiés dans le texte
 - Le résumé exécutif doit être concis (3-5 paragraphes max)
 - Les suggestions d'ordre du jour doivent se baser sur les actions non terminées, les décisions nécessitant un suivi et les sujets récurrents
