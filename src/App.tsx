@@ -15,6 +15,8 @@ import Documents from "@/pages/Documents";
 import Decisions from "@/pages/Decisions";
 import Meetings from "@/pages/Meetings";
 import Actions from "@/pages/Actions";
+import CalendarPage from "@/pages/Calendar";
+import ConflictOfInterest from "@/pages/ConflictOfInterest";
 import Archives from "@/pages/Archives";
 import AuditLog from "@/pages/AuditLog";
 import UserManagement from "@/pages/UserManagement";
