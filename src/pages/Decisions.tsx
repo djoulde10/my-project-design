@@ -112,7 +112,7 @@ export default function Decisions() {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Décision créée" });
+      toast({ title: "Résolution créée" });
       setOpen(false);
       setForm({ session_id: "", texte: "", type_vote: "unanimite", responsable_execution: "", date_effet: "", statut: "adoptee", vote_pour: 0, vote_contre: 0, vote_abstention: 0 });
       fetchAll();
