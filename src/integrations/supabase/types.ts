@@ -232,6 +232,63 @@ export type Database = {
         }
         Relationships: []
       }
+      conflict_of_interests: {
+        Row: {
+          company_id: string
+          created_at: string
+          declared_at: string
+          description: string | null
+          id: string
+          member_id: string
+          related_decisions: string[] | null
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string
+          created_at?: string
+          declared_at?: string
+          description?: string | null
+          id?: string
+          member_id: string
+          related_decisions?: string[] | null
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          declared_at?: string
+          description?: string | null
+          id?: string
+          member_id?: string
+          related_decisions?: string[] | null
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conflict_of_interests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conflict_of_interests_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decisions: {
         Row: {
           agenda_item_id: string | null

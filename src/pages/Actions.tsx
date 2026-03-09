@@ -9,8 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, AlertTriangle, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Plus, AlertTriangle, CheckCircle2, Clock, XCircle, Download, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   en_cours: { label: "En cours", color: "bg-blue-100 text-blue-800", icon: Clock },
@@ -69,8 +71,37 @@ export default function Actions() {
           <h1 className="text-xl sm:text-2xl font-bold">Suivi des actions</h1>
           <p className="text-sm text-muted-foreground">Actions issues des résolutions</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline"><Download className="w-4 h-4 mr-2" />Exporter</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => {
+                const headers = ["Action", "Résolution", "Responsable", "Échéance", "Statut"];
+                const rows = actions.map((a: any) => [
+                  a.title, a.decisions?.numero_decision ?? "—", a.members?.full_name ?? "—",
+                  a.due_date ? new Date(a.due_date).toLocaleDateString("fr-FR") : "—",
+                  statusConfig[a.status]?.label ?? a.status,
+                ]);
+                exportTableToPDF("Suivi des actions", headers, rows, "actions.pdf");
+              }}>
+                <Download className="w-4 h-4 mr-2" />Export PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                const headers = ["Action", "Description", "Résolution", "Responsable", "Échéance", "Statut", "Date clôture"];
+                const rows = actions.map((a: any) => [
+                  a.title, a.description ?? "", a.decisions?.numero_decision ?? "", a.members?.full_name ?? "",
+                  a.due_date ?? "", statusConfig[a.status]?.label ?? a.status, a.completion_date ?? "",
+                ]);
+                exportTableToCSV(headers, rows, "actions.csv");
+              }}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel (CSV)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Créer une action</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -114,7 +145,8 @@ export default function Actions() {
               <Button onClick={handleCreate} disabled={!form.title}>Créer</Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {/* Stats */}
