@@ -54,7 +54,7 @@ const categoryConfig: Record<
   minutes: { label: "Procès-verbaux", icon: ClipboardCheck, color: "text-emerald-600" },
   documents: { label: "Documents", icon: FolderOpen, color: "text-amber-600" },
   agenda_items: { label: "Ordres du jour", icon: FileText, color: "text-sky-600" },
-  decisions: { label: "Décisions", icon: Gavel, color: "text-rose-600" },
+  decisions: { label: "Résolutions", icon: Gavel, color: "text-rose-600" },
   actions: { label: "Actions", icon: ListTodo, color: "text-primary" },
   members: { label: "Membres", icon: Users, color: "text-teal-600" },
 };
