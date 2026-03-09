@@ -208,12 +208,12 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Décisions récentes */}
+        {/* Résolutions récentes */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Gavel className="w-5 h-5 text-amber-600" />
-              Décisions récentes
+              Résolutions récentes
             </CardTitle>
           </CardHeader>
           <CardContent>
