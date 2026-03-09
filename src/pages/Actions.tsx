@@ -190,10 +190,16 @@ export default function Actions() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {actions.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucune action</TableCell></TableRow>
-              ) : (
-                actions.map((a) => {
+              {(() => {
+                const filtered = actions.filter((a) => {
+                  if (filterStatus !== "all" && a.status !== filterStatus) return false;
+                  if (searchText && !a.title?.toLowerCase().includes(searchText.toLowerCase())) return false;
+                  return true;
+                });
+                if (filtered.length === 0) return (
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucune action</TableCell></TableRow>
+                );
+                return filtered.map((a) => {
                   const cfg = statusConfig[a.status] ?? statusConfig.en_cours;
                   return (
                     <TableRow key={a.id}>
@@ -213,8 +219,9 @@ export default function Actions() {
                       </TableCell>
                     </TableRow>
                   );
-                })
-              )}
+                });
+              })()}
+            </TableBody>
             </TableBody>
           </Table>
         </CardContent>
