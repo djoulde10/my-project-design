@@ -209,6 +209,20 @@ export default function Members() {
           </DialogContent>
         </Dialog>
       </div>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Rechercher un membre..." value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+        </div>
+        <Select value={filterOrgan} onValueChange={setFilterOrgan}>
+          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Tous les organes" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les organes</SelectItem>
+            {organs.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <Card>
         <CardContent className="p-0 overflow-x-auto">
