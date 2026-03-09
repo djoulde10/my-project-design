@@ -522,6 +522,18 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             <RichTextEditor content={pendingPVContent} onChange={setPendingPVContent} minHeight="500px" />
           </CardContent>
         </Card>
+
+        {/* AI Analysis in preview - only if session is set */}
+        {pendingPV.sessionId && pendingPVContent && (
+          <MeetingAIAnalysis
+            minuteId="preview"
+            sessionId={pendingPV.sessionId}
+            pvContent={pendingPVContent}
+            members={members}
+            onDecisionCreated={() => fetchAll()}
+            onActionCreated={() => fetchAll()}
+          />
+        )}
       </div>
     );
   }
