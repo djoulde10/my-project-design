@@ -361,7 +361,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
           {editDecision && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Texte de la décision</label>
+                <label className="text-sm font-medium">Texte de la résolution</label>
                 <Textarea
                   value={editDecision.data.text}
                   onChange={(e) => setEditDecision({ ...editDecision, data: { ...editDecision.data, text: e.target.value } })}

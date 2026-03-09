@@ -141,7 +141,7 @@ export default function Actions() {
             <TableHeader>
               <TableRow>
                 <TableHead>Action</TableHead>
-                <TableHead>Décision</TableHead>
+                <TableHead>Résolution</TableHead>
                 <TableHead>Responsable</TableHead>
                 <TableHead>Échéance</TableHead>
                 <TableHead>Statut</TableHead>

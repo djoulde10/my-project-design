@@ -246,7 +246,7 @@ export default function Decisions() {
             </TableHeader>
             <TableBody>
               {decisions.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucune décision</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucune résolution</TableCell></TableRow>
               ) : (
                 decisions.map((d) => {
                   const sigs = signatures[d.id] ?? [];

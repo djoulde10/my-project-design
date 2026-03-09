@@ -295,7 +295,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-2 text-center">
               <div className="bg-muted rounded-lg p-3">
                 <p className="text-2xl font-bold text-primary">{stats.decisions}</p>
-                <p className="text-xs text-muted-foreground">Décisions prises</p>
+                <p className="text-xs text-muted-foreground">Résolutions prises</p>
               </div>
               <div className="bg-muted rounded-lg p-3">
                 <p className="text-2xl font-bold text-emerald-600">{stats.completedActions}</p>

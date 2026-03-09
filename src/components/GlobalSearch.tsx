@@ -208,7 +208,7 @@ export default function GlobalSearch() {
             const { data } = await qb;
             return (data ?? []).map((r) => ({
               id: r.id,
-              title: r.numero_decision ?? "Décision",
+              title: r.numero_decision ?? "Résolution",
               subtitle: r.texte?.substring(0, 80),
               date: r.created_at,
               category: "decisions" as const,
