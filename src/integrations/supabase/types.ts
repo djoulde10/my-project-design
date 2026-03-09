@@ -382,6 +382,60 @@ export type Database = {
           },
         ]
       }
+      meeting_ai_analysis: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          minute_id: string
+          status: string
+          suggested_actions: Json | null
+          suggested_agenda: Json | null
+          suggested_decisions: Json | null
+          summary: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          minute_id: string
+          status?: string
+          suggested_actions?: Json | null
+          suggested_agenda?: Json | null
+          suggested_decisions?: Json | null
+          summary?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          minute_id?: string
+          status?: string
+          suggested_actions?: Json | null
+          suggested_agenda?: Json | null
+          suggested_decisions?: Json | null
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_ai_analysis_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_ai_analysis_minute_id_fkey"
+            columns: ["minute_id"]
+            isOneToOne: true
+            referencedRelation: "minutes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_templates: {
         Row: {
           company_id: string | null
