@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Users, ListTodo, AlertTriangle, CheckCircle2, Clock, TrendingUp, Timer, Target, Gavel, FileText, ShieldAlert, ArrowRight } from "lucide-react";
+import { CalendarDays, Users, ListTodo, AlertTriangle, CheckCircle2, Clock, TrendingUp, Timer, Target, Gavel, FileText, ShieldAlert, ArrowRight, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -22,6 +22,7 @@ export default function Dashboard() {
     nearDueActions: [] as any[],
     pendingPVs: 0,
     activeConflicts: 0,
+    pendingApprovals: 0,
     sessionsByMonth: [] as { month: string; count: number }[],
   });
 
@@ -30,7 +31,7 @@ export default function Dashboard() {
       const now = new Date().toISOString();
       const nearDueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-      const [sessionsRes, membersRes, decisionsRes, actionsRes, overdueRes, upcomingRes, completedRes, cancelledRes, inProgressRes, actionsWithDatesRes, recentDecisionsRes, nearDueRes, pendingPVRes, conflictsRes, sessionsAllRes] = await Promise.all([
+      const [sessionsRes, membersRes, decisionsRes, actionsRes, overdueRes, upcomingRes, completedRes, cancelledRes, inProgressRes, actionsWithDatesRes, recentDecisionsRes, nearDueRes, pendingPVRes, conflictsRes, sessionsAllRes, pendingApprovalsRes] = await Promise.all([
         supabase.from("sessions").select("id", { count: "exact", head: true }),
         supabase.from("members").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("decisions").select("id", { count: "exact", head: true }),
@@ -46,6 +47,7 @@ export default function Dashboard() {
         supabase.from("minutes").select("id", { count: "exact", head: true }).eq("pv_status", "brouillon"),
         supabase.from("conflict_of_interests").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("sessions").select("session_date").order("session_date", { ascending: false }).limit(100),
+        supabase.from("approval_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
       ]);
 
       let avgDays = 0;
@@ -93,6 +95,7 @@ export default function Dashboard() {
         nearDueActions: nearDueRes.data ?? [],
         pendingPVs: pendingPVRes.count ?? 0,
         activeConflicts: conflictsRes.count ?? 0,
+        pendingApprovals: pendingApprovalsRes.count ?? 0,
         sessionsByMonth,
       });
     };
@@ -229,7 +232,13 @@ export default function Dashboard() {
                   <ArrowRight className="w-3 h-3 text-muted-foreground" />
                 </div>
               )}
-              {stats.overdueActions === 0 && stats.pendingPVs === 0 && stats.activeConflicts === 0 && (
+              {stats.pendingApprovals > 0 && (
+                <div className="flex items-center justify-between text-sm cursor-pointer hover:bg-muted/50 rounded p-1 -mx-1" onClick={() => navigate("/approvals")}>
+                  <span className="text-violet-600 font-medium">{stats.pendingApprovals} approbation(s) en attente</span>
+                  <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                </div>
+              )}
+              {stats.overdueActions === 0 && stats.pendingPVs === 0 && stats.activeConflicts === 0 && stats.pendingApprovals === 0 && (
                 <div className="flex items-center gap-2 text-emerald-600">
                   <CheckCircle2 className="w-5 h-5" />
                   <p className="text-sm">Tout est à jour</p>

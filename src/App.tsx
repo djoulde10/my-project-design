@@ -11,7 +11,6 @@ import Sessions from "@/pages/Sessions";
 import Members from "@/pages/Members";
 import AgendaItems from "@/pages/AgendaItems";
 import Documents from "@/pages/Documents";
-// Minutes is now merged into Meetings
 import Decisions from "@/pages/Decisions";
 import Meetings from "@/pages/Meetings";
 import Actions from "@/pages/Actions";
@@ -21,7 +20,9 @@ import Archives from "@/pages/Archives";
 import AuditLog from "@/pages/AuditLog";
 import UserManagement from "@/pages/UserManagement";
 import MemberProfile from "@/pages/MemberProfile";
+import Approvals from "@/pages/Approvals";
 import NotFound from "./pages/NotFound";
+import AIAssistant from "@/components/AIAssistant";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,35 @@ function AuthRoute() {
   return <Auth />;
 }
 
+function ProtectedApp() {
+  const { user } = useAuth();
+  return (
+    <>
+      <Routes>
+        <Route path="/auth" element={<AuthRoute />} />
+        <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
+        <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
+        <Route path="/members/:id" element={<ProtectedRoute><MemberProfile /></ProtectedRoute>} />
+        <Route path="/agenda" element={<ProtectedRoute><AgendaItems /></ProtectedRoute>} />
+        <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+        <Route path="/minutes" element={<Navigate to="/meetings" replace />} />
+        <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />
+        <Route path="/decisions" element={<ProtectedRoute><Decisions /></ProtectedRoute>} />
+        <Route path="/actions" element={<ProtectedRoute><Actions /></ProtectedRoute>} />
+        <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
+        <Route path="/conflicts" element={<ProtectedRoute><ConflictOfInterest /></ProtectedRoute>} />
+        <Route path="/archives" element={<ProtectedRoute><Archives /></ProtectedRoute>} />
+        <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+        <Route path="/approvals" element={<ProtectedRoute><Approvals /></ProtectedRoute>} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      {user && <AIAssistant />}
+    </>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -46,25 +76,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<AuthRoute />} />
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
-            <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
-            <Route path="/members/:id" element={<ProtectedRoute><MemberProfile /></ProtectedRoute>} />
-            <Route path="/agenda" element={<ProtectedRoute><AgendaItems /></ProtectedRoute>} />
-            <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
-            <Route path="/minutes" element={<Navigate to="/meetings" replace />} />
-            <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />
-            <Route path="/decisions" element={<ProtectedRoute><Decisions /></ProtectedRoute>} />
-            <Route path="/actions" element={<ProtectedRoute><Actions /></ProtectedRoute>} />
-            <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
-            <Route path="/conflicts" element={<ProtectedRoute><ConflictOfInterest /></ProtectedRoute>} />
-            <Route path="/archives" element={<ProtectedRoute><Archives /></ProtectedRoute>} />
-            <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
-            <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <ProtectedApp />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
