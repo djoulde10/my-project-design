@@ -64,10 +64,10 @@ export default function Actions() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Suivi des actions</h1>
-          <p className="text-muted-foreground">Actions issues des décisions</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Suivi des actions</h1>
+          <p className="text-sm text-muted-foreground">Actions issues des décisions</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
