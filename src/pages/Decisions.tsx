@@ -213,7 +213,7 @@ export default function Decisions() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {Object.entries(statutLabels).map(([key, label]) => {
           const count = decisions.filter((d) => d.statut === key).length;
           return (
