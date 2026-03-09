@@ -97,7 +97,7 @@ Règles :
                   },
                   decisions: {
                     type: "array",
-                    description: "Liste des décisions identifiées",
+                    description: "Liste des résolutions identifiées",
                     items: {
                       type: "object",
                       properties: {
