@@ -158,7 +158,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
           <div>
             <h3 className="font-semibold text-lg">Analyse IA du procès-verbal</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              L'IA analysera le contenu pour extraire les décisions, actions, un résumé exécutif et des suggestions pour la prochaine réunion.
+              L'IA analysera le contenu pour extraire les résolutions, actions, un résumé exécutif et des suggestions pour la prochaine réunion.
             </p>
           </div>
           <Button onClick={runAnalysis} className="gap-2">
