@@ -87,7 +87,7 @@ Règles :
             type: "function",
             function: {
               name: "extract_meeting_analysis",
-              description: "Extraire l'analyse structurée d'un procès-verbal de réunion",
+              description: "Extraire l'analyse structurée d'un procès-verbal de réunion (résolutions, actions, résumé)",
               parameters: {
                 type: "object",
                 properties: {
