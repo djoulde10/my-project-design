@@ -18,6 +18,7 @@ import {
   ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2, Brain
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
+import MeetingAIAnalysis from "@/components/MeetingAIAnalysis";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
