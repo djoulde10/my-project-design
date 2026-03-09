@@ -37,6 +37,7 @@ const navItems = [
   { label: "Réunions & PV", icon: Mic, path: "/meetings" },
   { label: "Résolutions", icon: Gavel, path: "/decisions" },
   { label: "Suivi des actions", icon: ListTodo, path: "/actions" },
+  { label: "Approbations", icon: Shield, path: "/approvals" },
   { label: "Calendrier", icon: Calendar, path: "/calendar" },
   { label: "Conflits d'intérêts", icon: ShieldAlert, path: "/conflicts" },
   { label: "Archives", icon: Archive, path: "/archives" },
