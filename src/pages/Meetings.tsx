@@ -644,6 +644,18 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           </CardContent>
         </Card>
 
+        {/* AI Analysis */}
+        {viewMinute.session_id && viewMinute.content && (
+          <MeetingAIAnalysis
+            minuteId={viewMinute.id}
+            sessionId={viewMinute.session_id}
+            pvContent={viewMinute.content}
+            members={members}
+            onDecisionCreated={() => fetchAll()}
+            onActionCreated={() => fetchAll()}
+          />
+        )}
+
         {/* Signatures */}
         {minuteSignatures.length > 0 && (
           <Card>
