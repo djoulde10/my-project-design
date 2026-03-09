@@ -71,8 +71,37 @@ export default function Actions() {
           <h1 className="text-xl sm:text-2xl font-bold">Suivi des actions</h1>
           <p className="text-sm text-muted-foreground">Actions issues des résolutions</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline"><Download className="w-4 h-4 mr-2" />Exporter</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => {
+                const headers = ["Action", "Résolution", "Responsable", "Échéance", "Statut"];
+                const rows = actions.map((a: any) => [
+                  a.title, a.decisions?.numero_decision ?? "—", a.members?.full_name ?? "—",
+                  a.due_date ? new Date(a.due_date).toLocaleDateString("fr-FR") : "—",
+                  statusConfig[a.status]?.label ?? a.status,
+                ]);
+                exportTableToPDF("Suivi des actions", headers, rows, "actions.pdf");
+              }}>
+                <Download className="w-4 h-4 mr-2" />Export PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                const headers = ["Action", "Description", "Résolution", "Responsable", "Échéance", "Statut", "Date clôture"];
+                const rows = actions.map((a: any) => [
+                  a.title, a.description ?? "", a.decisions?.numero_decision ?? "", a.members?.full_name ?? "",
+                  a.due_date ?? "", statusConfig[a.status]?.label ?? a.status, a.completion_date ?? "",
+                ]);
+                exportTableToCSV(headers, rows, "actions.csv");
+              }}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel (CSV)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Créer une action</DialogTitle></DialogHeader>
             <div className="space-y-4">
