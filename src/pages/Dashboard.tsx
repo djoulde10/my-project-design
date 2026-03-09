@@ -95,6 +95,7 @@ export default function Dashboard() {
         nearDueActions: nearDueRes.data ?? [],
         pendingPVs: pendingPVRes.count ?? 0,
         activeConflicts: conflictsRes.count ?? 0,
+        pendingApprovals: pendingApprovalsRes.count ?? 0,
         sessionsByMonth,
       });
     };
