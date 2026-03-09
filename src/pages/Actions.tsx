@@ -145,8 +145,9 @@ export default function Actions() {
               <Button onClick={handleCreate} disabled={!form.title}>Créer</Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
         </div>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
