@@ -113,14 +113,16 @@ export default function Meetings() {
   });
 
   const fetchAll = useCallback(async () => {
-    const [tplRes, sessRes, minRes] = await Promise.all([
+    const [tplRes, sessRes, minRes, memRes] = await Promise.all([
       supabase.from("meeting_templates").select("*").order("created_at", { ascending: false }),
       supabase.from("sessions").select("id, title").order("session_date", { ascending: false }),
       supabase.from("minutes").select("*, sessions(title)").order("created_at", { ascending: false }),
+      supabase.from("members").select("id, full_name").eq("is_active", true).order("full_name"),
     ]);
     setTemplates(tplRes.data ?? []);
     setSessions(sessRes.data ?? []);
     setMinutes(minRes.data ?? []);
+    setMembers(memRes.data ?? []);
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
