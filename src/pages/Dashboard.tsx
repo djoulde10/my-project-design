@@ -233,7 +233,7 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm">Aucune décision</p>
+              <p className="text-muted-foreground text-sm">Aucune résolution</p>
             )}
           </CardContent>
         </Card>
