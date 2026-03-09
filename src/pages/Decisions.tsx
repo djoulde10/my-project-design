@@ -242,8 +242,9 @@ export default function Decisions() {
               <Button onClick={handleCreate} disabled={!form.session_id || !form.texte}>Enregistrer</Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
         </div>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
