@@ -86,7 +86,7 @@ export default function Decisions() {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Décision signée" });
+      toast({ title: "Résolution signée" });
       fetchAll();
     }
     setSigningId(null);
