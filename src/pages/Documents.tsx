@@ -128,10 +128,10 @@ export default function Documents() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Centre de documentation</h1>
-          <p className="text-muted-foreground">Stockez, organisez et consultez tous les documents de l'organisation</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Centre de documentation</h1>
+          <p className="text-sm text-muted-foreground">Stockez, organisez et consultez tous les documents</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -209,8 +209,8 @@ export default function Documents() {
 
       {/* Documents table */}
       <Card>
-        <CardContent className="p-0">
-          <Table>
+        <CardContent className="p-0 overflow-x-auto">
+          <Table className="min-w-[750px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Document</TableHead>
