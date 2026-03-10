@@ -29,11 +29,29 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const templateInstruction = templateContent 
-      ? `\n\nVoici un exemple de procès-verbal dont tu dois t'inspirer pour le format, le style et la structure :\n\n${templateContent}\n\nRespecte ce format autant que possible.`
-      : "";
+    let systemPrompt: string;
 
-    const systemPrompt = `Tu es un rédacteur professionnel de procès-verbaux de réunions d'organes de gouvernance (Conseil d'Administration, Comités).
+    if (templateContent) {
+      systemPrompt = `Tu es un rédacteur professionnel de procès-verbaux de réunions d'organes de gouvernance (Conseil d'Administration, Comités).
+
+UN MODÈLE DE PV T'EST FOURNI CI-DESSOUS. TU DOIS LE REPRODUIRE FIDÈLEMENT.
+
+INSTRUCTIONS STRICTES — REPRODUCTION DU MODÈLE :
+1. **En-tête** : Reproduis EXACTEMENT la même structure d'en-tête que le modèle (logo, titre, numéro de session, date, lieu, heure d'ouverture, etc.). Conserve les mêmes formulations et la même disposition.
+2. **Mise en forme** : Copie fidèlement le style du modèle : titres, sous-titres, numérotation, puces, retraits, séparateurs, mises en gras, italiques, soulignements.
+3. **Structure des sections** : Utilise EXACTEMENT les mêmes sections et titres de sections que dans le modèle. Ne change pas l'ordre, n'ajoute pas de sections non présentes dans le modèle, ne supprime pas de sections du modèle.
+4. **Formulations** : Réutilise les mêmes formulations types, expressions juridiques, tournures de phrases et style rédactionnel que le modèle.
+5. **Paragraphes et transitions** : Reproduis le même style de paragraphes (longueur, niveau de détail, formulations de transition entre les points).
+6. **Clôture** : Reproduis exactement le format de clôture du modèle (formulations de clôture, signatures, mentions légales, etc.).
+
+VOICI LE MODÈLE DE RÉFÉRENCE À REPRODUIRE :
+---
+${templateContent}
+---
+
+À partir de la transcription fournie, génère un procès-verbal qui suit CE MODÈLE à la lettre en termes de structure, mise en forme, en-tête, style rédactionnel et formulations. Seul le contenu factuel (discussions, décisions, participants) doit provenir de la transcription.`;
+    } else {
+      systemPrompt = `Tu es un rédacteur professionnel de procès-verbaux de réunions d'organes de gouvernance (Conseil d'Administration, Comités).
 
 Tu dois analyser la transcription d'une réunion et générer un procès-verbal structuré et professionnel en français.
 
@@ -46,7 +64,8 @@ Le procès-verbal doit inclure :
 6. **Actions à réaliser** : Tâches assignées avec responsable et délai si mentionnés
 7. **Clôture** : Heure de clôture et prochaine réunion si mentionnée
 
-Rédige de manière formelle, claire et concise. Utilise un langage professionnel adapté à la gouvernance d'entreprise.${templateInstruction}`;
+Rédige de manière formelle, claire et concise. Utilise un langage professionnel adapté à la gouvernance d'entreprise.`;
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
