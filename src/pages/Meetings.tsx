@@ -438,7 +438,10 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
     if (!templateFile || !templateName) return;
     setParsingTemplate(true);
     try {
-      const filePath = `${companyId}/${Date.now()}_${templateFile.name}`;
+      const sanitizedName = templateFile.name
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9._-]/g, "_");
+      const filePath = `${companyId}/${Date.now()}_${sanitizedName}`;
       const { error: upErr } = await supabase.storage.from("pv-templates").upload(filePath, templateFile);
       if (upErr) throw new Error(upErr.message);
       const { data: tpl, error: insErr } = await supabase
