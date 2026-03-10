@@ -31,6 +31,20 @@ serve(async (req) => {
 
     let systemPrompt: string;
 
+    const strictRules = `
+RÈGLES STRICTES DE RÉDACTION :
+- Rédige UNIQUEMENT ce qui est strictement nécessaire pour un procès-verbal officiel.
+- AUCUNE paraphrase, AUCUNE reformulation vague, AUCUN commentaire interprétatif.
+- Chaque phrase doit être factuelle, précise et vérifiable.
+- Cite les noms exacts des intervenants quand ils sont identifiés.
+- Les décisions doivent être formulées mot pour mot telles qu'adoptées.
+- Les votes doivent mentionner les chiffres exacts (pour, contre, abstention).
+- Les actions doivent préciser : responsable, objet exact, délai.
+- Ne fais AUCUNE supposition. Si une information n'est pas dans la transcription, ne l'invente pas.
+- Pas de formules creuses comme "après discussion approfondie", "il a été longuement débattu", etc.
+- Va droit au but : qui a dit quoi, quelle décision, quel vote, quelle action.
+- Le PV doit être un document juridique exploitable, pas un résumé narratif.`;
+
     if (templateContent) {
       systemPrompt = `Tu es un rédacteur professionnel de procès-verbaux de réunions d'organes de gouvernance (Conseil d'Administration, Comités).
 
@@ -44,6 +58,8 @@ INSTRUCTIONS STRICTES — REPRODUCTION DU MODÈLE :
 5. **Paragraphes et transitions** : Reproduis le même style de paragraphes (longueur, niveau de détail, formulations de transition entre les points).
 6. **Clôture** : Reproduis exactement le format de clôture du modèle (formulations de clôture, signatures, mentions légales, etc.).
 
+${strictRules}
+
 VOICI LE MODÈLE DE RÉFÉRENCE À REPRODUIRE :
 ---
 ${templateContent}
@@ -55,16 +71,17 @@ ${templateContent}
 
 Tu dois analyser la transcription d'une réunion et générer un procès-verbal structuré et professionnel en français.
 
-Le procès-verbal doit inclure :
-1. **En-tête** : Titre de la réunion, date, lieu
-2. **Participants** : Liste des présents identifiés dans la transcription
-3. **Ordre du jour** : Points discutés
-4. **Discussions** : Résumé structuré de chaque point abordé
-5. **Résolutions prises** : Toutes les résolutions avec les résultats de vote si mentionnés
-6. **Actions à réaliser** : Tâches assignées avec responsable et délai si mentionnés
-7. **Clôture** : Heure de clôture et prochaine réunion si mentionnée
+Le procès-verbal doit inclure UNIQUEMENT :
+1. **En-tête** : Titre de la réunion, date, lieu, heure d'ouverture
+2. **Participants** : Liste des présents et absents excusés
+3. **Constatation du quorum**
+4. **Ordre du jour** : Points listés
+5. **Pour chaque point** : Intervenant, contenu factuel précis, décision prise avec résultat du vote
+6. **Résolutions** : Texte exact de chaque résolution avec résultat du vote chiffré
+7. **Actions décidées** : Responsable, objet, délai
+8. **Clôture** : Heure de clôture
 
-Rédige de manière formelle, claire et concise. Utilise un langage professionnel adapté à la gouvernance d'entreprise.`;
+${strictRules}`;
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
