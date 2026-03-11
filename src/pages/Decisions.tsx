@@ -70,7 +70,7 @@ export default function Decisions() {
     // Fetch all decision signatures
     const { data: sigs } = await supabase
       .from("signatures")
-      .select("*, profiles:signed_by(full_name)")
+      .select("*")
       .eq("entity_type", "decision")
       .order("signed_at");
     const grouped: Record<string, any[]> = {};
