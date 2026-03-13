@@ -53,8 +53,8 @@ export default function Minutes() {
 
   const updateStatus = async (id: string, status: PvStatus) => {
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Statut mis à jour" }); setEditingId(null); fetchAll(); }
+    if (error) showError(error);
+    else { showSuccess("pv_status_updated"); setEditingId(null); fetchAll(); }
   };
 
   return (

@@ -167,7 +167,7 @@ export default function AgendaItems() {
     if (error) {
       showError(error);
     } else {
-      toast({ title: "Document supprimé" });
+      showSuccess("deleted");
       fetchAll();
     }
   };

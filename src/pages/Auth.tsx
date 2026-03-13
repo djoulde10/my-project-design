@@ -40,7 +40,7 @@ export default function Auth() {
       if (error) {
         showError(error);
       } else {
-        toast({ title: "Inscription réussie", description: "Vérifiez votre email pour confirmer votre compte." });
+        showSuccess("user_created", "Vérifiez votre e-mail pour confirmer votre compte.");
       }
     }
     setLoading(false);
