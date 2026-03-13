@@ -184,7 +184,7 @@ export default function Meetings() {
       setPendingPVContent(generatedPV);
       showSuccess("pv_generated");
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de générer le procès-verbal");
     } finally {
       setGenerating(false);
     }
