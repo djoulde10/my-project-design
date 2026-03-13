@@ -319,7 +319,7 @@ export default function Meetings() {
 
     const { error } = await supabase.from("minutes").update({ content: editingContent }).eq("id", viewMinute.id);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de sauvegarder les modifications du PV");
       return;
     }
     await supabase.from("minute_versions").insert({
