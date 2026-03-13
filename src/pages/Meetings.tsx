@@ -244,7 +244,7 @@ export default function Meetings() {
       showInfo("Transcription terminée", "Génération du PV en cours…");
       await generateAndPreview(transcriptionText, newTitle, newSessionId);
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de transcrire le fichier audio");
     } finally {
       setUploadTranscribing(false);
       resetForm();
