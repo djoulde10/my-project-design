@@ -24,7 +24,7 @@ export default function Auth() {
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        toast({ title: "Erreur de connexion", description: error.message, variant: "destructive" });
+        showError(error);
       } else {
         navigate("/");
       }
