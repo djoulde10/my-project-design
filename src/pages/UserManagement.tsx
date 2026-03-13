@@ -108,7 +108,7 @@ export default function UserManagement() {
     const newStatus = currentStatus === "actif" ? "suspendu" : "actif";
     const { error } = await supabase.from("profiles").update({ statut: newStatus }).eq("id", profileId);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
       await supabase.from("audit_log").insert({
         action: newStatus === "suspendu" ? "suspension_utilisateur" : "activation_utilisateur",
