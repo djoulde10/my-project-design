@@ -89,7 +89,7 @@ export default function UserManagement() {
   const handleUpdateRole = async (profileId: string, roleId: string) => {
     const { error } = await supabase.from("profiles").update({ role_id: roleId }).eq("id", profileId);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
       await supabase.from("audit_log").insert({
         action: "modification_role",
