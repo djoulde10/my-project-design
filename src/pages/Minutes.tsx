@@ -53,7 +53,7 @@ export default function Minutes() {
 
   const updateStatus = async (id: string, status: PvStatus) => {
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible de mettre à jour le statut du PV");
     else { showSuccess("pv_status_updated"); setEditingId(null); fetchAll(); }
   };
 
