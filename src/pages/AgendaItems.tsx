@@ -106,7 +106,7 @@ export default function AgendaItems() {
     } else {
       const { error } = await supabase.from("agenda_items").insert([payload]);
       if (error) {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        showError(error);
       } else {
         toast({ title: "Point d'ODJ ajouté" });
         setOpen(false);
