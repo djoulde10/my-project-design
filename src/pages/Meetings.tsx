@@ -319,7 +319,7 @@ export default function Meetings() {
 
     const { error } = await supabase.from("minutes").update({ content: editingContent }).eq("id", viewMinute.id);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
       return;
     }
     await supabase.from("minute_versions").insert({
