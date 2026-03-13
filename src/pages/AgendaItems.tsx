@@ -97,7 +97,7 @@ export default function AgendaItems() {
     if (editingId) {
       const { error } = await supabase.from("agenda_items").update(payload).eq("id", editingId);
       if (error) {
-        showError(error);
+        showError(error, "Impossible de modifier le point d'ordre du jour");
       } else {
         showSuccess("saved");
         setOpen(false);
