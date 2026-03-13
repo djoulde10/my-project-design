@@ -139,7 +139,7 @@ export default function Meetings() {
       setIsLiveMode(true);
       await scribe.connect({ token: data.token, microphone: { echoCancellation: true, noiseSuppression: true } });
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de démarrer la transcription en direct");
       setIsLiveMode(false);
     }
   };
