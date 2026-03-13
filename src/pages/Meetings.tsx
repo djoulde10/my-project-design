@@ -244,7 +244,7 @@ export default function Meetings() {
       showInfo("Transcription terminée", "Génération du PV en cours…");
       await generateAndPreview(transcriptionText, newTitle, newSessionId);
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
     } finally {
       setUploadTranscribing(false);
       resetForm();
