@@ -213,7 +213,7 @@ export default function Meetings() {
     const fileName = `${companyId}/${Date.now()}_${newTitle.replace(/\s+/g, "_")}.${uploadedFile.name.split(".").pop()}`;
     const { error: uploadError } = await supabase.storage.from("meeting-audio").upload(fileName, uploadedFile);
     if (uploadError) {
-      toast({ title: "Erreur upload", description: uploadError.message, variant: "destructive" });
+      showError(uploadError);
       return;
     }
 
