@@ -139,7 +139,7 @@ export default function Meetings() {
       setIsLiveMode(true);
       await scribe.connect({ token: data.token, microphone: { echoCancellation: true, noiseSuppression: true } });
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
       setIsLiveMode(false);
     }
   };
