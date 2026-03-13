@@ -146,7 +146,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       showSuccess("action_created");
       onActionCreated?.();
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de créer l'action suggérée");
     }
   };
 

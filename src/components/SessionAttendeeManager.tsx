@@ -107,7 +107,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
     const { error } = await supabase.from("session_attendees").update({
       proxy_member_id: proxyMemberId || null,
     }).eq("id", attendeeId);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible de définir le mandataire");
     await fetchData();
     onUpdated();
   };
