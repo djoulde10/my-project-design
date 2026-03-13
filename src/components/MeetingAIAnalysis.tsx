@@ -106,7 +106,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       showSuccess("ai_analysis_complete");
     } catch (e: any) {
       setError(e.message);
-      toast({ title: "Erreur d'analyse", description: e.message, variant: "destructive" });
+      showError(e);
     } finally {
       setAnalyzing(false);
     }
