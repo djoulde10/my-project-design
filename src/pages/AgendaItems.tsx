@@ -97,7 +97,7 @@ export default function AgendaItems() {
     if (editingId) {
       const { error } = await supabase.from("agenda_items").update(payload).eq("id", editingId);
       if (error) {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        showError(error);
       } else {
         toast({ title: "Point d'ODJ modifié" });
         setOpen(false);
