@@ -147,7 +147,7 @@ export default function AgendaItems() {
     });
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
       toast({ title: "Document attaché au point d'ODJ" });
       setDocDialogOpen(false);
