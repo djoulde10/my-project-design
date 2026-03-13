@@ -98,7 +98,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
 
   const togglePresence = async (id: string, current: boolean | null) => {
     const { error } = await supabase.from("session_attendees").update({ is_present: !current }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) showError(error);
     await fetchData();
     onUpdated();
   };
