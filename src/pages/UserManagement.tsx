@@ -59,7 +59,7 @@ export default function UserManagement() {
     });
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
       return;
     }
 
