@@ -131,7 +131,7 @@ export default function AgendaItems() {
     const { error: uploadError } = await supabase.storage.from("session-documents").upload(filePath, docFile);
 
     if (uploadError) {
-      toast({ title: "Erreur upload", description: uploadError.message, variant: "destructive" });
+      showError(uploadError);
       setUploading(false);
       return;
     }
