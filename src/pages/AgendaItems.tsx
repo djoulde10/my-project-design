@@ -147,7 +147,7 @@ export default function AgendaItems() {
     });
 
     if (error) {
-      showError(error);
+      showError(error, "Impossible d'enregistrer le document");
     } else {
       showSuccess("document_uploaded");
       setDocDialogOpen(false);
