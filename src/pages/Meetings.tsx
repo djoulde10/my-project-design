@@ -460,7 +460,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       setTemplateFile(null);
       fetchAll();
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible d'importer le modèle");
     } finally {
       setParsingTemplate(false);
     }
