@@ -427,7 +427,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       audioPlayerRef.current = audio;
       await audio.play();
     } catch (e: any) {
-      toast({ title: "Erreur TTS", description: e.message, variant: "destructive" });
+      showError(e);
     } finally {
       setTtsLoading(false);
     }
