@@ -213,7 +213,7 @@ export default function Meetings() {
     const fileName = `${companyId}/${Date.now()}_${newTitle.replace(/\s+/g, "_")}.${uploadedFile.name.split(".").pop()}`;
     const { error: uploadError } = await supabase.storage.from("meeting-audio").upload(fileName, uploadedFile);
     if (uploadError) {
-      showError(uploadError);
+      showError(uploadError, "Impossible de téléverser le fichier audio");
       return;
     }
 
