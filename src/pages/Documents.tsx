@@ -45,7 +45,7 @@ const categoryColors: Record<string, string> = {
 
 export default function Documents() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const companyId = useCompanyId();
   const [documents, setDocuments] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);

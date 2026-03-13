@@ -42,7 +42,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 export default function Approvals() {
   const { user } = useAuth();
   const { hasPermission, loading: permLoading } = usePermissions();
-  const { toast } = useToast();
+  
   const [requests, setRequests] = useState<ApprovalRequest[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);

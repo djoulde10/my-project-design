@@ -23,7 +23,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 };
 
 export default function Actions() {
-  const { toast } = useToast();
+  
   const [actions, setActions] = useState<any[]>([]);
   const [decisions, setDecisions] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);

@@ -14,7 +14,7 @@ import { showSuccess, showError } from "@/lib/toastHelpers";
 import { Plus, UserCog, Shield, Ban, CheckCircle2, Pencil, Trash2, Link } from "lucide-react";
 
 export default function UserManagement() {
-  const { toast } = useToast();
+  
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const [profiles, setProfiles] = useState<any[]>([]);

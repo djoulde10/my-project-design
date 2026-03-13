@@ -37,7 +37,7 @@ const pvStatusColors: Record<string, string> = {
 type PvStatus = "brouillon" | "valide" | "signe";
 
 export default function Meetings() {
-  const { toast } = useToast();
+  
   const { user } = useAuth();
   const companyId = useCompanyId();
   const [templates, setTemplates] = useState<any[]>([]);

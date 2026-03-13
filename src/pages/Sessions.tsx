@@ -37,7 +37,7 @@ interface AgendaItemDraft {
 
 export default function Sessions() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const companyId = useCompanyId();
   const [sessions, setSessions] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);

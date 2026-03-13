@@ -20,7 +20,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 };
 
 export default function ConflictOfInterest() {
-  const { toast } = useToast();
+  
   const { user } = useAuth();
   const [conflicts, setConflicts] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
