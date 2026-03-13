@@ -142,7 +142,7 @@ export default function Sessions() {
       );
     }
 
-    toast({ title: "Session créée avec succès" });
+    showSuccess("session_created");
     setOpen(false);
     setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
     setAgendaDrafts([]);
