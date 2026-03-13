@@ -217,7 +217,7 @@ export default function Meetings() {
       return;
     }
 
-    toast({ title: "Transcription en cours..." });
+    showInfo("Transcription en cours…");
     setUploadTranscribing(true);
     try {
       const formData = new FormData();
