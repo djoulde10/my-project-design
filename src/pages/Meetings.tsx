@@ -454,7 +454,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
         body: { templateId: tpl.id },
       });
       if (parseErr) console.error("Parse error:", parseErr);
-      toast({ title: "Modèle importé", description: parseData?.content ? "Structure analysée" : "Importé sans analyse" });
+      showInfo("Modèle importé", parseData?.content ? "Structure analysée avec succès." : "Importé sans analyse.");
       setTemplateOpen(false);
       setTemplateName("");
       setTemplateFile(null);
