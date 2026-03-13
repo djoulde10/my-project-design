@@ -184,7 +184,7 @@ export default function Meetings() {
       setPendingPVContent(generatedPV);
       showSuccess("pv_generated");
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
     } finally {
       setGenerating(false);
     }
