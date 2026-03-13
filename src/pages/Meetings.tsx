@@ -427,7 +427,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       audioPlayerRef.current = audio;
       await audio.play();
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de lire le procès-verbal (synthèse vocale)");
     } finally {
       setTtsLoading(false);
     }
