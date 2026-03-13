@@ -176,7 +176,7 @@ export default function Sessions() {
   };
 
   const generateBoardPacket = async (session: any) => {
-    toast({ title: "Génération du Board Packet..." });
+    showInfo("Génération du Board Packet en cours…");
 
     // Fetch full session data
     const [agRes, attRes, docsRes] = await Promise.all([
