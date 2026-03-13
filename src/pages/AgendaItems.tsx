@@ -106,7 +106,7 @@ export default function AgendaItems() {
     } else {
       const { error } = await supabase.from("agenda_items").insert([payload]);
       if (error) {
-        showError(error);
+        showError(error, "Impossible de créer le point d'ordre du jour");
       } else {
         showSuccess("saved");
         setOpen(false);
