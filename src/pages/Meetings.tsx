@@ -560,9 +560,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       signed_by: user?.id,
     });
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: "Procès-verbal signé avec succès" });
+      showSuccess("decision_signed");
       await fetchSignatures(minuteId);
       // Also update PV status to "signe" if validated
       if (viewMinute?.pv_status === "valide") {
