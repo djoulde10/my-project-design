@@ -22,7 +22,7 @@ const emptyForm = {
 
 export default function AgendaItems() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const companyId = useCompanyId();
   const [items, setItems] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
