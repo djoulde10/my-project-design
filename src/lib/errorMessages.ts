@@ -22,7 +22,22 @@ const ERROR_PATTERNS: ErrorPattern[] = [
   { test: /signup.*disabled/i, message: "Les inscriptions sont actuellement désactivées. Contactez votre administrateur." },
   { test: /rate limit|too many requests/i, message: "Trop de tentatives. Veuillez patienter quelques instants avant de réessayer." },
   { test: /token.*expired|jwt expired/i, message: "Votre session a expiré. Veuillez vous reconnecter." },
-  { test: /not authorized|permission denied|insufficient.*privilege/i, message: "Vous n'avez pas les droits nécessaires pour effectuer cette action." },
+  { test: /not authorized|permission denied|insufficient.*privilege/i, message: "Vous n'avez pas les droits nécessaires pour effectuer cette action. Contactez votre administrateur si vous pensez que c'est une erreur." },
+
+  // ── RLS / Row-Level Security ──
+  { test: /new row violates row-level security/i, message: "Vous n'avez pas l'autorisation d'effectuer cette opération. Vérifiez vos droits d'accès ou contactez votre administrateur." },
+  { test: /row-level security/i, message: "Accès refusé. Vous n'avez pas les permissions nécessaires pour cette action." },
+  { test: /violates row-level security policy for table "sessions"/i, message: "Vous n'avez pas le droit de créer ou modifier des sessions. Contactez votre administrateur pour obtenir les droits nécessaires." },
+  { test: /violates row-level security policy for table "members"/i, message: "Vous n'avez pas le droit de gérer les membres. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "decisions"/i, message: "Vous n'avez pas le droit de gérer les résolutions. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "documents"/i, message: "Vous n'avez pas le droit de gérer les documents. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "minutes"/i, message: "Vous n'avez pas le droit de gérer les procès-verbaux. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "actions"/i, message: "Vous n'avez pas le droit de gérer les actions. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "approval_requests"/i, message: "Vous n'avez pas le droit de gérer les approbations. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "conflict_of_interests"/i, message: "Vous n'avez pas le droit de gérer les conflits d'intérêts. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "signatures"/i, message: "Vous n'avez pas le droit de signer ce document. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "profiles"/i, message: "Vous n'avez pas le droit de modifier ce profil. Contactez votre administrateur." },
+  { test: /violates row-level security policy/i, message: "Vous n'avez pas les permissions nécessaires pour cette opération. Contactez votre administrateur." },
 
   // ── Database constraint violations ──
   { test: /unique.*violation|duplicate key|already exists/i, message: "Cet élément existe déjà. Veuillez vérifier les informations saisies." },
@@ -50,6 +65,8 @@ const ERROR_PATTERNS: ErrorPattern[] = [
   { test: /timeout|timed out/i, message: "La requête a pris trop de temps. Veuillez réessayer." },
 
   // ── Edge Functions ──
+  { test: /TTS failed/i, message: "La synthèse vocale a échoué. Veuillez réessayer ou vérifier votre quota de synthèse vocale." },
+  { test: /Transcription failed/i, message: "La transcription audio a échoué. Vérifiez le fichier audio et réessayez." },
   { test: /edge function.*error|function.*invocation/i, message: "Le traitement a échoué. Veuillez réessayer dans quelques instants." },
   { test: /quota.*exceeded|limit.*reached/i, message: "Le quota de requêtes est atteint. Veuillez réessayer plus tard." },
 ];
