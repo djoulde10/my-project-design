@@ -75,7 +75,7 @@ export default function Documents() {
     const { error: uploadError } = await supabase.storage.from("session-documents").upload(filePath, file);
 
     if (uploadError) {
-      toast({ title: "Erreur upload", description: uploadError.message, variant: "destructive" });
+      showError(uploadError);
       setUploading(false);
       return;
     }
