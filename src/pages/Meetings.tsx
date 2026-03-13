@@ -560,7 +560,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       signed_by: user?.id,
     });
     if (error) {
-      showError(error);
+      showError(error, "Impossible de signer le procès-verbal");
     } else {
       showSuccess("decision_signed");
       await fetchSignatures(minuteId);
