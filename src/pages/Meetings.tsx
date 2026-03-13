@@ -287,7 +287,7 @@ export default function Meetings() {
   const createPV = async () => {
     const { data, error } = await supabase.from("minutes").insert([pvForm]).select().single();
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
       return;
     }
     if (data) {
