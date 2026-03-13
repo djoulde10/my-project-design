@@ -299,7 +299,7 @@ export default function Meetings() {
         modified_by: user?.id,
       });
     }
-    toast({ title: "PV créé" });
+    showSuccess("pv_created");
     setPvOpen(false);
     setPvForm({ session_id: "", content: "", pv_status: "brouillon" });
     fetchAll();
