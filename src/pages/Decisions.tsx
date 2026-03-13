@@ -89,9 +89,9 @@ export default function Decisions() {
       signed_by: user?.id,
     });
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: "Résolution signée" });
+      showSuccess("decision_signed");
       fetchAll();
     }
     setSigningId(null);
