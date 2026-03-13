@@ -277,7 +277,7 @@ export default function Meetings() {
         modified_by: user?.id,
       });
     }
-    toast({ title: "Procès-verbal enregistré" });
+    showSuccess("pv_updated");
     setPendingPV(null);
     setPendingPVContent("");
     fetchAll();
