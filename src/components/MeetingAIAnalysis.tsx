@@ -13,7 +13,7 @@ import {
   Brain, CheckCircle2, XCircle, Edit, Loader2, ListChecks, Vote,
   CalendarPlus, FileText, AlertTriangle, Sparkles
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
 
