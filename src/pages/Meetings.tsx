@@ -265,7 +265,7 @@ export default function Meetings() {
       pv_status: "brouillon" as PvStatus,
     }).select().single();
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
       return;
     }
     if (data) {
