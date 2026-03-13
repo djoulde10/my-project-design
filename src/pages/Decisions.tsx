@@ -89,7 +89,7 @@ export default function Decisions() {
       signed_by: user?.id,
     });
     if (error) {
-      showError(error);
+      showError(error, "Impossible de signer la résolution");
     } else {
       showSuccess("decision_signed");
       fetchAll();
