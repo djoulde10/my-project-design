@@ -146,7 +146,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       showSuccess("action_created");
       onActionCreated?.();
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
     }
   };
 

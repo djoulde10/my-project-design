@@ -82,7 +82,7 @@ export default function MinuteVersionHistory({
     if (!version.content) return;
     onRestore(version.content);
     onOpenChange(false);
-    toast({ title: `Version ${version.version_number} restaurée`, description: "N'oubliez pas de sauvegarder." });
+    showSuccess("pv_version_restored");
   };
 
   const computeDiff = (oldText: string, newText: string) => {

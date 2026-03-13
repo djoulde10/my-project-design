@@ -107,7 +107,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
     const { error } = await supabase.from("session_attendees").update({
       proxy_member_id: proxyMemberId || null,
     }).eq("id", attendeeId);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) showError(error);
     await fetchData();
     onUpdated();
   };
