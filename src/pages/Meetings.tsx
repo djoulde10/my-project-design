@@ -287,7 +287,7 @@ export default function Meetings() {
   const createPV = async () => {
     const { data, error } = await supabase.from("minutes").insert([pvForm]).select().single();
     if (error) {
-      showError(error);
+      showError(error, "Impossible de créer le procès-verbal");
       return;
     }
     if (data) {
