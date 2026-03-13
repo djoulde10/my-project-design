@@ -171,8 +171,8 @@ export default function Sessions() {
 
   const updateSessionStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("sessions").update({ status: status as any }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Statut mis à jour" }); fetchSessions(); }
+    if (error) showError(error);
+    else { showSuccess("session_status_updated"); fetchSessions(); }
   };
 
   const generateBoardPacket = async (session: any) => {
