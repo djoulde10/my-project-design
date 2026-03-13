@@ -53,15 +53,6 @@ export default function Members() {
 
   useEffect(() => { fetchMembers(); fetchOrgans(); }, []);
 
-  const parseErrorMessage = (msg: string): string => {
-    if (msg.includes("Limite atteinte")) {
-      // Extract the readable part from the DB trigger error
-      const match = msg.match(/Limite atteinte[^"]*/);
-      return match ? match[0] : "Cette fonction est déjà occupée dans cet organe pour cette période de mandat.";
-    }
-    return msg;
-  };
-
   const handleSave = async () => {
     const payload = {
       ...form,
@@ -76,9 +67,9 @@ export default function Members() {
     }
 
     if (error) {
-      toast({ title: "Erreur", description: parseErrorMessage(error.message), variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: editingId ? "Membre modifié" : "Membre ajouté" });
+      showSuccess(editingId ? "member_updated" : "member_created");
       setOpen(false);
       setEditingId(null);
       setForm(emptyForm);

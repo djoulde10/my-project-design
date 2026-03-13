@@ -249,7 +249,7 @@ export default function Sessions() {
     }
 
     pdf.save(`Board_Packet_${session.numero_session ?? session.id}.pdf`);
-    toast({ title: "Board Packet généré !" });
+    showSuccess("board_packet_generated");
   };
 
   const caSessions = sessions.filter((s) => (s as any).organs?.type === "ca");

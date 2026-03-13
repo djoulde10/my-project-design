@@ -55,8 +55,8 @@ export default function Actions() {
       responsible_member_id: form.responsible_member_id || null,
       due_date: form.due_date || null,
     }]);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Action créée" }); setOpen(false); setForm({ decision_id: "", title: "", description: "", responsible_member_id: "", due_date: "" }); fetchAll(); }
+    if (error) showError(error);
+    else { showSuccess("action_created"); setOpen(false); setForm({ decision_id: "", title: "", description: "", responsible_member_id: "", due_date: "" }); fetchAll(); }
   };
 
   const updateStatus = async (id: string, status: string) => {

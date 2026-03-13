@@ -91,9 +91,9 @@ export default function Documents() {
     });
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: "Document uploadé" });
+      showSuccess("document_uploaded");
       setOpen(false);
       setForm({ session_id: "", name: "", category: "autre" });
       setFile(null);
