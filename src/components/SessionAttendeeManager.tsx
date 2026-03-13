@@ -79,8 +79,8 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
       session_id: sessionId,
       member_id: addMemberId,
     }]);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Participant ajouté" }); setAddMemberId(""); }
+    if (error) showError(error);
+    else { showSuccess("attendee_added"); setAddMemberId(""); }
     await fetchData();
     onUpdated();
     setLoading(false);
