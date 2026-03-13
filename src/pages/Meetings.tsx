@@ -469,7 +469,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
   const deleteTemplate = async (id: string, filePath: string) => {
     await supabase.storage.from("pv-templates").remove([filePath]);
     await supabase.from("meeting_templates").delete().eq("id", id);
-    toast({ title: "Modèle supprimé" });
+    showSuccess("deleted");
     fetchAll();
   };
 
