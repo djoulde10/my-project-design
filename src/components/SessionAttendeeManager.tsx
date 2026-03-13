@@ -79,7 +79,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
       session_id: sessionId,
       member_id: addMemberId,
     }]);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible d'ajouter le participant");
     else { showSuccess("attendee_added"); setAddMemberId(""); }
     await fetchData();
     onUpdated();
@@ -89,7 +89,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
   const removeAttendee = async (id: string) => {
     setLoading(true);
     const { error } = await supabase.from("session_attendees").delete().eq("id", id);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible de retirer le participant");
     else showSuccess("attendee_removed");
     await fetchData();
     onUpdated();
@@ -98,7 +98,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
 
   const togglePresence = async (id: string, current: boolean | null) => {
     const { error } = await supabase.from("session_attendees").update({ is_present: !current }).eq("id", id);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible de modifier la présence");
     await fetchData();
     onUpdated();
   };
@@ -107,7 +107,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
     const { error } = await supabase.from("session_attendees").update({
       proxy_member_id: proxyMemberId || null,
     }).eq("id", attendeeId);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible de définir le mandataire");
     await fetchData();
     onUpdated();
   };

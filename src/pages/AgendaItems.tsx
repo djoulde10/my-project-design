@@ -97,7 +97,7 @@ export default function AgendaItems() {
     if (editingId) {
       const { error } = await supabase.from("agenda_items").update(payload).eq("id", editingId);
       if (error) {
-        showError(error);
+        showError(error, "Impossible de modifier le point d'ordre du jour");
       } else {
         showSuccess("saved");
         setOpen(false);
@@ -106,7 +106,7 @@ export default function AgendaItems() {
     } else {
       const { error } = await supabase.from("agenda_items").insert([payload]);
       if (error) {
-        showError(error);
+        showError(error, "Impossible de créer le point d'ordre du jour");
       } else {
         showSuccess("saved");
         setOpen(false);
@@ -131,7 +131,7 @@ export default function AgendaItems() {
     const { error: uploadError } = await supabase.storage.from("session-documents").upload(filePath, docFile);
 
     if (uploadError) {
-      showError(uploadError);
+      showError(uploadError, "Impossible de téléverser le document");
       setUploading(false);
       return;
     }
@@ -147,7 +147,7 @@ export default function AgendaItems() {
     });
 
     if (error) {
-      showError(error);
+      showError(error, "Impossible d'enregistrer le document");
     } else {
       showSuccess("document_uploaded");
       setDocDialogOpen(false);
@@ -165,7 +165,7 @@ export default function AgendaItems() {
     await supabase.storage.from("session-documents").remove([doc.file_path]);
     const { error } = await supabase.from("documents").delete().eq("id", doc.id);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de supprimer le document");
     } else {
       showSuccess("deleted");
       fetchAll();

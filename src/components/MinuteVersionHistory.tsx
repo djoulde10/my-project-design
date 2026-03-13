@@ -53,7 +53,7 @@ export default function MinuteVersionHistory({
       .order("version_number", { ascending: false });
 
     if (error) {
-      showError(error);
+      showError(error, "Impossible de charger l'historique des versions");
       setLoading(false);
       return;
     }

@@ -91,7 +91,7 @@ export default function Approvals() {
       .eq("id", reviewDialog.request.id);
 
     if (error) {
-      showError(error);
+      showError(error, "Impossible de traiter la demande d'approbation");
     } else {
       showSuccess(reviewDialog.action === "approved" ? "approval_approved" : "approval_rejected");
       fetchRequests();

@@ -55,7 +55,7 @@ export default function Actions() {
       responsible_member_id: form.responsible_member_id || null,
       due_date: form.due_date || null,
     }]);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible de créer l'action");
     else { showSuccess("action_created"); setOpen(false); setForm({ decision_id: "", title: "", description: "", responsible_member_id: "", due_date: "" }); fetchAll(); }
   };
 

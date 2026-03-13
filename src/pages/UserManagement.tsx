@@ -59,7 +59,7 @@ export default function UserManagement() {
     });
 
     if (error) {
-      showError(error);
+      showError(error, "Impossible de créer l'utilisateur");
       return;
     }
 
@@ -89,7 +89,7 @@ export default function UserManagement() {
   const handleUpdateRole = async (profileId: string, roleId: string) => {
     const { error } = await supabase.from("profiles").update({ role_id: roleId }).eq("id", profileId);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de modifier le rôle");
     } else {
       await supabase.from("audit_log").insert({
         action: "modification_role",
@@ -108,7 +108,7 @@ export default function UserManagement() {
     const newStatus = currentStatus === "actif" ? "suspendu" : "actif";
     const { error } = await supabase.from("profiles").update({ statut: newStatus }).eq("id", profileId);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de modifier le statut de l'utilisateur");
     } else {
       await supabase.from("audit_log").insert({
         action: newStatus === "suspendu" ? "suspension_utilisateur" : "activation_utilisateur",
@@ -129,7 +129,7 @@ export default function UserManagement() {
       .update({ user_id: linkDialog.userId } as any)
       .eq("id", selectedMemberId);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de lier le membre à l'utilisateur");
     } else {
       await supabase.from("audit_log").insert({
         action: "liaison_membre_utilisateur",

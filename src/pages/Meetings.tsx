@@ -139,7 +139,7 @@ export default function Meetings() {
       setIsLiveMode(true);
       await scribe.connect({ token: data.token, microphone: { echoCancellation: true, noiseSuppression: true } });
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de démarrer la transcription en direct");
       setIsLiveMode(false);
     }
   };
@@ -184,7 +184,7 @@ export default function Meetings() {
       setPendingPVContent(generatedPV);
       showSuccess("pv_generated");
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de générer le procès-verbal");
     } finally {
       setGenerating(false);
     }
@@ -213,7 +213,7 @@ export default function Meetings() {
     const fileName = `${companyId}/${Date.now()}_${newTitle.replace(/\s+/g, "_")}.${uploadedFile.name.split(".").pop()}`;
     const { error: uploadError } = await supabase.storage.from("meeting-audio").upload(fileName, uploadedFile);
     if (uploadError) {
-      showError(uploadError);
+      showError(uploadError, "Impossible de téléverser le fichier audio");
       return;
     }
 
@@ -244,7 +244,7 @@ export default function Meetings() {
       showInfo("Transcription terminée", "Génération du PV en cours…");
       await generateAndPreview(transcriptionText, newTitle, newSessionId);
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de transcrire le fichier audio");
     } finally {
       setUploadTranscribing(false);
       resetForm();
@@ -265,7 +265,7 @@ export default function Meetings() {
       pv_status: "brouillon" as PvStatus,
     }).select().single();
     if (error) {
-      showError(error);
+      showError(error, "Impossible d'enregistrer le procès-verbal");
       return;
     }
     if (data) {
@@ -287,7 +287,7 @@ export default function Meetings() {
   const createPV = async () => {
     const { data, error } = await supabase.from("minutes").insert([pvForm]).select().single();
     if (error) {
-      showError(error);
+      showError(error, "Impossible de créer le procès-verbal");
       return;
     }
     if (data) {
@@ -319,7 +319,7 @@ export default function Meetings() {
 
     const { error } = await supabase.from("minutes").update({ content: editingContent }).eq("id", viewMinute.id);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de sauvegarder les modifications du PV");
       return;
     }
     await supabase.from("minute_versions").insert({
@@ -337,7 +337,7 @@ export default function Meetings() {
 
   const updateMinuteStatus = async (id: string, status: PvStatus) => {
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible de mettre à jour le statut du PV");
     else { showSuccess("pv_status_updated"); setEditingStatusId(null); fetchAll(); }
   };
 
@@ -427,7 +427,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       audioPlayerRef.current = audio;
       await audio.play();
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de lire le procès-verbal (synthèse vocale)");
     } finally {
       setTtsLoading(false);
     }
@@ -460,7 +460,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       setTemplateFile(null);
       fetchAll();
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible d'importer le modèle");
     } finally {
       setParsingTemplate(false);
     }
@@ -560,7 +560,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       signed_by: user?.id,
     });
     if (error) {
-      showError(error);
+      showError(error, "Impossible de signer le procès-verbal");
     } else {
       showSuccess("decision_signed");
       await fetchSignatures(minuteId);

@@ -89,7 +89,7 @@ export default function Decisions() {
       signed_by: user?.id,
     });
     if (error) {
-      showError(error);
+      showError(error, "Impossible de signer la résolution");
     } else {
       showSuccess("decision_signed");
       fetchAll();
@@ -115,7 +115,7 @@ export default function Decisions() {
       vote_abstention: form.vote_abstention,
     }]);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de créer la résolution");
     } else {
       showSuccess("decision_created");
       setOpen(false);

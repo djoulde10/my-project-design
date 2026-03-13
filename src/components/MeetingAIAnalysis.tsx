@@ -106,7 +106,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       showSuccess("ai_analysis_complete");
     } catch (e: any) {
       setError(e.message);
-      showError(e);
+      showError(e, "Échec de l'analyse IA");
     } finally {
       setAnalyzing(false);
     }
@@ -128,7 +128,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       showSuccess("decision_created");
       onDecisionCreated?.();
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de créer la résolution suggérée");
     }
   };
 
@@ -146,7 +146,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       showSuccess("action_created");
       onActionCreated?.();
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de créer l'action suggérée");
     }
   };
 
