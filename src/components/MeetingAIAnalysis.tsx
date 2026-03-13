@@ -54,7 +54,7 @@ interface MeetingAIAnalysisProps {
 }
 
 export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, members, onDecisionCreated, onActionCreated }: MeetingAIAnalysisProps) {
-  const { toast } = useToast();
+  
   const { user } = useAuth();
   const companyId = useCompanyId();
   const [analyzing, setAnalyzing] = useState(false);
