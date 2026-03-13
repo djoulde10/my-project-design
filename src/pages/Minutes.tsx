@@ -47,7 +47,7 @@ export default function Minutes() {
 
   const createPV = async () => {
     const { error } = await supabase.from("minutes").insert([pvForm]);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible de créer le procès-verbal");
     else { showSuccess("pv_created"); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll(); }
   };
 
