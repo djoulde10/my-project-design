@@ -99,7 +99,7 @@ export default function AgendaItems() {
       if (error) {
         showError(error);
       } else {
-        toast({ title: "Point d'ODJ modifié" });
+        showSuccess("saved");
         setOpen(false);
         fetchAll();
       }
