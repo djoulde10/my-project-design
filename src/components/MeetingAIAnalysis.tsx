@@ -143,7 +143,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       });
       if (error) throw error;
       setActionStatuses(prev => ({ ...prev, [index]: "accepted" }));
-      toast({ title: "Action enregistrée" });
+      showSuccess("action_created");
       onActionCreated?.();
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
