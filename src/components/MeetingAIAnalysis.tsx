@@ -103,7 +103,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
         created_by: user?.id,
       } as any, { onConflict: "minute_id" });
 
-      toast({ title: "Analyse terminée", description: "Les suggestions de l'IA sont prêtes à être examinées." });
+      showSuccess("ai_analysis_complete");
     } catch (e: any) {
       setError(e.message);
       toast({ title: "Erreur d'analyse", description: e.message, variant: "destructive" });
