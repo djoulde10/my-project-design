@@ -128,7 +128,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       showSuccess("decision_created");
       onDecisionCreated?.();
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
     }
   };
 
