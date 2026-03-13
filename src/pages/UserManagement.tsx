@@ -89,7 +89,7 @@ export default function UserManagement() {
   const handleUpdateRole = async (profileId: string, roleId: string) => {
     const { error } = await supabase.from("profiles").update({ role_id: roleId }).eq("id", profileId);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de modifier le rôle");
     } else {
       await supabase.from("audit_log").insert({
         action: "modification_role",
