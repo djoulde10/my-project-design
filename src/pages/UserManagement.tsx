@@ -59,7 +59,7 @@ export default function UserManagement() {
     });
 
     if (error) {
-      showError(error);
+      showError(error, "Impossible de créer l'utilisateur");
       return;
     }
 
