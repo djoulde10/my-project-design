@@ -165,7 +165,7 @@ export default function AgendaItems() {
     await supabase.storage.from("session-documents").remove([doc.file_path]);
     const { error } = await supabase.from("documents").delete().eq("id", doc.id);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
       toast({ title: "Document supprimé" });
       fetchAll();
