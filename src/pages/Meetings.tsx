@@ -182,7 +182,7 @@ export default function Meetings() {
       // Show in editor for review
       setPendingPV({ content: generatedPV, sessionId, title });
       setPendingPVContent(generatedPV);
-      toast({ title: "PV généré", description: "Relisez et modifiez le contenu avant d'enregistrer." });
+      showSuccess("pv_generated");
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
     } finally {
