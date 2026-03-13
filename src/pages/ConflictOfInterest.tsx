@@ -49,9 +49,9 @@ export default function ConflictOfInterest() {
       description: form.description || null,
     }]);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: "Conflit d'intérêt déclaré" });
+      showSuccess("conflict_declared");
       setOpen(false);
       setForm({ member_id: "", subject: "", description: "" });
       fetchAll();

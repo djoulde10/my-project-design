@@ -138,7 +138,7 @@ export default function UserManagement() {
         user_id: user?.id,
         details: { linked_user_id: linkDialog.userId },
       });
-      toast({ title: "Membre associé avec succès" });
+      showSuccess("user_linked");
       setLinkDialog(null);
       setSelectedMemberId("");
       fetchData();

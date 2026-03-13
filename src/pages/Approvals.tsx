@@ -91,9 +91,9 @@ export default function Approvals() {
       .eq("id", reviewDialog.request.id);
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: reviewDialog.action === "approved" ? "Demande approuvée" : "Demande rejetée" });
+      showSuccess(reviewDialog.action === "approved" ? "approval_approved" : "approval_rejected");
       fetchRequests();
     }
     setSubmitting(false);
