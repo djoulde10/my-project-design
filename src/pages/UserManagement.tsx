@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { Plus, UserCog, Shield, Ban, CheckCircle2, Pencil, Trash2, Link } from "lucide-react";
 
 export default function UserManagement() {

@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, FileIcon, Download, Search, FolderOpen, FileText, Gavel, BookOpen, Scale, Presentation, File } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const categories = [
   { value: "all", label: "Tous", icon: FolderOpen },

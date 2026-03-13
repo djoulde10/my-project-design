@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, ShieldAlert, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   active: { label: "Actif", color: "bg-amber-100 text-amber-800", icon: AlertTriangle },
