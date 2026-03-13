@@ -79,7 +79,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
       session_id: sessionId,
       member_id: addMemberId,
     }]);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible d'ajouter le participant");
     else { showSuccess("attendee_added"); setAddMemberId(""); }
     await fetchData();
     onUpdated();
