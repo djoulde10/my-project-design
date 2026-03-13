@@ -89,7 +89,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
   const removeAttendee = async (id: string) => {
     setLoading(true);
     const { error } = await supabase.from("session_attendees").delete().eq("id", id);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible de retirer le participant");
     else showSuccess("attendee_removed");
     await fetchData();
     onUpdated();
