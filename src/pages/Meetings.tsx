@@ -329,7 +329,7 @@ export default function Meetings() {
       summary: "Modification manuelle",
       modified_by: user?.id,
     });
-    toast({ title: "PV sauvegardé" });
+    showSuccess("saved");
     setViewMinute({ ...viewMinute, content: editingContent });
     setIsEditing(false);
     fetchAll();
