@@ -26,7 +26,7 @@ const pvStatusColors: Record<string, string> = {
 type PvStatus = "brouillon" | "valide" | "signe";
 
 export default function Minutes() {
-  const { toast } = useToast();
+  
   const [minutes, setMinutes] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [pvOpen, setPvOpen] = useState(false);
