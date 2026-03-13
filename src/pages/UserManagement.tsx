@@ -108,7 +108,7 @@ export default function UserManagement() {
     const newStatus = currentStatus === "actif" ? "suspendu" : "actif";
     const { error } = await supabase.from("profiles").update({ statut: newStatus }).eq("id", profileId);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de modifier le statut de l'utilisateur");
     } else {
       await supabase.from("audit_log").insert({
         action: newStatus === "suspendu" ? "suspension_utilisateur" : "activation_utilisateur",
