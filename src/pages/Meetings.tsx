@@ -344,7 +344,7 @@ export default function Meetings() {
   const deleteMinute = async (id: string) => {
     await supabase.from("minute_versions").delete().eq("minute_id", id);
     await supabase.from("minutes").delete().eq("id", id);
-    toast({ title: "PV supprimé" });
+    showSuccess("deleted");
     fetchAll();
   };
 
