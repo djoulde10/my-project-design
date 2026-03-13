@@ -14,7 +14,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+  
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
