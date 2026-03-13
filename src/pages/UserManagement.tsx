@@ -116,7 +116,7 @@ export default function UserManagement() {
         entity_id: profileId,
         user_id: user?.id,
       });
-      toast({ title: newStatus === "suspendu" ? "Compte suspendu" : "Compte activé" });
+      showSuccess(newStatus === "suspendu" ? "user_suspended" : "user_activated");
       fetchData();
     }
   };
