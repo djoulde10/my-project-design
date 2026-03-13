@@ -194,7 +194,7 @@ export default function Meetings() {
   const generatePVFromLive = async () => {
     const finalTranscript = committedTextRef.current;
     if (!finalTranscript) {
-      toast({ title: "Erreur", description: "Aucune transcription disponible", variant: "destructive" });
+      showError("Aucune transcription disponible");
       return;
     }
     if (scribe.isConnected) await stopLiveTranscription();
