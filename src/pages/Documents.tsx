@@ -75,7 +75,7 @@ export default function Documents() {
     const { error: uploadError } = await supabase.storage.from("session-documents").upload(filePath, file);
 
     if (uploadError) {
-      showError(uploadError);
+      showError(uploadError, "Impossible de téléverser le fichier");
       setUploading(false);
       return;
     }
