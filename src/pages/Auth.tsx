@@ -24,7 +24,7 @@ export default function Auth() {
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        showError(error);
+        showError(error, "Échec de la connexion");
       } else {
         navigate("/");
       }
