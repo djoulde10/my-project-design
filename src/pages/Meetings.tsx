@@ -205,7 +205,7 @@ export default function Meetings() {
   // Generate from uploaded file
   const createWithUploadedFile = async () => {
     if (!uploadedFile || !newTitle) {
-      toast({ title: "Erreur", description: "Titre et fichier audio requis", variant: "destructive" });
+      showError("Le titre et le fichier audio sont requis.");
       return;
     }
     setCreateOpen(false);
