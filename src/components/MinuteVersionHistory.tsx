@@ -53,7 +53,7 @@ export default function MinuteVersionHistory({
       .order("version_number", { ascending: false });
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
       setLoading(false);
       return;
     }
