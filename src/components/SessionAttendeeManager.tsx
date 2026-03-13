@@ -36,7 +36,7 @@ interface Props {
 
 export default function SessionAttendeeManager({ open, onOpenChange, sessionId, organId, onUpdated }: Props) {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [addMemberId, setAddMemberId] = useState("");
