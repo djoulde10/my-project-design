@@ -256,7 +256,7 @@ export default function Meetings() {
     if (!pendingPV) return;
     const sessionId = pendingPV.sessionId;
     if (!sessionId) {
-      toast({ title: "Erreur", description: "Veuillez associer une session", variant: "destructive" });
+      showError("Veuillez associer une session au procès-verbal.");
       return;
     }
     const { data, error } = await supabase.from("minutes").insert({
