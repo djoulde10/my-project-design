@@ -102,7 +102,7 @@ export default function Sessions() {
     };
     const { data: session, error } = await supabase.from("sessions").insert([payload]).select().single();
     if (error || !session) {
-      toast({ title: "Erreur", description: error?.message, variant: "destructive" });
+      showError(error);
       return;
     }
 
