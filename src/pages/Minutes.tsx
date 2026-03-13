@@ -47,8 +47,8 @@ export default function Minutes() {
 
   const createPV = async () => {
     const { error } = await supabase.from("minutes").insert([pvForm]);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "PV créé" }); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll(); }
+    if (error) showError(error);
+    else { showSuccess("pv_created"); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll(); }
   };
 
   const updateStatus = async (id: string, status: PvStatus) => {
