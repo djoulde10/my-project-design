@@ -460,7 +460,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       setTemplateFile(null);
       fetchAll();
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
     } finally {
       setParsingTemplate(false);
     }
