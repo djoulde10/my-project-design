@@ -128,7 +128,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       showSuccess("decision_created");
       onDecisionCreated?.();
     } catch (e: any) {
-      showError(e);
+      showError(e, "Impossible de créer la résolution suggérée");
     }
   };
 
