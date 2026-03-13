@@ -34,7 +34,7 @@ export default function MinuteVersionHistory({
   onOpenChange,
   onRestore,
 }: MinuteVersionHistoryProps) {
-  const { toast } = useToast();
+  
   const [versions, setVersions] = useState<Version[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewingVersion, setViewingVersion] = useState<Version | null>(null);
