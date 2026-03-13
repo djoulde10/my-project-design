@@ -98,7 +98,7 @@ export default function UserManagement() {
         user_id: user?.id,
         details: { new_role_id: roleId },
       });
-      toast({ title: "Rôle mis à jour" });
+      showSuccess("user_updated");
       fetchData();
     }
   };
