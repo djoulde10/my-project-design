@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const pvStatusLabels: Record<string, string> = {
   brouillon: "Brouillon",
@@ -26,7 +26,7 @@ const pvStatusColors: Record<string, string> = {
 type PvStatus = "brouillon" | "valide" | "signe";
 
 export default function Minutes() {
-  const { toast } = useToast();
+  
   const [minutes, setMinutes] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [pvOpen, setPvOpen] = useState(false);
@@ -47,14 +47,14 @@ export default function Minutes() {
 
   const createPV = async () => {
     const { error } = await supabase.from("minutes").insert([pvForm]);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "PV créé" }); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll(); }
+    if (error) showError(error);
+    else { showSuccess("pv_created"); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll(); }
   };
 
   const updateStatus = async (id: string, status: PvStatus) => {
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Statut mis à jour" }); setEditingId(null); fetchAll(); }
+    if (error) showError(error);
+    else { showSuccess("pv_status_updated"); setEditingId(null); fetchAll(); }
   };
 
   return (

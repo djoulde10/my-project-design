@@ -10,11 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { Plus, UserCog, Shield, Ban, CheckCircle2, Pencil, Trash2, Link } from "lucide-react";
 
 export default function UserManagement() {
-  const { toast } = useToast();
+  
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -48,7 +48,7 @@ export default function UserManagement() {
   // Créer un utilisateur via signup
   const handleCreate = async () => {
     if (!form.email || !form.password || !form.full_name || !form.role_id) {
-      toast({ title: "Erreur", description: "Tous les champs sont requis", variant: "destructive" });
+      showError("Tous les champs sont requis pour créer un utilisateur.");
       return;
     }
 
@@ -59,7 +59,7 @@ export default function UserManagement() {
     });
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
       return;
     }
 
@@ -79,7 +79,7 @@ export default function UserManagement() {
       });
     }
 
-    toast({ title: "Utilisateur créé", description: "Un email de confirmation a été envoyé." });
+    showSuccess("user_created", "Un e-mail de confirmation a été envoyé.");
     setOpen(false);
     setForm({ email: "", password: "", full_name: "", role_id: "" });
     fetchData();
@@ -89,7 +89,7 @@ export default function UserManagement() {
   const handleUpdateRole = async (profileId: string, roleId: string) => {
     const { error } = await supabase.from("profiles").update({ role_id: roleId }).eq("id", profileId);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
       await supabase.from("audit_log").insert({
         action: "modification_role",
@@ -98,7 +98,7 @@ export default function UserManagement() {
         user_id: user?.id,
         details: { new_role_id: roleId },
       });
-      toast({ title: "Rôle mis à jour" });
+      showSuccess("user_updated");
       fetchData();
     }
   };
@@ -108,7 +108,7 @@ export default function UserManagement() {
     const newStatus = currentStatus === "actif" ? "suspendu" : "actif";
     const { error } = await supabase.from("profiles").update({ statut: newStatus }).eq("id", profileId);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
       await supabase.from("audit_log").insert({
         action: newStatus === "suspendu" ? "suspension_utilisateur" : "activation_utilisateur",
@@ -116,7 +116,7 @@ export default function UserManagement() {
         entity_id: profileId,
         user_id: user?.id,
       });
-      toast({ title: newStatus === "suspendu" ? "Compte suspendu" : "Compte activé" });
+      showSuccess(newStatus === "suspendu" ? "user_suspended" : "user_activated");
       fetchData();
     }
   };
@@ -129,7 +129,7 @@ export default function UserManagement() {
       .update({ user_id: linkDialog.userId } as any)
       .eq("id", selectedMemberId);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
       await supabase.from("audit_log").insert({
         action: "liaison_membre_utilisateur",
@@ -138,7 +138,7 @@ export default function UserManagement() {
         user_id: user?.id,
         details: { linked_user_id: linkDialog.userId },
       });
-      toast({ title: "Membre associé avec succès" });
+      showSuccess("user_linked");
       setLinkDialog(null);
       setSelectedMemberId("");
       fetchData();

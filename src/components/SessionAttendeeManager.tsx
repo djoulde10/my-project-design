@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, UserPlus, Users } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 interface Attendee {
   id: string;
@@ -36,7 +36,7 @@ interface Props {
 
 export default function SessionAttendeeManager({ open, onOpenChange, sessionId, organId, onUpdated }: Props) {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [addMemberId, setAddMemberId] = useState("");
@@ -79,8 +79,8 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
       session_id: sessionId,
       member_id: addMemberId,
     }]);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Participant ajouté" }); setAddMemberId(""); }
+    if (error) showError(error);
+    else { showSuccess("attendee_added"); setAddMemberId(""); }
     await fetchData();
     onUpdated();
     setLoading(false);
@@ -89,8 +89,8 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
   const removeAttendee = async (id: string) => {
     setLoading(true);
     const { error } = await supabase.from("session_attendees").delete().eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else toast({ title: "Participant retiré" });
+    if (error) showError(error);
+    else showSuccess("attendee_removed");
     await fetchData();
     onUpdated();
     setLoading(false);
@@ -98,7 +98,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
 
   const togglePresence = async (id: string, current: boolean | null) => {
     const { error } = await supabase.from("session_attendees").update({ is_present: !current }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) showError(error);
     await fetchData();
     onUpdated();
   };
@@ -107,7 +107,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
     const { error } = await supabase.from("session_attendees").update({
       proxy_member_id: proxyMemberId || null,
     }).eq("id", attendeeId);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (error) showError(error);
     await fetchData();
     onUpdated();
   };

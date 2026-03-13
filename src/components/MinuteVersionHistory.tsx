@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { History, Eye, RotateCcw, GitCompare } from "lucide-react";
 
 interface MinuteVersionHistoryProps {
@@ -34,7 +34,7 @@ export default function MinuteVersionHistory({
   onOpenChange,
   onRestore,
 }: MinuteVersionHistoryProps) {
-  const { toast } = useToast();
+  
   const [versions, setVersions] = useState<Version[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewingVersion, setViewingVersion] = useState<Version | null>(null);
@@ -53,7 +53,7 @@ export default function MinuteVersionHistory({
       .order("version_number", { ascending: false });
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
       setLoading(false);
       return;
     }
@@ -82,7 +82,7 @@ export default function MinuteVersionHistory({
     if (!version.content) return;
     onRestore(version.content);
     onOpenChange(false);
-    toast({ title: `Version ${version.version_number} restaurée`, description: "N'oubliez pas de sauvegarder." });
+    showSuccess("pv_version_restored");
   };
 
   const computeDiff = (oldText: string, newText: string) => {

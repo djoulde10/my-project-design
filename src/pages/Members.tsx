@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, User, Pencil, Eye, Search } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const qualityLabels: Record<string, string> = {
   pca: "PCA",
@@ -31,7 +31,7 @@ const emptyForm = {
 };
 
 export default function Members() {
-  const { toast } = useToast();
+  
   const navigate = useNavigate();
   const [members, setMembers] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
@@ -53,15 +53,6 @@ export default function Members() {
 
   useEffect(() => { fetchMembers(); fetchOrgans(); }, []);
 
-  const parseErrorMessage = (msg: string): string => {
-    if (msg.includes("Limite atteinte")) {
-      // Extract the readable part from the DB trigger error
-      const match = msg.match(/Limite atteinte[^"]*/);
-      return match ? match[0] : "Cette fonction est déjà occupée dans cet organe pour cette période de mandat.";
-    }
-    return msg;
-  };
-
   const handleSave = async () => {
     const payload = {
       ...form,
@@ -76,9 +67,9 @@ export default function Members() {
     }
 
     if (error) {
-      toast({ title: "Erreur", description: parseErrorMessage(error.message), variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: editingId ? "Membre modifié" : "Membre ajouté" });
+      showSuccess(editingId ? "member_updated" : "member_created");
       setOpen(false);
       setEditingId(null);
       setForm(emptyForm);

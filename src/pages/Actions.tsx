@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, AlertTriangle, CheckCircle2, Clock, XCircle, Download, FileSpreadsheet } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -23,7 +23,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 };
 
 export default function Actions() {
-  const { toast } = useToast();
+  
   const [actions, setActions] = useState<any[]>([]);
   const [decisions, setDecisions] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
@@ -55,8 +55,8 @@ export default function Actions() {
       responsible_member_id: form.responsible_member_id || null,
       due_date: form.due_date || null,
     }]);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Action créée" }); setOpen(false); setForm({ decision_id: "", title: "", description: "", responsible_member_id: "", due_date: "" }); fetchAll(); }
+    if (error) showError(error);
+    else { showSuccess("action_created"); setOpen(false); setForm({ decision_id: "", title: "", description: "", responsible_member_id: "", due_date: "" }); fetchAll(); }
   };
 
   const updateStatus = async (id: string, status: string) => {

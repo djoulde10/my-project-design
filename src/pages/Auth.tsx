@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { Shield } from "lucide-react";
 
 export default function Auth() {
@@ -14,7 +14,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+  
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,7 +24,7 @@ export default function Auth() {
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        toast({ title: "Erreur de connexion", description: error.message, variant: "destructive" });
+        showError(error);
       } else {
         navigate("/");
       }
@@ -38,9 +38,9 @@ export default function Auth() {
         },
       });
       if (error) {
-        toast({ title: "Erreur d'inscription", description: error.message, variant: "destructive" });
+        showError(error);
       } else {
-        toast({ title: "Inscription réussie", description: "Vérifiez votre email pour confirmer votre compte." });
+        showSuccess("user_created", "Vérifiez votre e-mail pour confirmer votre compte.");
       }
     }
     setLoading(false);

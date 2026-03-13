@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import SessionAttendeeManager from "@/components/SessionAttendeeManager";
 import jsPDF from "jspdf";
 
@@ -37,7 +37,7 @@ interface AgendaItemDraft {
 
 export default function Sessions() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const companyId = useCompanyId();
   const [sessions, setSessions] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
@@ -102,7 +102,7 @@ export default function Sessions() {
     };
     const { data: session, error } = await supabase.from("sessions").insert([payload]).select().single();
     if (error || !session) {
-      toast({ title: "Erreur", description: error?.message, variant: "destructive" });
+      showError(error);
       return;
     }
 
@@ -142,7 +142,7 @@ export default function Sessions() {
       );
     }
 
-    toast({ title: "Session créée avec succès" });
+    showSuccess("session_created");
     setOpen(false);
     setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
     setAgendaDrafts([]);
@@ -171,12 +171,12 @@ export default function Sessions() {
 
   const updateSessionStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("sessions").update({ status: status as any }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Statut mis à jour" }); fetchSessions(); }
+    if (error) showError(error);
+    else { showSuccess("session_status_updated"); fetchSessions(); }
   };
 
   const generateBoardPacket = async (session: any) => {
-    toast({ title: "Génération du Board Packet..." });
+    showInfo("Génération du Board Packet en cours…");
 
     // Fetch full session data
     const [agRes, attRes, docsRes] = await Promise.all([
@@ -249,7 +249,7 @@ export default function Sessions() {
     }
 
     pdf.save(`Board_Packet_${session.numero_session ?? session.id}.pdf`);
-    toast({ title: "Board Packet généré !" });
+    showSuccess("board_packet_generated");
   };
 
   const caSessions = sessions.filter((s) => (s as any).organs?.type === "ca");

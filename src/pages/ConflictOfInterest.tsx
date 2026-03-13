@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, ShieldAlert, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   active: { label: "Actif", color: "bg-amber-100 text-amber-800", icon: AlertTriangle },
@@ -20,7 +20,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 };
 
 export default function ConflictOfInterest() {
-  const { toast } = useToast();
+  
   const { user } = useAuth();
   const [conflicts, setConflicts] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
@@ -49,9 +49,9 @@ export default function ConflictOfInterest() {
       description: form.description || null,
     }]);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: "Conflit d'intérêt déclaré" });
+      showSuccess("conflict_declared");
       setOpen(false);
       setForm({ member_id: "", subject: "", description: "" });
       fetchAll();

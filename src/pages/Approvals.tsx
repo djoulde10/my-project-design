@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { CheckCircle2, XCircle, Clock, Shield, FileText, Users, Gavel } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -42,7 +42,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 export default function Approvals() {
   const { user } = useAuth();
   const { hasPermission, loading: permLoading } = usePermissions();
-  const { toast } = useToast();
+  
   const [requests, setRequests] = useState<ApprovalRequest[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -91,9 +91,9 @@ export default function Approvals() {
       .eq("id", reviewDialog.request.id);
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: reviewDialog.action === "approved" ? "Demande approuvée" : "Demande rejetée" });
+      showSuccess(reviewDialog.action === "approved" ? "approval_approved" : "approval_rejected");
       fetchRequests();
     }
     setSubmitting(false);

@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Upload, FileIcon, Download, Trash2, Paperclip, Search, GripVertical } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const emptyForm = {
   session_id: "", title: "", description: "", presenter_member_id: "",
@@ -22,7 +22,7 @@ const emptyForm = {
 
 export default function AgendaItems() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const companyId = useCompanyId();
   const [items, setItems] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -97,18 +97,18 @@ export default function AgendaItems() {
     if (editingId) {
       const { error } = await supabase.from("agenda_items").update(payload).eq("id", editingId);
       if (error) {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        showError(error);
       } else {
-        toast({ title: "Point d'ODJ modifié" });
+        showSuccess("saved");
         setOpen(false);
         fetchAll();
       }
     } else {
       const { error } = await supabase.from("agenda_items").insert([payload]);
       if (error) {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        showError(error);
       } else {
-        toast({ title: "Point d'ODJ ajouté" });
+        showSuccess("saved");
         setOpen(false);
         fetchAll();
       }
@@ -131,7 +131,7 @@ export default function AgendaItems() {
     const { error: uploadError } = await supabase.storage.from("session-documents").upload(filePath, docFile);
 
     if (uploadError) {
-      toast({ title: "Erreur upload", description: uploadError.message, variant: "destructive" });
+      showError(uploadError);
       setUploading(false);
       return;
     }
@@ -147,9 +147,9 @@ export default function AgendaItems() {
     });
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: "Document attaché au point d'ODJ" });
+      showSuccess("document_uploaded");
       setDocDialogOpen(false);
       fetchAll();
     }
@@ -165,9 +165,9 @@ export default function AgendaItems() {
     await supabase.storage.from("session-documents").remove([doc.file_path]);
     const { error } = await supabase.from("documents").delete().eq("id", doc.id);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: "Document supprimé" });
+      showSuccess("deleted");
       fetchAll();
     }
   };

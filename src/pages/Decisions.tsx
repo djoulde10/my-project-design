@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Gavel, PenTool, CheckCircle2, Download, FileSpreadsheet } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -35,7 +35,7 @@ const voteLabels: Record<string, string> = {
 };
 
 export default function Decisions() {
-  const { toast } = useToast();
+  
   const { user } = useAuth();
   const [decisions, setDecisions] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -89,9 +89,9 @@ export default function Decisions() {
       signed_by: user?.id,
     });
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: "Résolution signée" });
+      showSuccess("decision_signed");
       fetchAll();
     }
     setSigningId(null);
@@ -115,9 +115,9 @@ export default function Decisions() {
       vote_abstention: form.vote_abstention,
     }]);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: "Résolution créée" });
+      showSuccess("decision_created");
       setOpen(false);
       setForm({ session_id: "", texte: "", type_vote: "unanimite", responsable_execution: "", date_effet: "", statut: "adoptee", vote_pour: 0, vote_contre: 0, vote_abstention: 0 });
       fetchAll();

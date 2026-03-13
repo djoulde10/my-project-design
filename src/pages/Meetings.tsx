@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
 import MeetingAIAnalysis from "@/components/MeetingAIAnalysis";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
 
@@ -37,7 +37,7 @@ const pvStatusColors: Record<string, string> = {
 type PvStatus = "brouillon" | "valide" | "signe";
 
 export default function Meetings() {
-  const { toast } = useToast();
+  
   const { user } = useAuth();
   const companyId = useCompanyId();
   const [templates, setTemplates] = useState<any[]>([]);
@@ -139,7 +139,7 @@ export default function Meetings() {
       setIsLiveMode(true);
       await scribe.connect({ token: data.token, microphone: { echoCancellation: true, noiseSuppression: true } });
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
       setIsLiveMode(false);
     }
   };
@@ -182,9 +182,9 @@ export default function Meetings() {
       // Show in editor for review
       setPendingPV({ content: generatedPV, sessionId, title });
       setPendingPVContent(generatedPV);
-      toast({ title: "PV généré", description: "Relisez et modifiez le contenu avant d'enregistrer." });
+      showSuccess("pv_generated");
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
     } finally {
       setGenerating(false);
     }
@@ -194,7 +194,7 @@ export default function Meetings() {
   const generatePVFromLive = async () => {
     const finalTranscript = committedTextRef.current;
     if (!finalTranscript) {
-      toast({ title: "Erreur", description: "Aucune transcription disponible", variant: "destructive" });
+      showError("Aucune transcription disponible");
       return;
     }
     if (scribe.isConnected) await stopLiveTranscription();
@@ -205,7 +205,7 @@ export default function Meetings() {
   // Generate from uploaded file
   const createWithUploadedFile = async () => {
     if (!uploadedFile || !newTitle) {
-      toast({ title: "Erreur", description: "Titre et fichier audio requis", variant: "destructive" });
+      showError("Le titre et le fichier audio sont requis.");
       return;
     }
     setCreateOpen(false);
@@ -213,11 +213,11 @@ export default function Meetings() {
     const fileName = `${companyId}/${Date.now()}_${newTitle.replace(/\s+/g, "_")}.${uploadedFile.name.split(".").pop()}`;
     const { error: uploadError } = await supabase.storage.from("meeting-audio").upload(fileName, uploadedFile);
     if (uploadError) {
-      toast({ title: "Erreur upload", description: uploadError.message, variant: "destructive" });
+      showError(uploadError);
       return;
     }
 
-    toast({ title: "Transcription en cours..." });
+    showInfo("Transcription en cours…");
     setUploadTranscribing(true);
     try {
       const formData = new FormData();
@@ -241,10 +241,10 @@ export default function Meetings() {
       const transcriptionData = await tRes.json();
       const transcriptionText = transcriptionData.text || "";
       setUploadTranscribing(false);
-      toast({ title: "Transcription terminée", description: "Génération du PV en cours..." });
+      showInfo("Transcription terminée", "Génération du PV en cours…");
       await generateAndPreview(transcriptionText, newTitle, newSessionId);
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
     } finally {
       setUploadTranscribing(false);
       resetForm();
@@ -256,7 +256,7 @@ export default function Meetings() {
     if (!pendingPV) return;
     const sessionId = pendingPV.sessionId;
     if (!sessionId) {
-      toast({ title: "Erreur", description: "Veuillez associer une session", variant: "destructive" });
+      showError("Veuillez associer une session au procès-verbal.");
       return;
     }
     const { data, error } = await supabase.from("minutes").insert({
@@ -265,7 +265,7 @@ export default function Meetings() {
       pv_status: "brouillon" as PvStatus,
     }).select().single();
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
       return;
     }
     if (data) {
@@ -277,7 +277,7 @@ export default function Meetings() {
         modified_by: user?.id,
       });
     }
-    toast({ title: "Procès-verbal enregistré" });
+    showSuccess("pv_updated");
     setPendingPV(null);
     setPendingPVContent("");
     fetchAll();
@@ -287,7 +287,7 @@ export default function Meetings() {
   const createPV = async () => {
     const { data, error } = await supabase.from("minutes").insert([pvForm]).select().single();
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
       return;
     }
     if (data) {
@@ -299,7 +299,7 @@ export default function Meetings() {
         modified_by: user?.id,
       });
     }
-    toast({ title: "PV créé" });
+    showSuccess("pv_created");
     setPvOpen(false);
     setPvForm({ session_id: "", content: "", pv_status: "brouillon" });
     fetchAll();
@@ -319,7 +319,7 @@ export default function Meetings() {
 
     const { error } = await supabase.from("minutes").update({ content: editingContent }).eq("id", viewMinute.id);
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
       return;
     }
     await supabase.from("minute_versions").insert({
@@ -329,7 +329,7 @@ export default function Meetings() {
       summary: "Modification manuelle",
       modified_by: user?.id,
     });
-    toast({ title: "PV sauvegardé" });
+    showSuccess("saved");
     setViewMinute({ ...viewMinute, content: editingContent });
     setIsEditing(false);
     fetchAll();
@@ -337,14 +337,14 @@ export default function Meetings() {
 
   const updateMinuteStatus = async (id: string, status: PvStatus) => {
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Statut mis à jour" }); setEditingStatusId(null); fetchAll(); }
+    if (error) showError(error);
+    else { showSuccess("pv_status_updated"); setEditingStatusId(null); fetchAll(); }
   };
 
   const deleteMinute = async (id: string) => {
     await supabase.from("minute_versions").delete().eq("minute_id", id);
     await supabase.from("minutes").delete().eq("id", id);
-    toast({ title: "PV supprimé" });
+    showSuccess("deleted");
     fetchAll();
   };
 
@@ -427,7 +427,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       audioPlayerRef.current = audio;
       await audio.play();
     } catch (e: any) {
-      toast({ title: "Erreur TTS", description: e.message, variant: "destructive" });
+      showError(e);
     } finally {
       setTtsLoading(false);
     }
@@ -454,13 +454,13 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
         body: { templateId: tpl.id },
       });
       if (parseErr) console.error("Parse error:", parseErr);
-      toast({ title: "Modèle importé", description: parseData?.content ? "Structure analysée" : "Importé sans analyse" });
+      showInfo("Modèle importé", parseData?.content ? "Structure analysée avec succès." : "Importé sans analyse.");
       setTemplateOpen(false);
       setTemplateName("");
       setTemplateFile(null);
       fetchAll();
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
     } finally {
       setParsingTemplate(false);
     }
@@ -469,7 +469,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
   const deleteTemplate = async (id: string, filePath: string) => {
     await supabase.storage.from("pv-templates").remove([filePath]);
     await supabase.from("meeting_templates").delete().eq("id", id);
-    toast({ title: "Modèle supprimé" });
+    showSuccess("deleted");
     fetchAll();
   };
 
@@ -560,9 +560,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       signed_by: user?.id,
     });
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: "Procès-verbal signé avec succès" });
+      showSuccess("decision_signed");
       await fetchSignatures(minuteId);
       // Also update PV status to "signe" if validated
       if (viewMinute?.pv_status === "valide") {

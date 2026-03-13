@@ -13,7 +13,7 @@ import {
   Brain, CheckCircle2, XCircle, Edit, Loader2, ListChecks, Vote,
   CalendarPlus, FileText, AlertTriangle, Sparkles
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
 
@@ -54,7 +54,7 @@ interface MeetingAIAnalysisProps {
 }
 
 export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, members, onDecisionCreated, onActionCreated }: MeetingAIAnalysisProps) {
-  const { toast } = useToast();
+  
   const { user } = useAuth();
   const companyId = useCompanyId();
   const [analyzing, setAnalyzing] = useState(false);
@@ -103,10 +103,10 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
         created_by: user?.id,
       } as any, { onConflict: "minute_id" });
 
-      toast({ title: "Analyse terminée", description: "Les suggestions de l'IA sont prêtes à être examinées." });
+      showSuccess("ai_analysis_complete");
     } catch (e: any) {
       setError(e.message);
-      toast({ title: "Erreur d'analyse", description: e.message, variant: "destructive" });
+      showError(e);
     } finally {
       setAnalyzing(false);
     }
@@ -125,10 +125,10 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       });
       if (error) throw error;
       setDecisionStatuses(prev => ({ ...prev, [index]: "accepted" }));
-      toast({ title: "Résolution enregistrée" });
+      showSuccess("decision_created");
       onDecisionCreated?.();
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
     }
   };
 
@@ -143,10 +143,10 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       });
       if (error) throw error;
       setActionStatuses(prev => ({ ...prev, [index]: "accepted" }));
-      toast({ title: "Action enregistrée" });
+      showSuccess("action_created");
       onActionCreated?.();
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      showError(e);
     }
   };
 

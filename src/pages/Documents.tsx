@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, FileIcon, Download, Search, FolderOpen, FileText, Gavel, BookOpen, Scale, Presentation, File } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const categories = [
   { value: "all", label: "Tous", icon: FolderOpen },
@@ -45,7 +45,7 @@ const categoryColors: Record<string, string> = {
 
 export default function Documents() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const companyId = useCompanyId();
   const [documents, setDocuments] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -75,7 +75,7 @@ export default function Documents() {
     const { error: uploadError } = await supabase.storage.from("session-documents").upload(filePath, file);
 
     if (uploadError) {
-      toast({ title: "Erreur upload", description: uploadError.message, variant: "destructive" });
+      showError(uploadError);
       setUploading(false);
       return;
     }
@@ -91,9 +91,9 @@ export default function Documents() {
     });
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      showError(error);
     } else {
-      toast({ title: "Document uploadé" });
+      showSuccess("document_uploaded");
       setOpen(false);
       setForm({ session_id: "", name: "", category: "autre" });
       setFile(null);
