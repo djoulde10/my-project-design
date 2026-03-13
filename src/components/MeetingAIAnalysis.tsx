@@ -106,7 +106,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       showSuccess("ai_analysis_complete");
     } catch (e: any) {
       setError(e.message);
-      showError(e);
+      showError(e, "Échec de l'analyse IA");
     } finally {
       setAnalyzing(false);
     }
