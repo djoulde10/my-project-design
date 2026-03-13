@@ -131,7 +131,7 @@ export default function AgendaItems() {
     const { error: uploadError } = await supabase.storage.from("session-documents").upload(filePath, docFile);
 
     if (uploadError) {
-      showError(uploadError);
+      showError(uploadError, "Impossible de téléverser le document");
       setUploading(false);
       return;
     }
