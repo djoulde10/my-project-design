@@ -48,7 +48,7 @@ export default function UserManagement() {
   // Créer un utilisateur via signup
   const handleCreate = async () => {
     if (!form.email || !form.password || !form.full_name || !form.role_id) {
-      toast({ title: "Erreur", description: "Tous les champs sont requis", variant: "destructive" });
+      showError("Tous les champs sont requis pour créer un utilisateur.");
       return;
     }
 
