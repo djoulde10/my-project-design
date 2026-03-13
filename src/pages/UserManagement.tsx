@@ -79,7 +79,7 @@ export default function UserManagement() {
       });
     }
 
-    toast({ title: "Utilisateur créé", description: "Un email de confirmation a été envoyé." });
+    showSuccess("user_created", "Un e-mail de confirmation a été envoyé.");
     setOpen(false);
     setForm({ email: "", password: "", full_name: "", role_id: "" });
     fetchData();
