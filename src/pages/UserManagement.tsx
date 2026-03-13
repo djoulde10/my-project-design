@@ -129,7 +129,7 @@ export default function UserManagement() {
       .update({ user_id: linkDialog.userId } as any)
       .eq("id", selectedMemberId);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de lier le membre à l'utilisateur");
     } else {
       await supabase.from("audit_log").insert({
         action: "liaison_membre_utilisateur",

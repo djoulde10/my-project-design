@@ -115,7 +115,7 @@ export default function Decisions() {
       vote_abstention: form.vote_abstention,
     }]);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de créer la résolution");
     } else {
       showSuccess("decision_created");
       setOpen(false);

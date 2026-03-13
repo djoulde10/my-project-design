@@ -91,7 +91,7 @@ export default function Documents() {
     });
 
     if (error) {
-      showError(error);
+      showError(error, "Impossible d'enregistrer le document");
     } else {
       showSuccess("document_uploaded");
       setOpen(false);

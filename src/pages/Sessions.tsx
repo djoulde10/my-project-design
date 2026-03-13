@@ -171,7 +171,7 @@ export default function Sessions() {
 
   const updateSessionStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("sessions").update({ status: status as any }).eq("id", id);
-    if (error) showError(error);
+    if (error) showError(error, "Impossible de mettre à jour le statut de la session");
     else { showSuccess("session_status_updated"); fetchSessions(); }
   };
 

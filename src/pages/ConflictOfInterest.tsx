@@ -49,7 +49,7 @@ export default function ConflictOfInterest() {
       description: form.description || null,
     }]);
     if (error) {
-      showError(error);
+      showError(error, "Impossible de déclarer le conflit d'intérêt");
     } else {
       showSuccess("conflict_declared");
       setOpen(false);

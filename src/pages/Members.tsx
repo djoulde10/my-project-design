@@ -67,7 +67,7 @@ export default function Members() {
     }
 
     if (error) {
-      showError(error);
+      showError(error, editingId ? "Impossible de modifier le membre" : "Impossible d'ajouter le membre");
     } else {
       showSuccess(editingId ? "member_updated" : "member_created");
       setOpen(false);

@@ -38,7 +38,7 @@ export default function Auth() {
         },
       });
       if (error) {
-        showError(error);
+        showError(error, "Échec de l'inscription");
       } else {
         showSuccess("user_created", "Vérifiez votre e-mail pour confirmer votre compte.");
       }
