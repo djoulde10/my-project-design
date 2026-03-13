@@ -149,7 +149,7 @@ export default function AgendaItems() {
     if (error) {
       showError(error);
     } else {
-      toast({ title: "Document attaché au point d'ODJ" });
+      showSuccess("document_uploaded");
       setDocDialogOpen(false);
       fetchAll();
     }
