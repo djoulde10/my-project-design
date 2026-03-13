@@ -241,7 +241,7 @@ export default function Meetings() {
       const transcriptionData = await tRes.json();
       const transcriptionText = transcriptionData.text || "";
       setUploadTranscribing(false);
-      toast({ title: "Transcription terminée", description: "Génération du PV en cours..." });
+      showInfo("Transcription terminée", "Génération du PV en cours…");
       await generateAndPreview(transcriptionText, newTitle, newSessionId);
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
