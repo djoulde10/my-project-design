@@ -337,8 +337,8 @@ export default function Meetings() {
 
   const updateMinuteStatus = async (id: string, status: PvStatus) => {
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Statut mis à jour" }); setEditingStatusId(null); fetchAll(); }
+    if (error) showError(error);
+    else { showSuccess("pv_status_updated"); setEditingStatusId(null); fetchAll(); }
   };
 
   const deleteMinute = async (id: string) => {
