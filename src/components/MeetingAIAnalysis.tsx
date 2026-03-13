@@ -125,7 +125,7 @@ export default function MeetingAIAnalysis({ minuteId, sessionId, pvContent, memb
       });
       if (error) throw error;
       setDecisionStatuses(prev => ({ ...prev, [index]: "accepted" }));
-      toast({ title: "Résolution enregistrée" });
+      showSuccess("decision_created");
       onDecisionCreated?.();
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
