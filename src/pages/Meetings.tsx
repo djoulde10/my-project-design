@@ -265,7 +265,7 @@ export default function Meetings() {
       pv_status: "brouillon" as PvStatus,
     }).select().single();
     if (error) {
-      showError(error);
+      showError(error, "Impossible d'enregistrer le procès-verbal");
       return;
     }
     if (data) {
