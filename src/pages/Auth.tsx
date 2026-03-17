@@ -17,6 +17,25 @@ export default function Auth() {
   
   const navigate = useNavigate();
 
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) {
+      showError(error, "Impossible d'envoyer le lien de réinitialisation");
+    } else {
+      showSuccess("saved", "Un e-mail de réinitialisation a été envoyé. Vérifiez votre boîte de réception.");
+      setShowForgotPassword(false);
+    }
+    setResetLoading(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
