@@ -97,11 +97,42 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans antialiased;
     font-family: 'DM Sans', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+/* Enhanced table styles for desktop */
+@layer components {
+  .prose table {
+    @apply w-full border-collapse;
+  }
+
+  /* Better card hover on desktop */
+  @media (min-width: 1024px) {
+    [data-slot="card"]:hover,
+    .group:hover .group-hover\:shadow-md {
+      box-shadow: 0 4px 24px -4px hsl(var(--foreground) / 0.08);
+    }
+  }
+
+  /* Scrollbar styling for desktop */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.35);
   }
 }
