@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { showSuccess, showError } from "@/lib/toastHelpers";
-import { Shield } from "lucide-react";
+import { Shield, ArrowLeft } from "lucide-react";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -67,67 +67,75 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+      {/* Decorative background for desktop */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/4 -right-1/4 w-[600px] h-[600px] rounded-full bg-primary/[0.04] blur-3xl" />
+        <div className="absolute -bottom-1/4 -left-1/4 w-[500px] h-[500px] rounded-full bg-accent/[0.06] blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4">
-            <Shield className="w-8 h-8 text-primary-foreground" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary shadow-lg shadow-primary/25 mb-4">
+            <Shield className="w-7 h-7 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">GovBoard</h1>
-          <p className="text-muted-foreground mt-1">Gestion des sessions CA & Comité d'Audit</p>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">GovBoard</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Plateforme de gouvernance d'entreprise</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{isLogin ? "Connexion" : "Inscription"}</CardTitle>
-            <CardDescription>
-              {isLogin ? "Accédez à votre espace de gouvernance" : "Créez votre compte"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
+        {!showForgotPassword ? (
+          <Card className="shadow-xl shadow-foreground/[0.03] border-border/60">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl">{isLogin ? "Connexion" : "Inscription"}</CardTitle>
+              <CardDescription>
+                {isLogin ? "Accédez à votre espace de gouvernance" : "Créez votre compte"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {!isLogin && (
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Nom complet</Label>
+                    <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder="Jean Dupont" />
+                  </div>
+                )}
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Nom complet</Label>
-                  <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="vous@entreprise.com" />
                 </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Mot de passe</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Chargement..." : isLogin ? "Se connecter" : "S'inscrire"}
-              </Button>
-              {isLogin && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Mot de passe</Label>
+                    {isLogin && (
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(true)}
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        Mot de passe oublié ?
+                      </button>
+                    )}
+                  </div>
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" />
+                </div>
+                <Button type="submit" className="w-full h-10" disabled={loading}>
+                  {loading ? "Chargement..." : isLogin ? "Se connecter" : "S'inscrire"}
+                </Button>
+              </form>
+              <div className="mt-5 pt-4 border-t text-center">
                 <button
                   type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="text-sm text-muted-foreground hover:text-primary hover:underline w-full text-right"
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Mot de passe oublié ?
+                  {isLogin ? "Pas de compte ? S'inscrire" : "Déjà un compte ? Se connecter"}
                 </button>
-              )}
-            </form>
-            <div className="mt-4 text-center">
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-primary hover:underline"
-              >
-                {isLogin ? "Pas de compte ? S'inscrire" : "Déjà un compte ? Se connecter"}
-              </button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {showForgotPassword && (
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle className="text-lg">Réinitialiser le mot de passe</CardTitle>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="shadow-xl shadow-foreground/[0.03] border-border/60">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl">Réinitialiser le mot de passe</CardTitle>
               <CardDescription>Entrez votre e-mail pour recevoir un lien de réinitialisation.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -140,21 +148,32 @@ export default function Auth() {
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
                     required
-                    placeholder="votre@email.com"
+                    placeholder="vous@entreprise.com"
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button type="submit" className="flex-1" disabled={resetLoading}>
+                  <Button type="submit" className="flex-1 h-10" disabled={resetLoading}>
                     {resetLoading ? "Envoi..." : "Envoyer le lien"}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => setShowForgotPassword(false)}>
-                    Annuler
                   </Button>
                 </div>
               </form>
+              <div className="mt-4 pt-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(false)}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Retour à la connexion
+                </button>
+              </div>
             </CardContent>
           </Card>
         )}
+
+        <p className="text-center text-[11px] text-muted-foreground/60 mt-6">
+          © {new Date().getFullYear()} GovBoard — Tous droits réservés
+        </p>
       </div>
     </div>
   );
