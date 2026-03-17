@@ -17,6 +17,25 @@ export default function Auth() {
   
   const navigate = useNavigate();
 
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) {
+      showError(error, "Impossible d'envoyer le lien de réinitialisation");
+    } else {
+      showSuccess("saved", "Un e-mail de réinitialisation a été envoyé. Vérifiez votre boîte de réception.");
+      setShowForgotPassword(false);
+    }
+    setResetLoading(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -83,6 +102,15 @@ export default function Auth() {
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Chargement..." : isLogin ? "Se connecter" : "S'inscrire"}
               </Button>
+              {isLogin && (
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-sm text-muted-foreground hover:text-primary hover:underline w-full text-right"
+                >
+                  Mot de passe oublié ?
+                </button>
+              )}
             </form>
             <div className="mt-4 text-center">
               <button
@@ -95,6 +123,38 @@ export default function Auth() {
             </div>
           </CardContent>
         </Card>
+
+        {showForgotPassword && (
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="text-lg">Réinitialiser le mot de passe</CardTitle>
+              <CardDescription>Entrez votre e-mail pour recevoir un lien de réinitialisation.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="resetEmail">Email</Label>
+                  <Input
+                    id="resetEmail"
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                    placeholder="votre@email.com"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" className="flex-1" disabled={resetLoading}>
+                    {resetLoading ? "Envoi..." : "Envoyer le lien"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowForgotPassword(false)}>
+                    Annuler
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
