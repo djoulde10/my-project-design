@@ -95,6 +95,8 @@ export default function RichTextEditor({
 
   if (!editor) return null;
 
+  const chain = () => editor.chain().focus() as any;
+
   return (
     <div className={cn("rounded-lg border border-input bg-background overflow-hidden shadow-sm transition-shadow focus-within:shadow-md focus-within:ring-1 focus-within:ring-ring/30", className)}>
       {/* Toolbar */}
