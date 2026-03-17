@@ -101,27 +101,27 @@ export default function RichTextEditor({
     <div className={cn("rounded-lg border border-input bg-background overflow-hidden shadow-sm transition-shadow focus-within:shadow-md focus-within:ring-1 focus-within:ring-ring/30", className)}>
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-0.5 border-b border-input px-1.5 py-1 bg-muted/40">
-        <ToolbarButton active={editor.isActive("paragraph") && !editor.isActive("heading")} onClick={() => editor.chain().focus().setParagraph().run()} icon={<Pilcrow className="w-4 h-4" />} label="Paragraphe" />
-        <ToolbarButton active={editor.isActive("heading", { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} icon={<Heading1 className="w-4 h-4" />} label="Titre 1" />
-        <ToolbarButton active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} icon={<Heading2 className="w-4 h-4" />} label="Titre 2" />
-        <ToolbarButton active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} icon={<Heading3 className="w-4 h-4" />} label="Titre 3" />
+        <ToolbarButton active={editor.isActive("paragraph") && !editor.isActive("heading")} onClick={() => chain().setParagraph().run()} icon={<Pilcrow className="w-4 h-4" />} label="Paragraphe" />
+        <ToolbarButton active={editor.isActive("heading", { level: 1 })} onClick={() => chain().toggleHeading({ level: 1 }).run()} icon={<Heading1 className="w-4 h-4" />} label="Titre 1" />
+        <ToolbarButton active={editor.isActive("heading", { level: 2 })} onClick={() => chain().toggleHeading({ level: 2 }).run()} icon={<Heading2 className="w-4 h-4" />} label="Titre 2" />
+        <ToolbarButton active={editor.isActive("heading", { level: 3 })} onClick={() => chain().toggleHeading({ level: 3 }).run()} icon={<Heading3 className="w-4 h-4" />} label="Titre 3" />
 
         <Separator orientation="vertical" className="mx-0.5 h-6" />
 
-        <ToolbarButton active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} icon={<Bold className="w-4 h-4" />} label="Gras (Ctrl+B)" />
-        <ToolbarButton active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} icon={<Italic className="w-4 h-4" />} label="Italique (Ctrl+I)" />
-        <ToolbarButton active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()} icon={<UnderlineIcon className="w-4 h-4" />} label="Souligné (Ctrl+U)" />
+        <ToolbarButton active={editor.isActive("bold")} onClick={() => chain().toggleBold().run()} icon={<Bold className="w-4 h-4" />} label="Gras (Ctrl+B)" />
+        <ToolbarButton active={editor.isActive("italic")} onClick={() => chain().toggleItalic().run()} icon={<Italic className="w-4 h-4" />} label="Italique (Ctrl+I)" />
+        <ToolbarButton active={editor.isActive("underline")} onClick={() => chain().toggleUnderline().run()} icon={<UnderlineIcon className="w-4 h-4" />} label="Souligné (Ctrl+U)" />
 
         <Separator orientation="vertical" className="mx-0.5 h-6" />
 
-        <ToolbarButton active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()} icon={<List className="w-4 h-4" />} label="Liste à puces" />
-        <ToolbarButton active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()} icon={<ListOrdered className="w-4 h-4" />} label="Liste numérotée" />
-        <ToolbarButton active={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()} icon={<Quote className="w-4 h-4" />} label="Citation" />
+        <ToolbarButton active={editor.isActive("bulletList")} onClick={() => chain().toggleBulletList().run()} icon={<List className="w-4 h-4" />} label="Liste à puces" />
+        <ToolbarButton active={editor.isActive("orderedList")} onClick={() => chain().toggleOrderedList().run()} icon={<ListOrdered className="w-4 h-4" />} label="Liste numérotée" />
+        <ToolbarButton active={editor.isActive("blockquote")} onClick={() => chain().toggleBlockquote().run()} icon={<Quote className="w-4 h-4" />} label="Citation" />
 
         <Separator orientation="vertical" className="mx-0.5 h-6" />
 
         <ToolbarButton active={editor.isActive("link")} onClick={setLink} icon={<LinkIcon className="w-4 h-4" />} label="Insérer un lien" />
-        <ToolbarButton active={false} onClick={() => editor.chain().focus().unsetLink().run()} icon={<Unlink className="w-4 h-4" />} label="Supprimer le lien" disabled={!editor.isActive("link")} />
+        <ToolbarButton active={false} onClick={() => chain().unsetLink().run()} icon={<Unlink className="w-4 h-4" />} label="Supprimer le lien" disabled={!editor.isActive("link")} />
 
         <Separator orientation="vertical" className="mx-0.5 h-6" />
 
@@ -136,24 +136,24 @@ export default function RichTextEditor({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
+            <DropdownMenuItem onClick={() => chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
               <Plus className="w-4 h-4 mr-2" /> Insérer un tableau (3×3)
             </DropdownMenuItem>
             {editor.isActive("table") && (
               <>
-                <DropdownMenuItem onClick={() => editor.chain().focus().addColumnAfter().run()}>
+                <DropdownMenuItem onClick={() => chain().addColumnAfter().run()}>
                   <Plus className="w-4 h-4 mr-2" /> Ajouter une colonne
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => editor.chain().focus().addRowAfter().run()}>
+                <DropdownMenuItem onClick={() => chain().addRowAfter().run()}>
                   <Plus className="w-4 h-4 mr-2" /> Ajouter une ligne
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => editor.chain().focus().deleteColumn().run()}>
+                <DropdownMenuItem onClick={() => chain().deleteColumn().run()}>
                   <Minus className="w-4 h-4 mr-2" /> Supprimer la colonne
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => editor.chain().focus().deleteRow().run()}>
+                <DropdownMenuItem onClick={() => chain().deleteRow().run()}>
                   <Minus className="w-4 h-4 mr-2" /> Supprimer la ligne
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => editor.chain().focus().deleteTable().run()} className="text-destructive">
+                <DropdownMenuItem onClick={() => chain().deleteTable().run()} className="text-destructive">
                   <Trash2 className="w-4 h-4 mr-2" /> Supprimer le tableau
                 </DropdownMenuItem>
               </>
@@ -163,19 +163,19 @@ export default function RichTextEditor({
 
         <Separator orientation="vertical" className="mx-0.5 h-6" />
 
-        <ToolbarButton active={false} onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()} icon={<RemoveFormatting className="w-4 h-4" />} label="Supprimer le formatage" />
+        <ToolbarButton active={false} onClick={() => chain().clearNodes().unsetAllMarks().run()} icon={<RemoveFormatting className="w-4 h-4" />} label="Supprimer le formatage" />
 
         <div className="flex-1" />
 
-        <ToolbarButton active={false} onClick={() => editor.chain().focus().undo().run()} icon={<Undo2 className="w-4 h-4" />} label="Annuler (Ctrl+Z)" disabled={!editor.can().undo()} />
-        <ToolbarButton active={false} onClick={() => editor.chain().focus().redo().run()} icon={<Redo2 className="w-4 h-4" />} label="Rétablir (Ctrl+Y)" disabled={!editor.can().redo()} />
+        <ToolbarButton active={false} onClick={() => chain().undo().run()} icon={<Undo2 className="w-4 h-4" />} label="Annuler (Ctrl+Z)" disabled={!editor.can().undo()} />
+        <ToolbarButton active={false} onClick={() => chain().redo().run()} icon={<Redo2 className="w-4 h-4" />} label="Rétablir (Ctrl+Y)" disabled={!editor.can().redo()} />
       </div>
 
       {/* Bubble Menu */}
       <BubbleMenu editor={editor} className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg">
-        <BubbleButton active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} icon={<Bold className="w-3.5 h-3.5" />} />
-        <BubbleButton active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} icon={<Italic className="w-3.5 h-3.5" />} />
-        <BubbleButton active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()} icon={<UnderlineIcon className="w-3.5 h-3.5" />} />
+        <BubbleButton active={editor.isActive("bold")} onClick={() => chain().toggleBold().run()} icon={<Bold className="w-3.5 h-3.5" />} />
+        <BubbleButton active={editor.isActive("italic")} onClick={() => chain().toggleItalic().run()} icon={<Italic className="w-3.5 h-3.5" />} />
+        <BubbleButton active={editor.isActive("underline")} onClick={() => chain().toggleUnderline().run()} icon={<UnderlineIcon className="w-3.5 h-3.5" />} />
         <BubbleButton active={editor.isActive("link")} onClick={setLink} icon={<LinkIcon className="w-3.5 h-3.5" />} />
       </BubbleMenu>
 
