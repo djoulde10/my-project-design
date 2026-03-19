@@ -115,6 +115,19 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin }: {
         </nav>
       </ScrollArea>
 
+      {isSuperAdmin && (
+        <div className="px-3 pb-1">
+          <Link
+            to="/admin"
+            onClick={onNavigate}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors font-medium"
+          >
+            <Shield className="w-[18px] h-[18px]" />
+            <span>Super Admin</span>
+          </Link>
+        </div>
+      )}
+
       <div className="p-3 border-t border-sidebar-border/60">
         <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-sidebar-accent/30 transition-colors">
           <div className="w-8 h-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-xs font-semibold text-sidebar-primary">
