@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import AppLayout from "@/components/AppLayout";
+import AdminLayout from "@/components/AdminLayout";
 import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
@@ -25,6 +26,15 @@ import Approvals from "@/pages/Approvals";
 import NotFound from "./pages/NotFound";
 import AIAssistant from "@/components/AIAssistant";
 
+// Admin pages
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminOrganizations from "@/pages/admin/AdminOrganizations";
+import AdminPlans from "@/pages/admin/AdminPlans";
+import AdminAnalytics from "@/pages/admin/AdminAnalytics";
+import AdminBilling from "@/pages/admin/AdminBilling";
+import AdminLogs from "@/pages/admin/AdminLogs";
+import AdminSettings from "@/pages/admin/AdminSettings";
+
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -32,6 +42,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Chargement...</div>;
   if (!user) return <Navigate to="/auth" replace />;
   return <AppLayout>{children}</AppLayout>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Chargement...</div>;
+  if (!user) return <Navigate to="/auth" replace />;
+  return <AdminLayout>{children}</AdminLayout>;
 }
 
 function AuthRoute() {
@@ -64,6 +81,16 @@ function ProtectedApp() {
         <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
         <Route path="/approvals" element={<ProtectedRoute><Approvals /></ProtectedRoute>} />
+
+        {/* Super Admin routes */}
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/organizations" element={<AdminRoute><AdminOrganizations /></AdminRoute>} />
+        <Route path="/admin/plans" element={<AdminRoute><AdminPlans /></AdminRoute>} />
+        <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+        <Route path="/admin/billing" element={<AdminRoute><AdminBilling /></AdminRoute>} />
+        <Route path="/admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
+        <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
       {user && <AIAssistant />}
