@@ -147,6 +147,7 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin }: {
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
+  const { isSuperAdmin } = useSuperAdmin();
   const location = useLocation();
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -156,7 +157,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-[260px] flex-shrink-0 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border/40">
-          <SidebarContent user={user} signOut={signOut} location={location} />
+          <SidebarContent user={user} signOut={signOut} location={location} isSuperAdmin={isSuperAdmin} />
         </aside>
       )}
 
