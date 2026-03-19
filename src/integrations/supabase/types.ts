@@ -1275,7 +1275,7 @@ export type Database = {
     Enums: {
       action_status: "en_cours" | "terminee" | "en_retard" | "annulee"
       agenda_nature: "information" | "decision"
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "super_admin"
       member_quality:
         | "pca"
         | "administrateur"
@@ -1421,7 +1421,7 @@ export const Constants = {
     Enums: {
       action_status: ["en_cours", "terminee", "en_retard", "annulee"],
       agenda_nature: ["information", "decision"],
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "super_admin"],
       member_quality: [
         "pca",
         "administrateur",
