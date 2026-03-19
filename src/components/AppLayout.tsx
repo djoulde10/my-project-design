@@ -166,7 +166,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-72 p-0 bg-sidebar text-sidebar-foreground flex flex-col">
             <SheetTitle className="sr-only">Navigation</SheetTitle>
-            <SidebarContent user={user} signOut={signOut} location={location} onNavigate={() => setMobileOpen(false)} />
+            <SidebarContent user={user} signOut={signOut} location={location} onNavigate={() => setMobileOpen(false)} isSuperAdmin={isSuperAdmin} />
           </SheetContent>
         </Sheet>
       )}
