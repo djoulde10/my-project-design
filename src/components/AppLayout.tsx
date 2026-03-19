@@ -60,11 +60,12 @@ const navSections = [
   },
 ];
 
-function SidebarContent({ user, signOut, location, onNavigate }: {
+function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin }: {
   user: any;
   signOut: () => void;
   location: any;
   onNavigate?: () => void;
+  isSuperAdmin?: boolean;
 }) {
   return (
     <>
