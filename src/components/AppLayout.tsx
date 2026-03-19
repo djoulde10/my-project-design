@@ -1,6 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { useSuperAdmin } from "@/hooks/useSuperAdmin";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationBell from "@/components/NotificationBell";
 import GlobalSearch from "@/components/GlobalSearch";
