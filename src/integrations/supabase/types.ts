@@ -248,6 +248,8 @@ export type Database = {
       }
       companies: {
         Row: {
+          auto_renew: boolean | null
+          billing_cycle: string | null
           couleur_principale: string | null
           created_at: string
           date_expiration: string | null
@@ -256,11 +258,16 @@ export type Database = {
           nom: string
           pays: string | null
           plan_abonnement: string | null
+          plan_id: string | null
           secteur: string | null
           statut: string | null
+          subscription_end: string | null
+          subscription_start: string | null
           updated_at: string
         }
         Insert: {
+          auto_renew?: boolean | null
+          billing_cycle?: string | null
           couleur_principale?: string | null
           created_at?: string
           date_expiration?: string | null
@@ -269,11 +276,16 @@ export type Database = {
           nom: string
           pays?: string | null
           plan_abonnement?: string | null
+          plan_id?: string | null
           secteur?: string | null
           statut?: string | null
+          subscription_end?: string | null
+          subscription_start?: string | null
           updated_at?: string
         }
         Update: {
+          auto_renew?: boolean | null
+          billing_cycle?: string | null
           couleur_principale?: string | null
           created_at?: string
           date_expiration?: string | null
@@ -282,11 +294,22 @@ export type Database = {
           nom?: string
           pays?: string | null
           plan_abonnement?: string | null
+          plan_id?: string | null
           secteur?: string | null
           statut?: string | null
+          subscription_end?: string | null
+          subscription_start?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conflict_of_interests: {
         Row: {
@@ -491,6 +514,81 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount: number
+          billing_period_end: string | null
+          billing_period_start: string | null
+          company_id: string
+          created_at: string
+          currency: string
+          due_date: string | null
+          id: string
+          invoice_number: string
+          metadata: Json | null
+          paid_at: string | null
+          pdf_url: string | null
+          plan_id: string | null
+          status: string
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          company_id: string
+          created_at?: string
+          currency?: string
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          metadata?: Json | null
+          paid_at?: string | null
+          pdf_url?: string | null
+          plan_id?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          company_id?: string
+          created_at?: string
+          currency?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          pdf_url?: string | null
+          plan_id?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -872,6 +970,50 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_usage: {
+        Row: {
+          company_id: string
+          created_at: string
+          current_documents: number
+          current_sessions: number
+          current_storage_mb: number
+          current_users: number
+          id: string
+          last_calculated_at: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          current_documents?: number
+          current_sessions?: number
+          current_storage_mb?: number
+          current_users?: number
+          id?: string
+          last_calculated_at?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          current_documents?: number
+          current_sessions?: number
+          current_storage_mb?: number
+          current_users?: number
+          id?: string
+          last_calculated_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_usage_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organs: {
         Row: {
           company_id: string | null
@@ -1230,6 +1372,101 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean
+          max_documents: number
+          max_sessions: number
+          max_storage_mb: number
+          max_users: number
+          name: string
+          price_monthly: number
+          price_yearly: number
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          max_documents?: number
+          max_sessions?: number
+          max_storage_mb?: number
+          max_users?: number
+          name: string
+          price_monthly?: number
+          price_yearly?: number
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          max_documents?: number
+          max_sessions?: number
+          max_storage_mb?: number
+          max_users?: number
+          name?: string
+          price_monthly?: number
+          price_yearly?: number
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      system_logs: {
+        Row: {
+          category: string
+          company_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          level: string
+          message: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string
+          company_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          level?: string
+          message: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          company_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          level?: string
+          message?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -1266,6 +1503,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: never; Returns: boolean }
       my_company_id: { Args: never; Returns: string }
       user_has_permission: {
         Args: { _permission_nom: string; _user_id: string }
