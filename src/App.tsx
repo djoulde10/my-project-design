@@ -34,6 +34,10 @@ import AdminAnalytics from "@/pages/admin/AdminAnalytics";
 import AdminBilling from "@/pages/admin/AdminBilling";
 import AdminLogs from "@/pages/admin/AdminLogs";
 import AdminSettings from "@/pages/admin/AdminSettings";
+import AdminFeatureFlags from "@/pages/admin/AdminFeatureFlags";
+import AdminSupport from "@/pages/admin/AdminSupport";
+import AdminSecurity from "@/pages/admin/AdminSecurity";
+import AdminMonitoring from "@/pages/admin/AdminMonitoring";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +94,10 @@ function ProtectedApp() {
         <Route path="/admin/billing" element={<AdminRoute><AdminBilling /></AdminRoute>} />
         <Route path="/admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+        <Route path="/admin/features" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
+        <Route path="/admin/support" element={<AdminRoute><AdminSupport /></AdminRoute>} />
+        <Route path="/admin/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
+        <Route path="/admin/monitoring" element={<AdminRoute><AdminMonitoring /></AdminRoute>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -260,6 +260,7 @@ export type Database = {
           plan_abonnement: string | null
           plan_id: string | null
           secteur: string | null
+          special_status: string | null
           statut: string | null
           subscription_end: string | null
           subscription_start: string | null
@@ -278,6 +279,7 @@ export type Database = {
           plan_abonnement?: string | null
           plan_id?: string | null
           secteur?: string | null
+          special_status?: string | null
           statut?: string | null
           subscription_end?: string | null
           subscription_start?: string | null
@@ -296,6 +298,7 @@ export type Database = {
           plan_abonnement?: string | null
           plan_id?: string | null
           secteur?: string | null
+          special_status?: string | null
           statut?: string | null
           subscription_end?: string | null
           subscription_start?: string | null
@@ -518,6 +521,41 @@ export type Database = {
           },
         ]
       }
+      feature_flags: {
+        Row: {
+          company_id: string
+          created_at: string
+          enabled: boolean
+          feature_key: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          enabled?: boolean
+          feature_key: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          enabled?: boolean
+          feature_key?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flags_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -592,6 +630,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      login_logs: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          ip_address: string | null
+          success: boolean
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       meeting_ai_analysis: {
         Row: {
@@ -1425,6 +1493,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          admin_response: string | null
+          company_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          priority: string
+          responded_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_response?: string | null
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          responded_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_response?: string | null
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          responded_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_logs: {
         Row: {

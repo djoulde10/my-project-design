@@ -15,6 +15,10 @@ import {
   ChevronRight,
   Menu,
   Package,
+  ToggleRight,
+  MessageSquare,
+  Activity,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,6 +32,7 @@ const adminNav = [
     items: [
       { label: "Vue d'ensemble", icon: LayoutDashboard, path: "/admin" },
       { label: "Analytics", icon: BarChart3, path: "/admin/analytics" },
+      { label: "Monitoring", icon: Activity, path: "/admin/monitoring" },
     ],
   },
   {
@@ -35,6 +40,7 @@ const adminNav = [
     items: [
       { label: "Organisations", icon: Building2, path: "/admin/organizations" },
       { label: "Plans & Tarifs", icon: Package, path: "/admin/plans" },
+      { label: "Feature Flags", icon: ToggleRight, path: "/admin/features" },
       { label: "Facturation", icon: CreditCard, path: "/admin/billing" },
     ],
   },
@@ -42,6 +48,8 @@ const adminNav = [
     label: "Système",
     items: [
       { label: "Logs système", icon: ScrollText, path: "/admin/logs" },
+      { label: "Sécurité", icon: ShieldCheck, path: "/admin/security" },
+      { label: "Support", icon: MessageSquare, path: "/admin/support" },
       { label: "Configuration", icon: Settings, path: "/admin/settings" },
     ],
   },
