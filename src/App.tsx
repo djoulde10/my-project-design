@@ -94,6 +94,10 @@ function ProtectedApp() {
         <Route path="/admin/billing" element={<AdminRoute><AdminBilling /></AdminRoute>} />
         <Route path="/admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+        <Route path="/admin/features" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
+        <Route path="/admin/support" element={<AdminRoute><AdminSupport /></AdminRoute>} />
+        <Route path="/admin/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
+        <Route path="/admin/monitoring" element={<AdminRoute><AdminMonitoring /></AdminRoute>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
