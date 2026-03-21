@@ -34,6 +34,10 @@ import AdminAnalytics from "@/pages/admin/AdminAnalytics";
 import AdminBilling from "@/pages/admin/AdminBilling";
 import AdminLogs from "@/pages/admin/AdminLogs";
 import AdminSettings from "@/pages/admin/AdminSettings";
+import AdminFeatureFlags from "@/pages/admin/AdminFeatureFlags";
+import AdminSupport from "@/pages/admin/AdminSupport";
+import AdminSecurity from "@/pages/admin/AdminSecurity";
+import AdminMonitoring from "@/pages/admin/AdminMonitoring";
 
 const queryClient = new QueryClient();
 
