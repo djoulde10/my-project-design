@@ -177,9 +177,19 @@ export default function Minutes() {
                         <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
                           Statut
                         </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setCommentingId(commentingId === m.id ? null : m.id)}>
+                          <MessageSquare className="w-4 h-4 mr-1" /> Commentaires
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
+                  {commentingId === m.id && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="p-4 bg-muted/20">
+                        <CommentThread entityType="minute" entityId={m.id} />
+                      </TableCell>
+                    </TableRow>
+                  )}
                 ))
               )}
             </TableBody>
