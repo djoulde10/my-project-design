@@ -229,7 +229,8 @@ export default function Documents() {
                 <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucun document trouvé</TableCell></TableRow>
               ) : (
                 filtered.map((doc) => (
-                  <TableRow key={doc.id}>
+                  <React.Fragment key={doc.id}>
+                  <TableRow>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <FileIcon className="w-4 h-4 text-primary" />
@@ -248,11 +249,24 @@ export default function Documents() {
                       {new Date(doc.created_at).toLocaleDateString("fr-FR")}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => handleDownload(doc)}>
-                        <Download className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleDownload(doc)}>
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setCommentingId(commentingId === doc.id ? null : doc.id)}>
+                          <MessageSquare className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
+                  {commentingId === doc.id && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="p-4 bg-muted/20">
+                        <CommentThread entityType="document" entityId={doc.id} />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  </React.Fragment>
                 ))
               )}
             </TableBody>
