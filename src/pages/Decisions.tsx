@@ -303,7 +303,8 @@ export default function Decisions() {
                   const sigs = signatures[d.id] ?? [];
                   const signed = userSignedDecision(d.id);
                   return (
-                    <TableRow key={d.id}>
+                    <React.Fragment key={d.id}>
+                    <TableRow>
                       <TableCell className="font-mono text-sm font-medium">{d.numero_decision ?? "—"}</TableCell>
                       <TableCell className="text-sm">{(d as any).sessions?.numero_session ?? (d as any).sessions?.title}</TableCell>
                       <TableCell className="max-w-xs truncate text-sm">{d.texte}</TableCell>
@@ -319,6 +320,7 @@ export default function Decisions() {
                         <Badge className={statutColors[d.statut] ?? ""}>{statutLabels[d.statut] ?? d.statut}</Badge>
                       </TableCell>
                       <TableCell>
+                        <div className="flex items-center gap-1">
                         {signed ? (
                           <Badge className="bg-emerald-100 text-emerald-800 gap-1"><CheckCircle2 className="w-3 h-3" />Signé ({sigs.length})</Badge>
                         ) : (
@@ -326,8 +328,20 @@ export default function Decisions() {
                             <PenTool className="w-3 h-3 mr-1" />{signingId === d.id ? "..." : "Signer"}
                           </Button>
                         )}
+                        <Button variant="ghost" size="sm" onClick={() => setCommentingId(commentingId === d.id ? null : d.id)}>
+                          <MessageSquare className="w-3.5 h-3.5" />
+                        </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
+                    {commentingId === d.id && (
+                      <TableRow>
+                        <TableCell colSpan={8} className="p-4 bg-muted/20">
+                          <CommentThread entityType="decision" entityId={d.id} />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    </React.Fragment>
                   );
                 });
               })()}
