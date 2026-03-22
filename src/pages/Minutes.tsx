@@ -36,6 +36,7 @@ export default function Minutes() {
   const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [commentingId, setCommentingId] = useState<string | null>(null);
 
   const fetchAll = async () => {
     const [minRes, sessRes] = await Promise.all([
