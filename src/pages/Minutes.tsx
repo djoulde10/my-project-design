@@ -150,7 +150,8 @@ export default function Minutes() {
                 <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun PV</TableCell></TableRow>
               ) : (
                 minutes.map((m) => (
-                  <TableRow key={m.id} className={editingContentId === m.id ? "bg-primary/5" : ""}>
+                  <React.Fragment key={m.id}>
+                  <TableRow className={editingContentId === m.id ? "bg-primary/5" : ""}>
                     <TableCell className="font-medium">{(m as any).sessions?.title}</TableCell>
                     <TableCell>
                       {editingId === m.id ? (
@@ -190,6 +191,7 @@ export default function Minutes() {
                       </TableCell>
                     </TableRow>
                   )}
+                  </React.Fragment>
                 ))
               )}
             </TableBody>
