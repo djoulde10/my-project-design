@@ -46,6 +46,7 @@ export default function Decisions() {
   const [signingId, setSigningId] = useState<string | null>(null);
   const [filterStatut, setFilterStatut] = useState<string>("all");
   const [searchText, setSearchText] = useState("");
+  const [commentingId, setCommentingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     session_id: "",
     texte: "",
