@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import CommentThread from "@/components/CommentThread";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,7 @@ import CollaborativeEditor from "@/components/CollaborativeEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit3, X } from "lucide-react";
+import { Plus, Edit3, X, MessageSquare } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const pvStatusLabels: Record<string, string> = {
@@ -35,6 +36,7 @@ export default function Minutes() {
   const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [commentingId, setCommentingId] = useState<string | null>(null);
 
   const fetchAll = async () => {
     const [minRes, sessRes] = await Promise.all([
@@ -148,7 +150,8 @@ export default function Minutes() {
                 <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun PV</TableCell></TableRow>
               ) : (
                 minutes.map((m) => (
-                  <TableRow key={m.id} className={editingContentId === m.id ? "bg-primary/5" : ""}>
+                  <React.Fragment key={m.id}>
+                  <TableRow className={editingContentId === m.id ? "bg-primary/5" : ""}>
                     <TableCell className="font-medium">{(m as any).sessions?.title}</TableCell>
                     <TableCell>
                       {editingId === m.id ? (
@@ -175,9 +178,20 @@ export default function Minutes() {
                         <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
                           Statut
                         </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setCommentingId(commentingId === m.id ? null : m.id)}>
+                          <MessageSquare className="w-4 h-4 mr-1" /> Commentaires
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
+                  {commentingId === m.id && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="p-4 bg-muted/20">
+                        <CommentThread entityType="minute" entityId={m.id} />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  </React.Fragment>
                 ))
               )}
             </TableBody>
