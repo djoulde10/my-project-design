@@ -56,6 +56,7 @@ export default function Documents() {
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+  const [commentingId, setCommentingId] = useState<string | null>(null);
 
   const fetchAll = async () => {
     const [docsRes, sessionsRes] = await Promise.all([
