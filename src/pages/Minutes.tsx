@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import RichTextEditor from "@/components/RichTextEditor";
+import CollaborativeEditor from "@/components/CollaborativeEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus } from "lucide-react";
+import { Plus, Edit3, X } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const pvStatusLabels: Record<string, string> = {
@@ -26,13 +27,14 @@ const pvStatusColors: Record<string, string> = {
 type PvStatus = "brouillon" | "valide" | "signe";
 
 export default function Minutes() {
-  
   const [minutes, setMinutes] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [pvOpen, setPvOpen] = useState(false);
   const [pvForm, setPvForm] = useState<{ session_id: string; content: string; pv_status: PvStatus }>({ session_id: "", content: "", pv_status: "brouillon" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
+  const [editingContentId, setEditingContentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
 
   const fetchAll = async () => {
     const [minRes, sessRes] = await Promise.all([
@@ -55,6 +57,11 @@ export default function Minutes() {
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut du PV");
     else { showSuccess("pv_status_updated"); setEditingId(null); fetchAll(); }
+  };
+
+  const openCollaborativeEdit = (m: any) => {
+    setEditingContentId(m.id);
+    setEditingContent(m.content || "");
   };
 
   return (
@@ -100,6 +107,31 @@ export default function Minutes() {
         </Dialog>
       </div>
 
+      {/* Collaborative editing panel */}
+      {editingContentId && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">
+                Édition collaborative — {minutes.find(m => m.id === editingContentId)?.sessions?.title || "PV"}
+              </h3>
+              <Button variant="ghost" size="icon" onClick={() => { setEditingContentId(null); fetchAll(); }}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <CollaborativeEditor
+              documentId={editingContentId}
+              documentType="minute"
+              tableName="minutes"
+              content={editingContent}
+              onChange={setEditingContent}
+              minHeight="300px"
+              placeholder="Rédigez le procès-verbal ici..."
+            />
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -108,7 +140,7 @@ export default function Minutes() {
                 <TableHead>Session</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Action</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -116,7 +148,7 @@ export default function Minutes() {
                 <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun PV</TableCell></TableRow>
               ) : (
                 minutes.map((m) => (
-                  <TableRow key={m.id}>
+                  <TableRow key={m.id} className={editingContentId === m.id ? "bg-primary/5" : ""}>
                     <TableCell className="font-medium">{(m as any).sessions?.title}</TableCell>
                     <TableCell>
                       {editingId === m.id ? (
@@ -136,9 +168,14 @@ export default function Minutes() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
-                        Modifier statut
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => openCollaborativeEdit(m)}>
+                          <Edit3 className="w-4 h-4 mr-1" /> Éditer
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
+                          Statut
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
