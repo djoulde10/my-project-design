@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import RichTextEditor from "@/components/RichTextEditor";
+import CollaborativeEditor from "@/components/CollaborativeEditor";
+import CommentThread from "@/components/CommentThread";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2,
-  ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2, Brain
+  ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2, Brain, MessageSquare
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
 import MeetingAIAnalysis from "@/components/MeetingAIAnalysis";
@@ -341,6 +343,18 @@ export default function Meetings() {
     else { showSuccess("pv_status_updated"); setEditingStatusId(null); fetchAll(); }
   };
 
+  const openMinute = (minute: any, startEditing = false) => {
+    setViewMinute(minute);
+    setEditingContent(minute.content || "");
+    setIsEditing(startEditing);
+  };
+
+  const closeRealtimeEditing = () => {
+    setViewMinute((current: any) => current ? { ...current, content: editingContent } : current);
+    setIsEditing(false);
+    fetchAll();
+  };
+
   const deleteMinute = async (id: string) => {
     await supabase.from("minute_versions").delete().eq("minute_id", id);
     await supabase.from("minutes").delete().eq("id", id);
@@ -598,14 +612,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           <div className="flex gap-2 flex-wrap">
             {!isEditing && (
               <Button variant="outline" onClick={() => { setIsEditing(true); setEditingContent(viewMinute.content || ""); }}>
-                <Edit className="w-4 h-4 mr-2" />Modifier
+                <Edit className="w-4 h-4 mr-2" />Éditer en temps réel
               </Button>
             )}
             {isEditing && (
-              <>
-                <Button variant="outline" onClick={() => setIsEditing(false)}>Annuler</Button>
-                <Button onClick={saveMinuteEdit}><Save className="w-4 h-4 mr-2" />Sauvegarder</Button>
-              </>
+              <Button variant="outline" onClick={closeRealtimeEditing}>Fermer l'édition</Button>
             )}
             <Button variant="outline" onClick={() => exportPDF(viewMinute)}><Download className="w-4 h-4 mr-2" />PDF</Button>
             <Button variant="outline" onClick={() => exportDOCX(viewMinute)}><FileDown className="w-4 h-4 mr-2" />Word</Button>
@@ -647,10 +658,26 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           </Card>
         )}
 
+        {isEditing && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-4 text-sm text-muted-foreground">
+              Collaboration en direct active — présence, synchronisation et sauvegarde automatique sont activées.
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardContent className="p-6">
             {isEditing ? (
-              <RichTextEditor content={editingContent} onChange={setEditingContent} minHeight="500px" />
+              <CollaborativeEditor
+                documentId={viewMinute.id}
+                documentType="minute"
+                tableName="minutes"
+                content={editingContent}
+                onChange={setEditingContent}
+                minHeight="500px"
+                placeholder="Modifiez le procès-verbal en collaboration..."
+              />
             ) : (
               <ScrollArea className="h-[500px]">
                 <div className="text-sm prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: viewMinute.content || "<p>Contenu vide</p>" }} />
@@ -670,6 +697,8 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             onActionCreated={() => fetchAll()}
           />
         )}
+
+        <CommentThread entityType="minute" entityId={viewMinute.id} />
 
         {/* Signatures */}
         {minuteSignatures.length > 0 && (
@@ -978,9 +1007,15 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                           {new Date(m.created_at).toLocaleDateString("fr-FR")}
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => { setViewMinute(m); setEditingContent(m.content || ""); }}>
+                          <div className="flex flex-wrap gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
                               <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
+                              <Edit className="w-4 h-4 mr-1" />Collaborer
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
+                              <MessageSquare className="w-4 h-4 mr-1" />Commentaires
                             </Button>
                             <Button variant="ghost" size="sm" onClick={() => exportPDF(m)}>
                               <Download className="w-4 h-4" />
