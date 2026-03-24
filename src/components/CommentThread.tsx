@@ -86,6 +86,31 @@ export default function CommentThread({ entityType, entityId }: CommentThreadPro
   }, [fetchComments]);
 
   useEffect(() => {
+    const channel = supabase
+      .channel(`comments:${entityType}:${entityId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "comments",
+          filter: `entity_id=eq.${entityId}`,
+        },
+        (payload) => {
+          const record = (payload.new || payload.old) as { entity_type?: string } | undefined;
+          if (record?.entity_type === entityType) {
+            fetchComments();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [entityId, entityType, fetchComments]);
+
+  useEffect(() => {
     supabase
       .from("profiles")
       .select("id, full_name")
@@ -119,23 +144,6 @@ export default function CommentThread({ entityType, entityId }: CommentThreadPro
     if (error) {
       toast({ title: "Erreur", description: "Impossible d'ajouter le commentaire", variant: "destructive" });
       return;
-    }
-
-    // Send notifications for mentions
-    if (mentions.length > 0) {
-      const myName = users.find((u) => u.id === user.id)?.full_name || "Quelqu'un";
-      const entityLabel = entityType === "minute" ? "procès-verbal" : entityType === "document" ? "document" : "décision";
-      for (const uid of mentions) {
-        if (uid === user.id) continue;
-        await supabase.from("notifications").insert({
-          user_id: uid,
-          type: "mention",
-          title: `${myName} vous a mentionné`,
-          message: `${myName} vous a mentionné dans un commentaire sur un ${entityLabel}.`,
-          link: `/${entityType === "minute" ? "minutes" : entityType === "document" ? "documents" : "decisions"}`,
-          metadata: { entity_type: entityType, entity_id: entityId },
-        } as any);
-      }
     }
 
     if (parentId) {
