@@ -49,6 +49,12 @@ export default function EntityPermissionsDialog({ open, onOpenChange, entityType
   const handleAddUser = async () => {
     if (!selectedUserId) return;
     setSaving(true);
+    // Ensure we have a company_id - fallback to RPC if hook hasn't loaded yet
+    let resolvedCompanyId = companyId;
+    if (!resolvedCompanyId) {
+      const { data } = await supabase.rpc("my_company_id");
+      resolvedCompanyId = data;
+    }
     const { error } = await supabase.from("entity_permissions").insert({
       entity_type: entityType,
       entity_id: entityId,
@@ -58,7 +64,7 @@ export default function EntityPermissionsDialog({ open, onOpenChange, entityType
       can_delete: false,
       can_comment: true,
       granted_by: user?.id,
-      company_id: companyId,
+      company_id: resolvedCompanyId,
     } as any);
     if (error) showError(error, "Impossible d'ajouter la permission");
     else { showSuccess("permission_added"); setSelectedUserId(""); refetch(); }
