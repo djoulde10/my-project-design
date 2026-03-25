@@ -1034,6 +1034,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             >
                               <History className="w-4 h-4" />
                             </Button>
+                            <Button variant="ghost" size="sm" onClick={() => { setPermEntityId(m.id); setPermEntityName(m.sessions?.title || m.title || "Réunion"); }}>
+                              <Shield className="w-4 h-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
