@@ -164,6 +164,11 @@ export const SUCCESS_MESSAGES = {
   transcription_started: "La transcription est en cours…",
   board_packet_generated: "Le Board Packet a été généré avec succès.",
 
+  // Permissions
+  permission_added: "La permission a été ajoutée.",
+  permission_updated: "La permission a été mise à jour.",
+  permission_removed: "La permission a été supprimée.",
+
   // Generic
   saved: "Les modifications ont été enregistrées.",
   deleted: "L'élément a été supprimé.",

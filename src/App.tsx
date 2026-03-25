@@ -23,6 +23,7 @@ import AuditLog from "@/pages/AuditLog";
 import UserManagement from "@/pages/UserManagement";
 import MemberProfile from "@/pages/MemberProfile";
 import Approvals from "@/pages/Approvals";
+import PermissionsManagement from "@/pages/PermissionsManagement";
 import NotFound from "./pages/NotFound";
 import AIAssistant from "@/components/AIAssistant";
 
@@ -85,6 +86,7 @@ function ProtectedApp() {
         <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
         <Route path="/approvals" element={<ProtectedRoute><Approvals /></ProtectedRoute>} />
+        <Route path="/permissions" element={<ProtectedRoute><PermissionsManagement /></ProtectedRoute>} />
 
         {/* Super Admin routes */}
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

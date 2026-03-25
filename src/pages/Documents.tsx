@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, FileIcon, Download, Search, FolderOpen, FileText, Gavel, BookOpen, Scale, Presentation, File, MessageSquare } from "lucide-react";
+import { Upload, FileIcon, Download, Search, FolderOpen, FileText, Gavel, BookOpen, Scale, Presentation, File, MessageSquare, Shield } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import CommentThread from "@/components/CommentThread";
 
@@ -57,6 +58,8 @@ export default function Documents() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [commentingId, setCommentingId] = useState<string | null>(null);
+  const [permDocId, setPermDocId] = useState<string | null>(null);
+  const [permDocName, setPermDocName] = useState("");
 
   const fetchAll = async () => {
     const [docsRes, sessionsRes] = await Promise.all([
@@ -256,6 +259,9 @@ export default function Documents() {
                         <Button variant="ghost" size="icon" onClick={() => setCommentingId(commentingId === doc.id ? null : doc.id)}>
                           <MessageSquare className="w-4 h-4" />
                         </Button>
+                        <Button variant="ghost" size="icon" onClick={() => { setPermDocId(doc.id); setPermDocName(doc.name); }}>
+                          <Shield className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -273,6 +279,15 @@ export default function Documents() {
           </Table>
         </CardContent>
       </Card>
+      {permDocId && (
+        <EntityPermissionsDialog
+          open={!!permDocId}
+          onOpenChange={(open) => { if (!open) setPermDocId(null); }}
+          entityType="document"
+          entityId={permDocId}
+          entityName={permDocName}
+        />
+      )}
     </div>
   );
 }
