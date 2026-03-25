@@ -48,6 +48,8 @@ export default function Meetings() {
   const [minutes, setMinutes] = useState<any[]>([]);
   const [members, setMembers] = useState<{ id: string; full_name: string }[]>([]);
   const [activeTab, setActiveTab] = useState("pv");
+  const [permEntityId, setPermEntityId] = useState<string | null>(null);
+  const [permEntityName, setPermEntityName] = useState("");
 
   // Realtime transcription state
   const [liveTranscript, setLiveTranscript] = useState("");
