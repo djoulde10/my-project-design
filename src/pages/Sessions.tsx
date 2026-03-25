@@ -46,6 +46,8 @@ export default function Sessions() {
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [sessionDetails, setSessionDetails] = useState<Record<string, { agendaItems: any[]; attendees: any[] }>>({});
   const [manageAttendeesSession, setManageAttendeesSession] = useState<{ id: string; organId: string } | null>(null);
+  const [permEntityId, setPermEntityId] = useState<string | null>(null);
+  const [permEntityName, setPermEntityName] = useState("");
 
   const [form, setForm] = useState({
     organ_id: "", title: "", session_type: "ordinaire" as "ordinaire" | "extraordinaire",
