@@ -48,6 +48,8 @@ export default function Decisions() {
   const [filterStatut, setFilterStatut] = useState<string>("all");
   const [searchText, setSearchText] = useState("");
   const [commentingId, setCommentingId] = useState<string | null>(null);
+  const [permEntityId, setPermEntityId] = useState<string | null>(null);
+  const [permEntityName, setPermEntityName] = useState("");
   const [form, setForm] = useState({
     session_id: "",
     texte: "",
