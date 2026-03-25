@@ -17,9 +17,10 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2,
-  ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2, Brain, MessageSquare
+  ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2, Brain, MessageSquare, Shield
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
+import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import MeetingAIAnalysis from "@/components/MeetingAIAnalysis";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
