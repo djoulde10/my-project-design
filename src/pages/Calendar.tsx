@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, CalendarDays, MapPin, Video, ExternalLink } from "lucide-react";
+import SessionCalendarActions from "@/components/SessionCalendarActions";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
