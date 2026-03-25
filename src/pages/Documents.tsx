@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, FileIcon, Download, Search, FolderOpen, FileText, Gavel, BookOpen, Scale, Presentation, File, MessageSquare, Shield } from "lucide-react";
+import { Upload, FileIcon, Download, Search, FolderOpen, FileText, Gavel, BookOpen, Scale, Presentation, File, MessageSquare, Shield, ExternalLink, Cloud } from "lucide-react";
+import { getGoogleDriveLink, getOneDriveLink } from "@/lib/calendarIntegrations";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import CommentThread from "@/components/CommentThread";
 
@@ -138,10 +139,23 @@ export default function Documents() {
           <h1 className="text-xl sm:text-2xl font-bold">Centre de documentation</h1>
           <p className="text-sm text-muted-foreground">Stockez, organisez et consultez tous les documents</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Upload className="w-4 h-4 mr-2" />Uploader un document</Button>
-          </DialogTrigger>
+        <div className="flex flex-wrap gap-2">
+          <a href={getGoogleDriveLink()} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm">
+              <Cloud className="w-4 h-4 mr-1" />Google Drive
+              <ExternalLink className="w-3 h-3 ml-1" />
+            </Button>
+          </a>
+          <a href={getOneDriveLink()} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm">
+              <Cloud className="w-4 h-4 mr-1" />OneDrive
+              <ExternalLink className="w-3 h-3 ml-1" />
+            </Button>
+          </a>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button><Upload className="w-4 h-4 mr-2" />Uploader un document</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Uploader un document</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -182,6 +196,7 @@ export default function Documents() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Category stats cards */}
