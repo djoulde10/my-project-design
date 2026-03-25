@@ -55,7 +55,7 @@ export default function PermissionsManagement() {
   }));
 
   const BoolIcon = ({ value }: { value: boolean }) =>
-    value ? <Check className="w-4 h-4 text-emerald-600 mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />;
+    value ? <Check className="w-4 h-4 text-primary mx-auto" /> : <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />;
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
