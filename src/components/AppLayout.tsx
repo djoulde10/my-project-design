@@ -56,6 +56,7 @@ const navSections = [
       { label: "Archives", icon: Archive, path: "/archives" },
       { label: "Journal d'audit", icon: Shield, path: "/audit" },
       { label: "Utilisateurs", icon: Users, path: "/users" },
+      { label: "Permissions", icon: Shield, path: "/permissions" },
     ],
   },
 ];
