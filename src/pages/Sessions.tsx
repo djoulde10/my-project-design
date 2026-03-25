@@ -324,6 +324,9 @@ export default function Sessions() {
                         <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le Board Packet">
                           <Package className="w-4 h-4" />
                         </Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
+                          <Shield className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
