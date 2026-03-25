@@ -11,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Gavel, PenTool, CheckCircle2, Download, FileSpreadsheet, MessageSquare } from "lucide-react";
+import { Plus, Gavel, PenTool, CheckCircle2, Download, FileSpreadsheet, MessageSquare, Shield } from "lucide-react";
 import CommentThread from "@/components/CommentThread";
+import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -47,6 +48,8 @@ export default function Decisions() {
   const [filterStatut, setFilterStatut] = useState<string>("all");
   const [searchText, setSearchText] = useState("");
   const [commentingId, setCommentingId] = useState<string | null>(null);
+  const [permEntityId, setPermEntityId] = useState<string | null>(null);
+  const [permEntityName, setPermEntityName] = useState("");
   const [form, setForm] = useState({
     session_id: "",
     texte: "",
@@ -331,6 +334,9 @@ export default function Decisions() {
                         <Button variant="ghost" size="sm" onClick={() => setCommentingId(commentingId === d.id ? null : d.id)}>
                           <MessageSquare className="w-3.5 h-3.5" />
                         </Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setPermEntityId(d.id); setPermEntityName(d.numero_decision || d.texte?.slice(0, 30) || "Décision"); }}>
+                          <Shield className="w-3.5 h-3.5" />
+                        </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -349,6 +355,15 @@ export default function Decisions() {
           </Table>
         </CardContent>
       </Card>
+      {permEntityId && (
+        <EntityPermissionsDialog
+          open={!!permEntityId}
+          onOpenChange={(open) => { if (!open) setPermEntityId(null); }}
+          entityType="decision"
+          entityId={permEntityId}
+          entityName={permEntityName}
+        />
+      )}
     </div>
   );
 }

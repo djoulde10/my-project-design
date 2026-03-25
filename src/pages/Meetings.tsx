@@ -17,9 +17,10 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2,
-  ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2, Brain, MessageSquare
+  ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2, Brain, MessageSquare, Shield
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
+import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import MeetingAIAnalysis from "@/components/MeetingAIAnalysis";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
@@ -47,6 +48,8 @@ export default function Meetings() {
   const [minutes, setMinutes] = useState<any[]>([]);
   const [members, setMembers] = useState<{ id: string; full_name: string }[]>([]);
   const [activeTab, setActiveTab] = useState("pv");
+  const [permEntityId, setPermEntityId] = useState<string | null>(null);
+  const [permEntityName, setPermEntityName] = useState("");
 
   // Realtime transcription state
   const [liveTranscript, setLiveTranscript] = useState("");
@@ -1031,6 +1034,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             >
                               <History className="w-4 h-4" />
                             </Button>
+                            <Button variant="ghost" size="sm" onClick={() => { setPermEntityId(m.id); setPermEntityName(m.sessions?.title || m.title || "Réunion"); }}>
+                              <Shield className="w-4 h-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1134,6 +1140,15 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           fetchAll();
         }}
       />
+      {permEntityId && (
+        <EntityPermissionsDialog
+          open={!!permEntityId}
+          onOpenChange={(open) => { if (!open) setPermEntityId(null); }}
+          entityType="meeting"
+          entityId={permEntityId}
+          entityName={permEntityName}
+        />
+      )}
     </div>
   );
 }

@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users, Shield } from "lucide-react";
+import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import SessionAttendeeManager from "@/components/SessionAttendeeManager";
 import jsPDF from "jspdf";
@@ -45,6 +46,8 @@ export default function Sessions() {
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [sessionDetails, setSessionDetails] = useState<Record<string, { agendaItems: any[]; attendees: any[] }>>({});
   const [manageAttendeesSession, setManageAttendeesSession] = useState<{ id: string; organId: string } | null>(null);
+  const [permEntityId, setPermEntityId] = useState<string | null>(null);
+  const [permEntityName, setPermEntityName] = useState("");
 
   const [form, setForm] = useState({
     organ_id: "", title: "", session_type: "ordinaire" as "ordinaire" | "extraordinaire",
@@ -321,6 +324,9 @@ export default function Sessions() {
                         <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le Board Packet">
                           <Package className="w-4 h-4" />
                         </Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
+                          <Shield className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -512,6 +518,15 @@ export default function Sessions() {
           sessionId={manageAttendeesSession.id}
           organId={manageAttendeesSession.organId}
           onUpdated={() => loadSessionDetails(manageAttendeesSession.id)}
+        />
+      )}
+      {permEntityId && (
+        <EntityPermissionsDialog
+          open={!!permEntityId}
+          onOpenChange={(open) => { if (!open) setPermEntityId(null); }}
+          entityType="session"
+          entityId={permEntityId}
+          entityName={permEntityName}
         />
       )}
     </div>
