@@ -520,6 +520,15 @@ export default function Sessions() {
           onUpdated={() => loadSessionDetails(manageAttendeesSession.id)}
         />
       )}
+      {permEntityId && (
+        <EntityPermissionsDialog
+          open={!!permEntityId}
+          onOpenChange={(open) => { if (!open) setPermEntityId(null); }}
+          entityType="session"
+          entityId={permEntityId}
+          entityName={permEntityName}
+        />
+      )}
     </div>
   );
 }

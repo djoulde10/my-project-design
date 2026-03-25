@@ -355,6 +355,15 @@ export default function Decisions() {
           </Table>
         </CardContent>
       </Card>
+      {permEntityId && (
+        <EntityPermissionsDialog
+          open={!!permEntityId}
+          onOpenChange={(open) => { if (!open) setPermEntityId(null); }}
+          entityType="decision"
+          entityId={permEntityId}
+          entityName={permEntityName}
+        />
+      )}
     </div>
   );
 }

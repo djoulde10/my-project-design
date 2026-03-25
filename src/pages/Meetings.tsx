@@ -1140,6 +1140,15 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           fetchAll();
         }}
       />
+      {permEntityId && (
+        <EntityPermissionsDialog
+          open={!!permEntityId}
+          onOpenChange={(open) => { if (!open) setPermEntityId(null); }}
+          entityType="meeting"
+          entityId={permEntityId}
+          entityName={permEntityName}
+        />
+      )}
     </div>
   );
 }
