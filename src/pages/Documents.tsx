@@ -259,6 +259,9 @@ export default function Documents() {
                         <Button variant="ghost" size="icon" onClick={() => setCommentingId(commentingId === doc.id ? null : doc.id)}>
                           <MessageSquare className="w-4 h-4" />
                         </Button>
+                        <Button variant="ghost" size="icon" onClick={() => { setPermDocId(doc.id); setPermDocName(doc.name); }}>
+                          <Shield className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
