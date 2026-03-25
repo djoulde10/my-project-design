@@ -196,7 +196,7 @@ export default function Documents() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+        </div>
 
       {/* Category stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
