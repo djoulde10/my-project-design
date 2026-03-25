@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, CalendarDays, MapPin, Video, ExternalLink } from "lucide-react";
+import SessionCalendarActions from "@/components/SessionCalendarActions";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
@@ -197,9 +198,12 @@ export default function CalendarPage() {
                         </a>
                       )}
                     </div>
-                    <Button size="sm" variant="outline" className="w-full mt-1" onClick={() => navigate("/sessions")}>
-                      <ExternalLink className="w-3 h-3 mr-1" />Voir la session
-                    </Button>
+                    <div className="flex gap-2 mt-1">
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => navigate("/sessions")}>
+                        <ExternalLink className="w-3 h-3 mr-1" />Voir
+                      </Button>
+                      <SessionCalendarActions session={s} variant="button" />
+                    </div>
                   </div>
                 ))}
               </div>
