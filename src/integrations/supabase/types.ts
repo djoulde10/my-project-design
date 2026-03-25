@@ -575,6 +575,59 @@ export type Database = {
           },
         ]
       }
+      entity_permissions: {
+        Row: {
+          can_comment: boolean
+          can_delete: boolean
+          can_edit: boolean
+          can_view: boolean
+          company_id: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          granted_by: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_comment?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_view?: boolean
+          company_id?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          granted_by?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_comment?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_view?: boolean
+          company_id?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          granted_by?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_permissions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_flags: {
         Row: {
           company_id: string
@@ -1662,6 +1715,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_entity_permission: {
+        Args: {
+          _action: string
+          _entity_id: string
+          _entity_type: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       get_user_permissions: {
         Args: { _user_id: string }
         Returns: {
