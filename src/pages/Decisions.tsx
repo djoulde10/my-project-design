@@ -334,6 +334,9 @@ export default function Decisions() {
                         <Button variant="ghost" size="sm" onClick={() => setCommentingId(commentingId === d.id ? null : d.id)}>
                           <MessageSquare className="w-3.5 h-3.5" />
                         </Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setPermEntityId(d.id); setPermEntityName(d.numero_decision || d.texte?.slice(0, 30) || "Décision"); }}>
+                          <Shield className="w-3.5 h-3.5" />
+                        </Button>
                         </div>
                       </TableCell>
                     </TableRow>
