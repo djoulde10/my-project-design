@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users, Shield } from "lucide-react";
+import SessionCalendarActions from "@/components/SessionCalendarActions";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import SessionAttendeeManager from "@/components/SessionAttendeeManager";
