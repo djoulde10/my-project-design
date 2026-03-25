@@ -279,6 +279,15 @@ export default function Documents() {
           </Table>
         </CardContent>
       </Card>
+      {permDocId && (
+        <EntityPermissionsDialog
+          open={!!permDocId}
+          onOpenChange={(open) => { if (!open) setPermDocId(null); }}
+          entityType="document"
+          entityId={permDocId}
+          entityName={permDocName}
+        />
+      )}
     </div>
   );
 }
