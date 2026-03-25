@@ -23,6 +23,7 @@ import AuditLog from "@/pages/AuditLog";
 import UserManagement from "@/pages/UserManagement";
 import MemberProfile from "@/pages/MemberProfile";
 import Approvals from "@/pages/Approvals";
+import PermissionsManagement from "@/pages/PermissionsManagement";
 import NotFound from "./pages/NotFound";
 import AIAssistant from "@/components/AIAssistant";
 
