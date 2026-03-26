@@ -62,6 +62,7 @@ export default function Meetings() {
   const [newTitle, setNewTitle] = useState("");
   const [newSessionId, setNewSessionId] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [pvMode, setPvMode] = useState<"professionnel" | "simplifie">("professionnel");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadTranscribing, setUploadTranscribing] = useState(false);
   const [transcriptionLang, setTranscriptionLang] = useState("fra");
