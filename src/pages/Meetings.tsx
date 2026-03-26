@@ -62,6 +62,7 @@ export default function Meetings() {
   const [newTitle, setNewTitle] = useState("");
   const [newSessionId, setNewSessionId] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [pvMode, setPvMode] = useState<"professionnel" | "simplifie">("professionnel");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadTranscribing, setUploadTranscribing] = useState(false);
   const [transcriptionLang, setTranscriptionLang] = useState("fra");
@@ -180,6 +181,7 @@ export default function Meetings() {
           meetingTitle: title || `Réunion du ${new Date().toLocaleDateString("fr-FR")}`,
           meetingDate: new Date().toLocaleDateString("fr-FR"),
           templateContent,
+          mode: pvMode,
         },
       });
       if (pvError) throw new Error(pvError.message);
@@ -802,6 +804,16 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                 </SelectContent>
               </Select>
             )}
+
+            <Select value={pvMode} onValueChange={(v) => setPvMode(v as "professionnel" | "simplifie")}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="professionnel">PV Professionnel</SelectItem>
+                <SelectItem value="simplifie">PV Simplifié</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {!isLiveMode && !liveTranscript && (
@@ -893,6 +905,16 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                       <SelectTrigger><SelectValue placeholder="Aucun modèle" /></SelectTrigger>
                       <SelectContent>
                         {templates.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Mode de rédaction</Label>
+                    <Select value={pvMode} onValueChange={(v) => setPvMode(v as "professionnel" | "simplifie")}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="professionnel">PV Professionnel (complet)</SelectItem>
+                        <SelectItem value="simplifie">PV Simplifié (synthétique)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
