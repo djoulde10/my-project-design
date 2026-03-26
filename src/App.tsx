@@ -41,6 +41,7 @@ import AdminFeatureFlags from "@/pages/admin/AdminFeatureFlags";
 import AdminSupport from "@/pages/admin/AdminSupport";
 import AdminSecurity from "@/pages/admin/AdminSecurity";
 import AdminMonitoring from "@/pages/admin/AdminMonitoring";
+import AdminApiManagement from "@/pages/admin/AdminApiManagement";
 
 const queryClient = new QueryClient();
 
