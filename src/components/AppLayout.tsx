@@ -21,6 +21,7 @@ import {
   Menu,
   Calendar,
   ShieldAlert,
+  Key,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ const navSections = [
       { label: "Journal d'audit", icon: Shield, path: "/audit" },
       { label: "Utilisateurs", icon: Users, path: "/users" },
       { label: "Permissions", icon: Shield, path: "/permissions" },
+      { label: "API", icon: Key, path: "/api-keys" },
     ],
   },
 ];

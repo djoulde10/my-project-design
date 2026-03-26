@@ -169,6 +169,10 @@ export const SUCCESS_MESSAGES = {
   permission_updated: "La permission a été mise à jour.",
   permission_removed: "La permission a été supprimée.",
 
+  // API Keys
+  api_key_created: "La clé API a été créée avec succès.",
+  api_key_revoked: "La clé API a été révoquée.",
+
   // Generic
   saved: "Les modifications ont été enregistrées.",
   deleted: "L'élément a été supprimé.",
