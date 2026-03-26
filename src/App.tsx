@@ -89,6 +89,8 @@ function ProtectedApp() {
         <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
         <Route path="/approvals" element={<ProtectedRoute><Approvals /></ProtectedRoute>} />
         <Route path="/permissions" element={<ProtectedRoute><PermissionsManagement /></ProtectedRoute>} />
+        <Route path="/api-keys" element={<ProtectedRoute><ApiKeys /></ProtectedRoute>} />
+        <Route path="/api-docs" element={<ProtectedRoute><ApiDocs /></ProtectedRoute>} />
 
         {/* Super Admin routes */}
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
