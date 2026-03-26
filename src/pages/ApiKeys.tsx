@@ -130,8 +130,8 @@ export default function ApiKeys() {
               <DialogHeader><DialogTitle>Créer une clé API</DialogTitle></DialogHeader>
               {newKeyVisible ? (
                 <div className="space-y-4">
-                  <div className="p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
-                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">⚠️ Copiez cette clé maintenant. Elle ne sera plus affichée.</p>
+                  <div className="p-4 bg-accent/50 border border-border rounded-lg">
+                    <p className="text-sm font-medium text-foreground mb-2">⚠️ Copiez cette clé maintenant. Elle ne sera plus affichée.</p>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 text-xs bg-background p-2 rounded border break-all">{newKeyVisible}</code>
                       <Button size="icon" variant="outline" onClick={() => copyToClipboard(newKeyVisible)}>
