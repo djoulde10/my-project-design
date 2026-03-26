@@ -41,6 +41,7 @@ import AdminFeatureFlags from "@/pages/admin/AdminFeatureFlags";
 import AdminSupport from "@/pages/admin/AdminSupport";
 import AdminSecurity from "@/pages/admin/AdminSecurity";
 import AdminMonitoring from "@/pages/admin/AdminMonitoring";
+import AdminApiManagement from "@/pages/admin/AdminApiManagement";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ function ProtectedApp() {
         <Route path="/admin/support" element={<AdminRoute><AdminSupport /></AdminRoute>} />
         <Route path="/admin/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
         <Route path="/admin/monitoring" element={<AdminRoute><AdminMonitoring /></AdminRoute>} />
+        <Route path="/admin/api" element={<AdminRoute><AdminApiManagement /></AdminRoute>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Activity,
   ShieldCheck,
+  Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ const adminNav = [
     items: [
       { label: "Logs système", icon: ScrollText, path: "/admin/logs" },
       { label: "Sécurité", icon: ShieldCheck, path: "/admin/security" },
+      { label: "API Management", icon: Plug, path: "/admin/api" },
       { label: "Support", icon: MessageSquare, path: "/admin/support" },
       { label: "Configuration", icon: Settings, path: "/admin/settings" },
     ],
