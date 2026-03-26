@@ -181,6 +181,7 @@ export default function Meetings() {
           meetingTitle: title || `Réunion du ${new Date().toLocaleDateString("fr-FR")}`,
           meetingDate: new Date().toLocaleDateString("fr-FR"),
           templateContent,
+          mode: pvMode,
         },
       });
       if (pvError) throw new Error(pvError.message);
