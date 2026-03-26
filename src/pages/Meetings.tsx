@@ -804,6 +804,16 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                 </SelectContent>
               </Select>
             )}
+
+            <Select value={pvMode} onValueChange={(v) => setPvMode(v as "professionnel" | "simplifie")}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="professionnel">PV Professionnel</SelectItem>
+                <SelectItem value="simplifie">PV Simplifié</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {!isLiveMode && !liveTranscript && (
