@@ -25,6 +25,7 @@ import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import MeetingAIAnalysis from "@/components/MeetingAIAnalysis";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
+import PermissionGate from "@/components/PermissionGate";
 import { useCompanyId } from "@/hooks/useCompanyId";
 
 // PV status helpers
