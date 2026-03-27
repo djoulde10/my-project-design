@@ -23,7 +23,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { transcription, meetingTitle, meetingDate, templateContent, mode } = await req.json();
+    const { transcription, meetingTitle, meetingDate, templateContent, mode, orgName, orgLogoUrl, orgColor } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -88,10 +88,26 @@ RÈGLES DE STYLE RÉDACTIONNEL :
 - Développe le contexte des discussions pour chaque point de l'ordre du jour.
 - Le document doit être exhaustif et exploitable juridiquement.`;
 
+    const brandingBlock = orgName || orgLogoUrl ? `
+BRANDING DE L'ORGANISATION :
+- Nom de l'organisation : ${orgName || "Non spécifié"}
+${orgLogoUrl ? `- Le logo de l'organisation est disponible. Ajoute en tout début du document un en-tête HTML contenant :
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid ${orgColor || '#1e40af'}">
+    <img src="${orgLogoUrl}" alt="${orgName || ''}" style="height:50px;max-width:120px;object-fit:contain" />
+    <div>
+      <div style="font-size:16px;font-weight:700;color:${orgColor || '#1e40af'}">${orgName || ''}</div>
+      <div style="font-size:11px;color:#6b7280">Procès-verbal de réunion</div>
+    </div>
+  </div>` : ""}
+${orgColor ? `- Utilise la couleur ${orgColor} pour les titres <h1> et <h2> via l'attribut style="color:${orgColor}".` : ""}
+` : "";
+
     let systemPrompt: string;
 
     if (templateContent) {
       systemPrompt = `Tu es un rédacteur professionnel de procès-verbaux de réunions d'organes de gouvernance (Conseil d'Administration, Comités).
+
+${brandingBlock}
 
 UN MODÈLE DE PV T'EST FOURNI CI-DESSOUS. TU DOIS LE REPRODUIRE FIDÈLEMENT.
 
@@ -116,6 +132,8 @@ ${templateContent}
 À partir de la transcription fournie, génère un procès-verbal HTML qui suit CE MODÈLE à la lettre en termes de structure, mise en forme, en-tête, style rédactionnel et formulations. Seul le contenu factuel (discussions, décisions, participants) doit provenir de la transcription.`;
     } else {
       systemPrompt = `Tu es un rédacteur professionnel de procès-verbaux de réunions d'organes de gouvernance (Conseil d'Administration, Comités).
+
+${brandingBlock}
 
 Tu dois analyser la transcription d'une réunion et générer un procès-verbal structuré et professionnel en HTML.
 

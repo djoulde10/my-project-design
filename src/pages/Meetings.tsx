@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useCompanyBranding } from "@/hooks/useCompanyBranding";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +51,8 @@ export default function Meetings() {
   const [activeTab, setActiveTab] = useState("pv");
   const [permEntityId, setPermEntityId] = useState<string | null>(null);
   const [permEntityName, setPermEntityName] = useState("");
+
+  const { branding } = useCompanyBranding();
 
   // Realtime transcription state
   const [liveTranscript, setLiveTranscript] = useState("");
@@ -182,6 +185,9 @@ export default function Meetings() {
           meetingDate: new Date().toLocaleDateString("fr-FR"),
           templateContent,
           mode: pvMode,
+          orgName: branding.platform_name || branding.nom,
+          orgLogoUrl: branding.logo_url,
+          orgColor: branding.couleur_principale,
         },
       });
       if (pvError) throw new Error(pvError.message);
