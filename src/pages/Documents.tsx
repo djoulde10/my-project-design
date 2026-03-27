@@ -154,9 +154,11 @@ export default function Documents() {
             </Button>
           </a>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Upload className="w-4 h-4 mr-2" />Uploader un document</Button>
-            </DialogTrigger>
+            <PermissionGate permission="gerer_documents">
+              <DialogTrigger asChild>
+                <Button><Upload className="w-4 h-4 mr-2" />Uploader un document</Button>
+              </DialogTrigger>
+            </PermissionGate>
           <DialogContent>
             <DialogHeader><DialogTitle>Uploader un document</DialogTitle></DialogHeader>
             <div className="space-y-4">
