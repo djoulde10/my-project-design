@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { MessageSquare, RefreshCw } from "lucide-react";
+import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 
 export default function AdminSupport() {
   const [tickets, setTickets] = useState<any[]>([]);
