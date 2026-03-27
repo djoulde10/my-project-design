@@ -106,70 +106,260 @@
   }
 }
 
-/* Tiptap editor content styles - force visibility */
+/* ============================================
+   Tiptap Editor — WYSIWYG Styles
+   ============================================ */
 @layer utilities {
-  .ProseMirror {
+  /* Editor content area */
+  .tiptap-editor-content {
     color: hsl(var(--foreground));
+    padding: 1rem;
+    line-height: 1.7;
   }
-  .ProseMirror ul {
+
+  .tiptap-editor-content:focus {
+    outline: none;
+  }
+
+  /* ---- Headings ---- */
+  .tiptap-editor-content h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 1.25em 0 0.5em;
+    line-height: 1.3;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .tiptap-editor-content h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 1em 0 0.4em;
+    line-height: 1.35;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .tiptap-editor-content h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0.85em 0 0.35em;
+    line-height: 1.4;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .tiptap-editor-content h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0.75em 0 0.3em;
+    line-height: 1.4;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  /* ---- Paragraphs ---- */
+  .tiptap-editor-content p {
+    margin: 0.4em 0;
+  }
+
+  .tiptap-editor-content p.is-editor-empty:first-child::before {
+    color: hsl(var(--muted-foreground));
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+
+  /* ---- Bullet Lists ---- */
+  .tiptap-editor-content ul,
+  .tiptap-editor-content .tiptap-bullet-list {
     list-style-type: disc !important;
-    padding-left: 1.5em !important;
+    padding-left: 1.75em !important;
     margin: 0.5em 0 !important;
     display: block !important;
   }
-  .ProseMirror ol {
+
+  .tiptap-editor-content ul ul {
+    list-style-type: circle !important;
+  }
+
+  .tiptap-editor-content ul ul ul {
+    list-style-type: square !important;
+  }
+
+  /* ---- Ordered Lists ---- */
+  .tiptap-editor-content ol,
+  .tiptap-editor-content .tiptap-ordered-list {
     list-style-type: decimal !important;
-    padding-left: 1.5em !important;
+    padding-left: 1.75em !important;
     margin: 0.5em 0 !important;
     display: block !important;
   }
-  .ProseMirror li {
-    margin: 0.25em 0;
+
+  .tiptap-editor-content ol ol {
+    list-style-type: lower-alpha !important;
+  }
+
+  .tiptap-editor-content ol ol ol {
+    list-style-type: lower-roman !important;
+  }
+
+  /* ---- List Items ---- */
+  .tiptap-editor-content li,
+  .tiptap-editor-content .tiptap-list-item {
     display: list-item !important;
+    margin: 0.2em 0;
   }
-  .ProseMirror li p {
+
+  .tiptap-editor-content li p {
     margin: 0;
+    display: inline;
   }
-  .ProseMirror blockquote {
-    border-left: 3px solid hsl(var(--primary) / 0.3) !important;
-    padding-left: 1em !important;
-    margin: 0.5em 0 !important;
+
+  .tiptap-editor-content li > ul,
+  .tiptap-editor-content li > ol {
+    margin-top: 0.15em !important;
+    margin-bottom: 0.15em !important;
+  }
+
+  /* ---- Blockquotes ---- */
+  .tiptap-editor-content blockquote {
+    border-left: 3px solid hsl(var(--primary) / 0.4);
+    padding-left: 1em;
+    margin: 0.75em 0;
     color: hsl(var(--muted-foreground));
     font-style: italic;
   }
-  .ProseMirror table {
+
+  /* ---- Links ---- */
+  .tiptap-editor-content a {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  /* ---- Tables ---- */
+  .tiptap-editor-content .tableWrapper {
+    overflow-x: auto;
+    margin: 0.75em 0;
+  }
+
+  .tiptap-editor-content table,
+  .tiptap-editor-content .tiptap-table {
     border-collapse: collapse !important;
     width: 100% !important;
-    margin: 0.5em 0 !important;
-    overflow: hidden;
+    margin: 0.75em 0 !important;
     display: table !important;
+    table-layout: fixed;
   }
-  .ProseMirror table td,
-  .ProseMirror table th {
+
+  .tiptap-editor-content table tr,
+  .tiptap-editor-content .tiptap-table-row {
+    display: table-row !important;
+  }
+
+  .tiptap-editor-content table td,
+  .tiptap-editor-content .tiptap-table-cell {
     border: 1px solid hsl(var(--border)) !important;
     padding: 0.5em 0.75em !important;
     min-width: 80px;
     vertical-align: top;
     position: relative;
+    display: table-cell !important;
   }
-  .ProseMirror table th {
+
+  .tiptap-editor-content table th,
+  .tiptap-editor-content .tiptap-table-header {
+    border: 1px solid hsl(var(--border)) !important;
+    padding: 0.5em 0.75em !important;
+    min-width: 80px;
+    vertical-align: top;
+    position: relative;
+    display: table-cell !important;
     background: hsl(var(--muted)) !important;
     font-weight: 600;
   }
-  .ProseMirror table .selectedCell {
+
+  .tiptap-editor-content table .selectedCell {
     background: hsl(var(--primary) / 0.1);
   }
-  .ProseMirror table tr {
-    display: table-row !important;
+
+  /* Column resize handle */
+  .tiptap-editor-content .column-resize-handle {
+    position: absolute;
+    right: -2px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: hsl(var(--primary));
+    cursor: col-resize;
+    z-index: 20;
   }
-  .ProseMirror h1 { font-size: 1.25rem; font-weight: 600; margin: 1em 0 0.5em; }
-  .ProseMirror h2 { font-size: 1.125rem; font-weight: 600; margin: 0.75em 0 0.4em; }
-  .ProseMirror h3 { font-size: 1rem; font-weight: 600; margin: 0.75em 0 0.4em; }
-  .ProseMirror p { margin: 0.35em 0; }
-  .ProseMirror:focus { outline: none; }
-  .ProseMirror .tableWrapper {
+
+  .tiptap-editor-content .resize-cursor {
+    cursor: col-resize;
+  }
+
+  /* ---- Images ---- */
+  .tiptap-editor-content img,
+  .tiptap-editor-content .tiptap-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 0.75em 0;
+    display: block;
+  }
+
+  .tiptap-editor-content img.ProseMirror-selectednode {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+
+  /* ---- Text Alignment ---- */
+  .tiptap-editor-content [style*="text-align: center"] {
+    text-align: center;
+  }
+  .tiptap-editor-content [style*="text-align: right"] {
+    text-align: right;
+  }
+  .tiptap-editor-content [style*="text-align: left"] {
+    text-align: left;
+  }
+
+  /* ---- Horizontal Rule ---- */
+  .tiptap-editor-content hr {
+    border: none;
+    border-top: 1px solid hsl(var(--border));
+    margin: 1.5em 0;
+  }
+
+  /* ---- Code ---- */
+  .tiptap-editor-content code {
+    background: hsl(var(--muted));
+    padding: 0.15em 0.35em;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+    font-family: monospace;
+  }
+
+  .tiptap-editor-content pre {
+    background: hsl(var(--muted));
+    padding: 0.75em 1em;
+    border-radius: 0.5rem;
     overflow-x: auto;
-    margin: 0.5em 0;
+    margin: 0.75em 0;
+  }
+
+  .tiptap-editor-content pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    font-size: 0.875rem;
+  }
+
+  /* ---- Gapcursor ---- */
+  .tiptap-editor-content .ProseMirror-gapcursor::after {
+    border-top: 1px solid hsl(var(--foreground));
+  }
+
+  /* ---- Dropcursor ---- */
+  .ProseMirror-dropcursor {
+    color: hsl(var(--primary)) !important;
   }
 }
 
