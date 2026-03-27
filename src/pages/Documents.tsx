@@ -17,6 +17,7 @@ import { Upload, FileIcon, Download, Search, FolderOpen, FileText, Gavel, BookOp
 import { getGoogleDriveLink, getOneDriveLink } from "@/lib/calendarIntegrations";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import CommentThread from "@/components/CommentThread";
+import PermissionGate from "@/components/PermissionGate";
 
 const categories = [
   { value: "all", label: "Tous", icon: FolderOpen },
@@ -153,9 +154,11 @@ export default function Documents() {
             </Button>
           </a>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Upload className="w-4 h-4 mr-2" />Uploader un document</Button>
-            </DialogTrigger>
+            <PermissionGate permission="gerer_documents">
+              <DialogTrigger asChild>
+                <Button><Upload className="w-4 h-4 mr-2" />Uploader un document</Button>
+              </DialogTrigger>
+            </PermissionGate>
           <DialogContent>
             <DialogHeader><DialogTitle>Uploader un document</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -274,9 +277,11 @@ export default function Documents() {
                         <Button variant="ghost" size="icon" onClick={() => setCommentingId(commentingId === doc.id ? null : doc.id)}>
                           <MessageSquare className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => { setPermDocId(doc.id); setPermDocName(doc.name); }}>
-                          <Shield className="w-4 h-4" />
-                        </Button>
+                        <PermissionGate permission="gerer_utilisateurs">
+                          <Button variant="ghost" size="icon" onClick={() => { setPermDocId(doc.id); setPermDocName(doc.name); }}>
+                            <Shield className="w-4 h-4" />
+                          </Button>
+                        </PermissionGate>
                       </div>
                     </TableCell>
                   </TableRow>

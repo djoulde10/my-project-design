@@ -25,6 +25,7 @@ import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import MeetingAIAnalysis from "@/components/MeetingAIAnalysis";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
+import PermissionGate from "@/components/PermissionGate";
 import { useCompanyId } from "@/hooks/useCompanyId";
 
 // PV status helpers
@@ -886,9 +887,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
               if (!open && scribe.isConnected) stopLiveTranscription();
               if (!open) resetForm();
             }}>
-              <DialogTrigger asChild>
-                <Button variant="outline"><Upload className="w-4 h-4 mr-2" />Importer un audio</Button>
-              </DialogTrigger>
+              <PermissionGate permission="valider_pv">
+                <DialogTrigger asChild>
+                  <Button variant="outline"><Upload className="w-4 h-4 mr-2" />Importer un audio</Button>
+                </DialogTrigger>
+              </PermissionGate>
               <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle>Importer un fichier audio</DialogTitle></DialogHeader>
                 <div className="space-y-4">
@@ -959,7 +962,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
 
             {/* Manual PV dialog */}
             <Dialog open={pvOpen} onOpenChange={setPvOpen}>
-              <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV manuel</Button></DialogTrigger>
+              <PermissionGate permission="valider_pv">
+                <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV manuel</Button></DialogTrigger>
+              </PermissionGate>
               <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle>Rédiger un procès-verbal</DialogTitle></DialogHeader>
                 <div className="space-y-4">
@@ -1062,9 +1067,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             >
                               <History className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => { setPermEntityId(m.id); setPermEntityName(m.sessions?.title || m.title || "Réunion"); }}>
-                              <Shield className="w-4 h-4" />
-                            </Button>
+                            <PermissionGate permission="gerer_utilisateurs">
+                              <Button variant="ghost" size="sm" onClick={() => { setPermEntityId(m.id); setPermEntityName(m.sessions?.title || m.title || "Réunion"); }}>
+                                <Shield className="w-4 h-4" />
+                              </Button>
+                            </PermissionGate>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1083,9 +1090,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
               Importez des exemples de procès-verbaux pour que l'IA s'inspire de leur structure et style.
             </p>
             <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
-              <DialogTrigger asChild>
-                <Button><Plus className="w-4 h-4 mr-2" />Importer un modèle</Button>
-              </DialogTrigger>
+              <PermissionGate permission="gerer_documents">
+                <DialogTrigger asChild>
+                  <Button><Plus className="w-4 h-4 mr-2" />Importer un modèle</Button>
+                </DialogTrigger>
+              </PermissionGate>
               <DialogContent>
                 <DialogHeader><DialogTitle>Importer un modèle de PV</DialogTitle></DialogHeader>
                 <div className="space-y-4">

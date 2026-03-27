@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { Plus, UserCog, Shield, Ban, CheckCircle2, Pencil, Trash2, Link } from "lucide-react";
+import PermissionGate from "@/components/PermissionGate";
 
 export default function UserManagement() {
   
@@ -167,9 +168,11 @@ export default function UserManagement() {
           <p className="text-muted-foreground">Créer, modifier et gérer les comptes utilisateurs</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Nouvel utilisateur</Button>
-          </DialogTrigger>
+          <PermissionGate permission="gerer_utilisateurs">
+            <DialogTrigger asChild>
+              <Button><Plus className="w-4 h-4 mr-2" />Nouvel utilisateur</Button>
+            </DialogTrigger>
+          </PermissionGate>
           <DialogContent>
             <DialogHeader><DialogTitle>Créer un utilisateur</DialogTitle></DialogHeader>
             <div className="space-y-4">

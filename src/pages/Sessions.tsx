@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users, Shield } from "lucide-react";
 import SessionCalendarActions from "@/components/SessionCalendarActions";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
+import PermissionGate from "@/components/PermissionGate";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import SessionAttendeeManager from "@/components/SessionAttendeeManager";
 import jsPDF from "jspdf";
@@ -326,9 +327,11 @@ export default function Sessions() {
                           <Package className="w-4 h-4" />
                         </Button>
                         <SessionCalendarActions session={s} variant="icon" />
-                        <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
-                          <Shield className="w-4 h-4" />
-                        </Button>
+                        <PermissionGate permission="gerer_utilisateurs">
+                          <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
+                            <Shield className="w-4 h-4" />
+                          </Button>
+                        </PermissionGate>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -391,9 +394,11 @@ export default function Sessions() {
           <p className="text-sm text-muted-foreground">Gérez les sessions du CA et du Comité d'Audit</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Nouvelle session</Button>
-          </DialogTrigger>
+          <PermissionGate permission="creer_session">
+            <DialogTrigger asChild>
+              <Button><Plus className="w-4 h-4 mr-2" />Nouvelle session</Button>
+            </DialogTrigger>
+          </PermissionGate>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Créer une session</DialogTitle></DialogHeader>
             <div className="space-y-4">

@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, ShieldAlert, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
+import PermissionGate from "@/components/PermissionGate";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   active: { label: "Actif", color: "bg-amber-100 text-amber-800", icon: AlertTriangle },
@@ -77,9 +78,11 @@ export default function ConflictOfInterest() {
           <p className="text-sm text-muted-foreground">Déclaration et gestion des conflits d'intérêts des membres</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Nouvelle déclaration</Button>
-          </DialogTrigger>
+          <PermissionGate permission="gerer_conflits">
+            <DialogTrigger asChild>
+              <Button><Plus className="w-4 h-4 mr-2" />Nouvelle déclaration</Button>
+            </DialogTrigger>
+          </PermissionGate>
           <DialogContent>
             <DialogHeader><DialogTitle>Déclarer un conflit d'intérêt</DialogTitle></DialogHeader>
             <div className="space-y-4">

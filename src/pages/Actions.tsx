@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, AlertTriangle, CheckCircle2, Clock, XCircle, Download, FileSpreadsheet } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
+import PermissionGate from "@/components/PermissionGate";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
@@ -104,7 +105,9 @@ export default function Actions() {
             </DropdownMenuContent>
           </DropdownMenu>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
+            <PermissionGate permission="suivre_actions">
+              <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
+            </PermissionGate>
           <DialogContent>
             <DialogHeader><DialogTitle>Créer une action</DialogTitle></DialogHeader>
             <div className="space-y-4">

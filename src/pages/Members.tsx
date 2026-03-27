@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, User, Pencil, Eye, Search } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
+import PermissionGate from "@/components/PermissionGate";
 
 const qualityLabels: Record<string, string> = {
   pca: "PCA",
@@ -106,9 +107,11 @@ export default function Members() {
           <p className="text-sm text-muted-foreground">Gestion des membres des organes</p>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditingId(null); setForm(emptyForm); } }}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Nouveau membre</Button>
-          </DialogTrigger>
+          <PermissionGate permission="gerer_membres">
+            <DialogTrigger asChild>
+              <Button><Plus className="w-4 h-4 mr-2" />Nouveau membre</Button>
+            </DialogTrigger>
+          </PermissionGate>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editingId ? "Modifier le membre" : "Ajouter un membre"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -264,9 +267,11 @@ export default function Members() {
                         <Button variant="ghost" size="icon" onClick={() => navigate(`/members/${m.id}`)}>
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(m)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
+                        <PermissionGate permission="gerer_membres">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(m)}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </PermissionGate>
                       </div>
                     </TableCell>
                   </TableRow>
