@@ -23,7 +23,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { transcription, meetingTitle, meetingDate, templateContent, mode } = await req.json();
+    const { transcription, meetingTitle, meetingDate, templateContent, mode, orgName, orgLogoUrl, orgColor } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
