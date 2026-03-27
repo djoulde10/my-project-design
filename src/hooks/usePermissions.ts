@@ -14,7 +14,12 @@ export type PermissionName =
   | "creer_decisions"
   | "suivre_actions"
   | "consulter_audit"
-  | "gerer_organes";
+  | "gerer_organes"
+  | "gerer_conflits"
+  | "gerer_approbations"
+  | "gerer_api"
+  | "gerer_support"
+  | "consulter_analytics";
 
 export function usePermissions() {
   const { user } = useAuth();

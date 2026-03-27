@@ -49,6 +49,17 @@ const entityLabels: Record<string, string> = {
   meeting_templates: "Modèles",
   profiles: "Profils",
   notifications: "Notifications",
+  api_keys: "Clés API",
+  comments: "Commentaires",
+  companies: "Organisations",
+  conflict_of_interests: "Conflits d'intérêts",
+  entity_permissions: "Permissions entités",
+  feature_flags: "Feature flags",
+  role_permissions: "Permissions rôles",
+  roles: "Rôles",
+  support_tickets: "Tickets support",
+  approval_requests: "Approbations",
+  meeting_ai_analysis: "Analyses IA",
 };
 
 const PAGE_SIZE = 50;
