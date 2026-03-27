@@ -429,6 +429,7 @@ export type Database = {
           pays: string | null
           plan_abonnement: string | null
           plan_id: string | null
+          platform_name: string | null
           secteur: string | null
           special_status: string | null
           statut: string | null
@@ -448,6 +449,7 @@ export type Database = {
           pays?: string | null
           plan_abonnement?: string | null
           plan_id?: string | null
+          platform_name?: string | null
           secteur?: string | null
           special_status?: string | null
           statut?: string | null
@@ -467,6 +469,7 @@ export type Database = {
           pays?: string | null
           plan_abonnement?: string | null
           plan_id?: string | null
+          platform_name?: string | null
           secteur?: string | null
           special_status?: string | null
           statut?: string | null
