@@ -17,6 +17,7 @@ import { Upload, FileIcon, Download, Search, FolderOpen, FileText, Gavel, BookOp
 import { getGoogleDriveLink, getOneDriveLink } from "@/lib/calendarIntegrations";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import CommentThread from "@/components/CommentThread";
+import PermissionGate from "@/components/PermissionGate";
 
 const categories = [
   { value: "all", label: "Tous", icon: FolderOpen },
