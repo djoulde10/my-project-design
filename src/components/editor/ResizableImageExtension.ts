@@ -1,9 +1,5 @@
 import Image from "@tiptap/extension-image";
 import { mergeAttributes } from "@tiptap/react";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { Decoration, DecorationSet } from "@tiptap/pm/view";
-
-const resizableImagePluginKey = new PluginKey("resizableImage");
 
 export const ResizableImage = Image.extend({
   addAttributes() {
@@ -11,8 +7,10 @@ export const ResizableImage = Image.extend({
       ...this.parent?.(),
       width: {
         default: null,
-        parseHTML: (element: HTMLElement) =>
-          element.getAttribute("width") || element.style.width || null,
+        parseHTML: (element: HTMLElement) => {
+          const w = element.getAttribute("width") || element.style.width?.replace("px", "");
+          return w ? Number(w) : null;
+        },
         renderHTML: (attributes: Record<string, any>) => {
           if (!attributes.width) return {};
           return { width: attributes.width, style: `width: ${attributes.width}px` };
@@ -20,11 +18,13 @@ export const ResizableImage = Image.extend({
       },
       height: {
         default: null,
-        parseHTML: (element: HTMLElement) =>
-          element.getAttribute("height") || element.style.height || null,
+        parseHTML: (element: HTMLElement) => {
+          const h = element.getAttribute("height") || element.style.height?.replace("px", "");
+          return h ? Number(h) : null;
+        },
         renderHTML: (attributes: Record<string, any>) => {
           if (!attributes.height) return {};
-          return { height: attributes.height, style: `height: ${attributes.height}px` };
+          return { height: attributes.height };
         },
       },
       alignment: {
@@ -62,16 +62,8 @@ export const ResizableImage = Image.extend({
 
   parseHTML() {
     return [
-      {
-        tag: "figure.tiptap-image-wrapper img",
-        getAttrs: (node: string | HTMLElement) => {
-          if (typeof node === "string") return false;
-          return {};
-        },
-      },
-      {
-        tag: "img[src]",
-      },
+      { tag: "figure.tiptap-image-wrapper img" },
+      { tag: "img[src]" },
     ];
   },
 
@@ -93,149 +85,42 @@ export const ResizableImage = Image.extend({
     };
   },
 
-  addProseMirrorPlugins() {
-    const extensionThis = this;
-    return [
-      new Plugin({
-        key: resizableImagePluginKey,
-        props: {
-          handleDOMEvents: {
-            mousedown(view, event) {
-              const target = event.target as HTMLElement;
-              if (!target.classList.contains("image-resize-handle")) return false;
-
-              event.preventDefault();
-              event.stopPropagation();
-
-              const handle = target.dataset.handle as string;
-              const wrapper = target.closest(".tiptap-image-resize-container") as HTMLElement;
-              if (!wrapper) return false;
-
-              const img = wrapper.querySelector("img") as HTMLImageElement;
-              if (!img) return false;
-
-              const startX = event.clientX;
-              const startY = event.clientY;
-              const startWidth = img.getBoundingClientRect().width;
-              const startHeight = img.getBoundingClientRect().height;
-              const aspectRatio = startWidth / startHeight;
-
-              const onMouseMove = (e: MouseEvent) => {
-                let newWidth = startWidth;
-                let newHeight = startHeight;
-
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-
-                if (handle.includes("right")) {
-                  newWidth = Math.max(50, startWidth + dx);
-                } else if (handle.includes("left")) {
-                  newWidth = Math.max(50, startWidth - dx);
-                }
-
-                if (handle.includes("bottom")) {
-                  newHeight = Math.max(50, startHeight + dy);
-                } else if (handle.includes("top")) {
-                  newHeight = Math.max(50, startHeight - dy);
-                }
-
-                // Corner handles maintain aspect ratio
-                if (handle.length > 2) {
-                  // e.g. "se", "nw"
-                  if (Math.abs(dx) > Math.abs(dy)) {
-                    newHeight = newWidth / aspectRatio;
-                  } else {
-                    newWidth = newHeight * aspectRatio;
-                  }
-                }
-
-                img.style.width = `${Math.round(newWidth)}px`;
-                img.style.height = `${Math.round(newHeight)}px`;
-              };
-
-              const onMouseUp = (e: MouseEvent) => {
-                document.removeEventListener("mousemove", onMouseMove);
-                document.removeEventListener("mouseup", onMouseUp);
-                document.body.style.cursor = "";
-                document.body.style.userSelect = "";
-
-                const finalWidth = Math.round(img.getBoundingClientRect().width);
-                const finalHeight = Math.round(img.getBoundingClientRect().height);
-
-                // Find the node position and update attributes
-                const { state } = view;
-                const { selection } = state;
-                const pos = selection.from;
-
-                view.dispatch(
-                  state.tr.setNodeMarkup(pos, undefined, {
-                    ...state.doc.nodeAt(pos)?.attrs,
-                    width: finalWidth,
-                    height: finalHeight,
-                  })
-                );
-              };
-
-              document.body.style.cursor = target.style.cursor;
-              document.body.style.userSelect = "none";
-              document.addEventListener("mousemove", onMouseMove);
-              document.addEventListener("mouseup", onMouseUp);
-
-              return true;
-            },
-          },
-          decorations(state) {
-            const { doc, selection } = state;
-            const decorations: Decoration[] = [];
-
-            doc.descendants((node, pos) => {
-              if (node.type.name === extensionThis.name && selection.from === pos) {
-                decorations.push(
-                  Decoration.widget(pos + 1, () => {
-                    // We don't use widget here, we use node decoration
-                    return document.createElement("span");
-                  })
-                );
-              }
-            });
-
-            return DecorationSet.empty;
-          },
-        },
-      }),
-    ];
-  },
-
   addNodeView() {
     return ({ node, getPos, editor }) => {
+      // -- Figure wrapper (alignment) --
+      const figure = document.createElement("figure");
+      figure.classList.add("tiptap-image-wrapper");
+      const applyAlignment = (a: string) => {
+        figure.style.textAlign = a;
+        figure.setAttribute("data-alignment", a);
+      };
+      applyAlignment(node.attrs.alignment || "center");
+
+      // -- Resize container --
       const container = document.createElement("div");
       container.classList.add("tiptap-image-resize-container");
-      container.style.display = "inline-block";
-      container.style.position = "relative";
-      container.style.lineHeight = "0";
 
+      // -- Image --
       const img = document.createElement("img");
       img.src = node.attrs.src;
       img.alt = node.attrs.alt || "";
       img.classList.add("tiptap-image");
       img.draggable = false;
-
-      if (node.attrs.width) {
-        img.style.width = `${node.attrs.width}px`;
-      }
-      if (node.attrs.height) {
-        img.style.height = `${node.attrs.height}px`;
-      } else {
-        img.style.height = "auto";
-      }
-
+      if (node.attrs.width) img.style.width = `${node.attrs.width}px`;
+      if (node.attrs.height) img.style.height = `${node.attrs.height}px`;
+      else img.style.height = "auto";
       container.appendChild(img);
 
-      // Create resize handles
-      const handles = ["nw", "ne", "sw", "se", "n", "s", "e", "w"];
-      const handleElements: HTMLElement[] = [];
+      // -- Dimension tooltip --
+      const tooltip = document.createElement("div");
+      tooltip.classList.add("image-resize-tooltip");
+      tooltip.style.display = "none";
+      container.appendChild(tooltip);
 
-      handles.forEach((h) => {
+      // -- Resize handles --
+      const handlePositions = ["nw", "n", "ne", "e", "se", "s", "sw", "w"] as const;
+      const handleElements: HTMLElement[] = [];
+      handlePositions.forEach((h) => {
         const handle = document.createElement("div");
         handle.classList.add("image-resize-handle", `handle-${h}`);
         handle.dataset.handle = h;
@@ -244,25 +129,20 @@ export const ResizableImage = Image.extend({
         container.appendChild(handle);
       });
 
-      // Show/hide handles on selection
-      const showHandles = () =>
-        handleElements.forEach((h) => (h.style.display = "block"));
-      const hideHandles = () =>
-        handleElements.forEach((h) => (h.style.display = "none"));
+      const showHandles = () => handleElements.forEach((h) => (h.style.display = "block"));
+      const hideHandles = () => handleElements.forEach((h) => (h.style.display = "none"));
       hideHandles();
 
-      // Click to select
+      // -- Click to select --
       container.addEventListener("click", (e) => {
         e.preventDefault();
         if (typeof getPos === "function") {
           const pos = getPos();
-          if (pos != null) {
-            editor.commands.setNodeSelection(pos);
-          }
+          if (pos != null) editor.commands.setNodeSelection(pos);
         }
       });
 
-      // Resize via handles
+      // -- Resize logic --
       handleElements.forEach((handle) => {
         handle.addEventListener("mousedown", (event) => {
           event.preventDefault();
@@ -271,31 +151,61 @@ export const ResizableImage = Image.extend({
           const h = handle.dataset.handle!;
           const startX = event.clientX;
           const startY = event.clientY;
-          const startWidth = img.getBoundingClientRect().width;
-          const startHeight = img.getBoundingClientRect().height;
+          const rect = img.getBoundingClientRect();
+          const startWidth = rect.width;
+          const startHeight = rect.height;
           const aspectRatio = startWidth / startHeight;
+          const isCorner = h.length === 2;
+
+          tooltip.style.display = "block";
+          const updateTooltip = (w: number, h: number) => {
+            tooltip.textContent = `${Math.round(w)} × ${Math.round(h)}`;
+          };
+          updateTooltip(startWidth, startHeight);
 
           const onMouseMove = (e: MouseEvent) => {
-            let newWidth = startWidth;
-            let newHeight = startHeight;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
+            let newWidth = startWidth;
+            let newHeight = startHeight;
 
-            const isCorner = h.length === 2;
+            // Calculate based on handle direction
+            if (h.includes("e")) newWidth = startWidth + dx;
+            else if (h.includes("w")) newWidth = startWidth - dx;
 
-            if (h.includes("e")) newWidth = Math.max(50, startWidth + dx);
-            else if (h.includes("w")) newWidth = Math.max(50, startWidth - dx);
+            if (h.includes("s")) newHeight = startHeight + dy;
+            else if (h.includes("n")) newHeight = startHeight - dy;
 
-            if (h.includes("s")) newHeight = Math.max(50, startHeight + dy);
-            else if (h.includes("n")) newHeight = Math.max(50, startHeight - dy);
-
+            // Proportional resize: corners lock ratio by default, Shift unlocks
+            // Side handles: free by default, Shift locks ratio
             if (isCorner) {
-              // Maintain aspect ratio for corners
-              newHeight = newWidth / aspectRatio;
+              if (!e.shiftKey) {
+                // Lock aspect ratio (default for corners)
+                const dominant = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+                if (dominant === "x") {
+                  newHeight = newWidth / aspectRatio;
+                } else {
+                  newWidth = newHeight * aspectRatio;
+                }
+              }
+            } else {
+              if (e.shiftKey) {
+                // Lock aspect ratio when Shift is held for side handles
+                if (h === "e" || h === "w") {
+                  newHeight = newWidth / aspectRatio;
+                } else {
+                  newWidth = newHeight * aspectRatio;
+                }
+              }
             }
+
+            // Enforce minimums
+            newWidth = Math.max(30, newWidth);
+            newHeight = Math.max(30, newHeight);
 
             img.style.width = `${Math.round(newWidth)}px`;
             img.style.height = `${Math.round(newHeight)}px`;
+            updateTooltip(newWidth, newHeight);
           };
 
           const onMouseUp = () => {
@@ -303,6 +213,7 @@ export const ResizableImage = Image.extend({
             document.removeEventListener("mouseup", onMouseUp);
             document.body.style.cursor = "";
             document.body.style.userSelect = "";
+            tooltip.style.display = "none";
 
             const finalWidth = Math.round(img.getBoundingClientRect().width);
             const finalHeight = Math.round(img.getBoundingClientRect().height);
@@ -328,12 +239,6 @@ export const ResizableImage = Image.extend({
         });
       });
 
-      // Wrapper for alignment
-      const figure = document.createElement("figure");
-      figure.classList.add("tiptap-image-wrapper");
-      const alignment = node.attrs.alignment || "center";
-      figure.style.textAlign = alignment;
-      figure.setAttribute("data-alignment", alignment);
       figure.appendChild(container);
 
       return {
@@ -341,8 +246,8 @@ export const ResizableImage = Image.extend({
         contentDOM: null,
         update(updatedNode) {
           if (updatedNode.type.name !== "image") return false;
-
           img.src = updatedNode.attrs.src;
+          img.alt = updatedNode.attrs.alt || "";
           if (updatedNode.attrs.width) {
             img.style.width = `${updatedNode.attrs.width}px`;
           } else {
@@ -353,11 +258,9 @@ export const ResizableImage = Image.extend({
           } else {
             img.style.height = "auto";
           }
-
-          const newAlignment = updatedNode.attrs.alignment || "center";
-          figure.style.textAlign = newAlignment;
-          figure.setAttribute("data-alignment", newAlignment);
-
+          applyAlignment(updatedNode.attrs.alignment || "center");
+          // Keep node.attrs in sync for future resize operations
+          (node as any).attrs = updatedNode.attrs;
           return true;
         },
         selectNode() {
@@ -367,10 +270,9 @@ export const ResizableImage = Image.extend({
         deselectNode() {
           container.classList.remove("ProseMirror-selectednode");
           hideHandles();
+          tooltip.style.display = "none";
         },
-        destroy() {
-          // cleanup
-        },
+        destroy() {},
       };
     };
   },
