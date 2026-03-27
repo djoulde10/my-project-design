@@ -24,7 +24,7 @@ const DEFAULT_BRANDING: CompanyBranding = {
 let brandingCache: Record<string, { data: CompanyBranding; ts: number }> = {};
 const CACHE_TTL = 5 * 60 * 1000; // 5 min
 
-function hexToHSL(hex: string): string {
+export function hexToHSL(hex: string): string {
   hex = hex.replace("#", "");
   const r = parseInt(hex.substring(0, 2), 16) / 255;
   const g = parseInt(hex.substring(2, 4), 16) / 255;
@@ -87,34 +87,6 @@ export function useCompanyBranding() {
         setLoading(false);
       });
   }, [companyId]);
-
-  // Apply CSS custom properties dynamically to the actual design system tokens
-  useEffect(() => {
-    const root = document.documentElement;
-    if (branding.couleur_principale) {
-      const hsl = hexToHSL(branding.couleur_principale);
-      root.style.setProperty("--primary", hsl);
-      root.style.setProperty("--ring", hsl);
-      root.style.setProperty("--sidebar-primary", hsl);
-      root.style.setProperty("--sidebar-ring", hsl);
-    }
-    if (branding.couleur_secondaire) {
-      const hsl = hexToHSL(branding.couleur_secondaire);
-      root.style.setProperty("--secondary", hsl);
-    }
-    if (branding.couleur_accent) {
-      const hsl = hexToHSL(branding.couleur_accent);
-      root.style.setProperty("--accent", hsl);
-    }
-    return () => {
-      root.style.removeProperty("--primary");
-      root.style.removeProperty("--ring");
-      root.style.removeProperty("--sidebar-primary");
-      root.style.removeProperty("--sidebar-ring");
-      root.style.removeProperty("--secondary");
-      root.style.removeProperty("--accent");
-    };
-  }, [branding]);
 
   const displayName = useMemo(
     () => branding.platform_name || branding.nom || "GovBoard",
