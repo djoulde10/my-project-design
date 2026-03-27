@@ -73,6 +73,7 @@ export default function AdminOrganizations() {
   const changePlan = async (org: any, planId: string) => {
     const { error } = await supabase.from("companies").update({ plan_id: planId }).eq("id", org.id);
     if (error) { toast.error("Erreur"); return; }
+    logAdminAction({ action: "changement_plan", entity_type: "companies", entity_id: org.id, target_company_id: org.id, details: { nom: org.nom, old_plan_id: org.plan_id, new_plan_id: planId } });
     toast.success("Plan modifié");
     fetchOrgs();
   };
