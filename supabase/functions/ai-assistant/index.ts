@@ -330,7 +330,13 @@ function buildPageContext(page: string | null): string {
     '/help': "L'utilisateur est sur le CENTRE D'AIDE. Propose-lui des guides et réponds à ses questions.",
   };
   
-  const key = Object.keys(contexts).find(k => page.startsWith(k) && k !== '/' || page === k);
+    '/permissions': "L'utilisateur est sur la page PERMISSIONS. Aide-le à gérer les permissions granulaires par entité.",
+    '/api-keys': "L'utilisateur est sur la page CLÉS API. Aide-le à créer et gérer les accès API.",
+    '/api-docs': "L'utilisateur est sur la page DOCUMENTATION API. Aide-le à comprendre et utiliser l'API REST.",
+    '/archives': "L'utilisateur est sur la page ARCHIVES. Aide-le à consulter les données archivées.",
+  };
+  
+  const key = Object.keys(contexts).sort((a, b) => b.length - a.length).find(k => page === k || (k !== '/' && page.startsWith(k)));
   if (key) {
     return `CONTEXTE DE PAGE:\n${contexts[key]}`;
   }

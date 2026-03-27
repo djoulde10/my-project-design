@@ -37,6 +37,13 @@ const ERROR_PATTERNS: ErrorPattern[] = [
   { test: /violates row-level security policy for table "conflict_of_interests"/i, message: "Vous n'avez pas le droit de gérer les conflits d'intérêts. Contactez votre administrateur." },
   { test: /violates row-level security policy for table "signatures"/i, message: "Vous n'avez pas le droit de signer ce document. Contactez votre administrateur." },
   { test: /violates row-level security policy for table "profiles"/i, message: "Vous n'avez pas le droit de modifier ce profil. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "api_keys"/i, message: "Vous n'avez pas le droit de gérer les clés API. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "comments"/i, message: "Vous n'avez pas le droit de gérer ce commentaire. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "entity_permissions"/i, message: "Vous n'avez pas le droit de gérer les permissions. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "feature_flags"/i, message: "Vous n'avez pas le droit de gérer les feature flags. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "roles"/i, message: "Vous n'avez pas le droit de gérer les rôles. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "support_tickets"/i, message: "Vous n'avez pas le droit de gérer les tickets de support. Contactez votre administrateur." },
+  { test: /violates row-level security policy for table "companies"/i, message: "Vous n'avez pas le droit de modifier les informations de l'organisation. Contactez votre administrateur." },
   { test: /violates row-level security policy/i, message: "Vous n'avez pas les permissions nécessaires pour cette opération. Contactez votre administrateur." },
 
   // ── Database constraint violations ──
