@@ -21,6 +21,7 @@ const FEATURE_KEYS = [
 ];
 
 export default function AdminFeatureFlags() {
+  const { logAdminAction } = useAdminAuditLog();
   const [orgs, setOrgs] = useState<any[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<string>("");
   const [flags, setFlags] = useState<Record<string, boolean>>({});
