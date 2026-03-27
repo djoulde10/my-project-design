@@ -196,6 +196,7 @@ export default function OrganizationSettings() {
       toast.error("Erreur lors de la sauvegarde");
     } else {
       toast.success("Paramètres enregistrés avec succès");
+      invalidateCache();
       loadSettings();
     }
     setSaving(false);
