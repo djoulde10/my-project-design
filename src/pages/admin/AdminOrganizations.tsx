@@ -65,6 +65,7 @@ export default function AdminOrganizations() {
   const setSpecialStatus = async (org: any, status: string | null) => {
     const { error } = await supabase.from("companies").update({ special_status: status } as any).eq("id", org.id);
     if (error) { toast.error("Erreur"); return; }
+    logAdminAction({ action: "statut_special", entity_type: "companies", entity_id: org.id, target_company_id: org.id, details: { nom: org.nom, special_status: status } });
     toast.success("Statut spécial mis à jour");
     fetchOrgs();
   };
