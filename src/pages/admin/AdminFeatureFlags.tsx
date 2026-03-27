@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ToggleRight, Building2 } from "lucide-react";
+import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 
 const FEATURE_KEYS = [
   { key: "ai_assistant", label: "Assistant IA", description: "Accès à l'assistant IA conversationnel" },
