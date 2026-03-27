@@ -1090,9 +1090,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
               Importez des exemples de procès-verbaux pour que l'IA s'inspire de leur structure et style.
             </p>
             <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
-              <DialogTrigger asChild>
-                <Button><Plus className="w-4 h-4 mr-2" />Importer un modèle</Button>
-              </DialogTrigger>
+              <PermissionGate permission="gerer_documents">
+                <DialogTrigger asChild>
+                  <Button><Plus className="w-4 h-4 mr-2" />Importer un modèle</Button>
+                </DialogTrigger>
+              </PermissionGate>
               <DialogContent>
                 <DialogHeader><DialogTitle>Importer un modèle de PV</DialogTitle></DialogHeader>
                 <div className="space-y-4">
