@@ -26,6 +26,7 @@ import Approvals from "@/pages/Approvals";
 import PermissionsManagement from "@/pages/PermissionsManagement";
 import ApiKeys from "@/pages/ApiKeys";
 import ApiDocs from "@/pages/ApiDocs";
+import OrganizationSettings from "@/pages/OrganizationSettings";
 import NotFound from "./pages/NotFound";
 import AIAssistant from "@/components/AIAssistant";
 
