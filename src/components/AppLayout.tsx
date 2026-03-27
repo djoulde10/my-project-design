@@ -60,6 +60,7 @@ const navSections = [
       { label: "Utilisateurs", icon: Users, path: "/users" },
       { label: "Permissions", icon: Shield, path: "/permissions" },
       { label: "API", icon: Key, path: "/api-keys" },
+      { label: "Personnalisation", icon: Settings, path: "/settings" },
     ],
   },
 ];
