@@ -394,9 +394,11 @@ export default function Sessions() {
           <p className="text-sm text-muted-foreground">Gérez les sessions du CA et du Comité d'Audit</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Nouvelle session</Button>
-          </DialogTrigger>
+          <PermissionGate permission="creer_session">
+            <DialogTrigger asChild>
+              <Button><Plus className="w-4 h-4 mr-2" />Nouvelle session</Button>
+            </DialogTrigger>
+          </PermissionGate>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Créer une session</DialogTitle></DialogHeader>
             <div className="space-y-4">

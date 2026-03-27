@@ -105,7 +105,9 @@ export default function Actions() {
             </DropdownMenuContent>
           </DropdownMenu>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
+            <PermissionGate permission="suivre_actions">
+              <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
+            </PermissionGate>
           <DialogContent>
             <DialogHeader><DialogTitle>Créer une action</DialogTitle></DialogHeader>
             <div className="space-y-4">
