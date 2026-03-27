@@ -34,6 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AdminApiManagement() {
   const queryClient = useQueryClient();
+  const { logAdminAction } = useAdminAuditLog();
   const [tab, setTab] = useState("dashboard");
   const [logFilter, setLogFilter] = useState({ search: "", status: "all", period: "7" });
   const [keyFilter, setKeyFilter] = useState("");
