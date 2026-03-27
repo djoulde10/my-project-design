@@ -88,10 +88,26 @@ RÈGLES DE STYLE RÉDACTIONNEL :
 - Développe le contexte des discussions pour chaque point de l'ordre du jour.
 - Le document doit être exhaustif et exploitable juridiquement.`;
 
+    const brandingBlock = orgName || orgLogoUrl ? `
+BRANDING DE L'ORGANISATION :
+- Nom de l'organisation : ${orgName || "Non spécifié"}
+${orgLogoUrl ? `- Le logo de l'organisation est disponible. Ajoute en tout début du document un en-tête HTML contenant :
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid ${orgColor || '#1e40af'}">
+    <img src="${orgLogoUrl}" alt="${orgName || ''}" style="height:50px;max-width:120px;object-fit:contain" />
+    <div>
+      <div style="font-size:16px;font-weight:700;color:${orgColor || '#1e40af'}">${orgName || ''}</div>
+      <div style="font-size:11px;color:#6b7280">Procès-verbal de réunion</div>
+    </div>
+  </div>` : ""}
+${orgColor ? `- Utilise la couleur ${orgColor} pour les titres <h1> et <h2> via l'attribut style="color:${orgColor}".` : ""}
+` : "";
+
     let systemPrompt: string;
 
     if (templateContent) {
       systemPrompt = `Tu es un rédacteur professionnel de procès-verbaux de réunions d'organes de gouvernance (Conseil d'Administration, Comités).
+
+${brandingBlock}
 
 UN MODÈLE DE PV T'EST FOURNI CI-DESSOUS. TU DOIS LE REPRODUIRE FIDÈLEMENT.
 
