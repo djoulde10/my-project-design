@@ -12,8 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Plus, Search, Building2, Ban, CheckCircle, Trash2, Eye, Star, TestTube, ArrowUpDown, Users, CalendarDays, FileText, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 
 export default function AdminOrganizations() {
+  const { logAdminAction } = useAdminAuditLog();
   const [orgs, setOrgs] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
   const [search, setSearch] = useState("");
