@@ -60,6 +60,12 @@ const entityLabels: Record<string, string> = {
   support_tickets: "Tickets support",
   approval_requests: "Approbations",
   meeting_ai_analysis: "Analyses IA",
+  invoices: "Factures",
+  subscription_plans: "Plans d'abonnement",
+  organization_usage: "Usage organisations",
+  user_roles: "Rôles utilisateurs",
+  login_logs: "Connexions",
+  system_logs: "Logs système",
 };
 
 const PAGE_SIZE = 50;
