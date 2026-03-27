@@ -62,6 +62,7 @@ const navSections = [
       { label: "Permissions", icon: Shield, path: "/permissions" },
       { label: "API", icon: Key, path: "/api-keys" },
       { label: "Personnalisation", icon: Settings, path: "/settings" },
+      { label: "Centre d'aide", icon: HelpCircle, path: "/help" },
     ],
   },
 ];
