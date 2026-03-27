@@ -47,6 +47,7 @@ export default function AdminOrganizations() {
     const newStatus = org.statut === "actif" ? "suspendu" : "actif";
     const { error } = await supabase.from("companies").update({ statut: newStatus }).eq("id", org.id);
     if (error) { toast.error("Erreur"); return; }
+    logAdminAction({ action: newStatus === "actif" ? "activation_organisation" : "suspension_organisation", entity_type: "companies", entity_id: org.id, target_company_id: org.id, details: { nom: org.nom, old_statut: org.statut, new_statut: newStatus } });
     toast.success(`Organisation ${newStatus === "actif" ? "activée" : "suspendue"}`);
     fetchOrgs();
   };
