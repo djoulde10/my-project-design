@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useSuperAdmin } from "@/hooks/useSuperAdmin";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCompanyBranding } from "@/hooks/useCompanyBranding";
-import NotificationBell from "@/components/NotificationBell";
+import NotificationCenter from "@/components/notifications/NotificationCenter";
 import GlobalSearch from "@/components/GlobalSearch";
 import {
   LayoutDashboard,
@@ -209,7 +209,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex-1 min-w-0 max-w-xl">
             <GlobalSearch />
           </div>
-          <NotificationBell />
+          <NotificationCenter />
         </header>
         <main className="flex-1 overflow-auto">
           {children}
