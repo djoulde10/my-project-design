@@ -327,9 +327,11 @@ export default function Sessions() {
                           <Package className="w-4 h-4" />
                         </Button>
                         <SessionCalendarActions session={s} variant="icon" />
-                        <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
-                          <Shield className="w-4 h-4" />
-                        </Button>
+                        <PermissionGate permission="gerer_utilisateurs">
+                          <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
+                            <Shield className="w-4 h-4" />
+                          </Button>
+                        </PermissionGate>
                       </div>
                     </TableCell>
                   </TableRow>
