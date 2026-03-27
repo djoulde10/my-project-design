@@ -66,6 +66,7 @@ export default function AdminFeatureFlags() {
     const map: Record<string, boolean> = {};
     FEATURE_KEYS.forEach(f => { map[f.key] = true; });
     setFlags(map);
+    logAdminAction({ action: "enable_all_features", entity_type: "feature_flags", target_company_id: selectedOrg, details: { features: FEATURE_KEYS.map(f => f.key) } });
     toast.success("Toutes les fonctionnalités activées");
     setSaving(false);
   };

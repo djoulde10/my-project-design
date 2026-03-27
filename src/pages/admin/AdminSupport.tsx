@@ -47,6 +47,7 @@ export default function AdminSupport() {
 
   const updateStatus = async (id: string, status: string) => {
     await supabase.from("support_tickets").update({ status }).eq("id", id);
+    logAdminAction({ action: "changement_statut_ticket", entity_type: "support_tickets", entity_id: id, details: { new_status: status } });
     toast.success("Statut mis à jour");
     fetchTickets();
   };
