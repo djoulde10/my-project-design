@@ -962,7 +962,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
 
             {/* Manual PV dialog */}
             <Dialog open={pvOpen} onOpenChange={setPvOpen}>
-              <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV manuel</Button></DialogTrigger>
+              <PermissionGate permission="valider_pv">
+                <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV manuel</Button></DialogTrigger>
+              </PermissionGate>
               <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle>Rédiger un procès-verbal</DialogTitle></DialogHeader>
                 <div className="space-y-4">
