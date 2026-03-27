@@ -179,6 +179,7 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
+  const { permissions } = usePermissions();
   const { branding, displayName } = useCompanyBranding();
   const location = useLocation();
   const isMobile = useIsMobile();
