@@ -15,6 +15,7 @@ import {
   Activity, Key, Building2, AlertTriangle, Clock, CheckCircle2, XCircle,
   Search, Ban, RefreshCw, BarChart3, Zap, Shield, TrendingUp,
 } from "lucide-react";
+import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, Legend,
