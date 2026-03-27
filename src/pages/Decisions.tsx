@@ -16,6 +16,7 @@ import CommentThread from "@/components/CommentThread";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
+import PermissionGate from "@/components/PermissionGate";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const statutLabels: Record<string, string> = {
