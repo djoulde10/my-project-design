@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ToggleRight, Building2 } from "lucide-react";
+import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 
 const FEATURE_KEYS = [
   { key: "ai_assistant", label: "Assistant IA", description: "Accès à l'assistant IA conversationnel" },
@@ -20,6 +21,7 @@ const FEATURE_KEYS = [
 ];
 
 export default function AdminFeatureFlags() {
+  const { logAdminAction } = useAdminAuditLog();
   const [orgs, setOrgs] = useState<any[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<string>("");
   const [flags, setFlags] = useState<Record<string, boolean>>({});
@@ -50,6 +52,7 @@ export default function AdminFeatureFlags() {
     );
     if (error) { toast.error("Erreur: " + error.message); setSaving(false); return; }
     setFlags(f => ({ ...f, [key]: enabled }));
+    logAdminAction({ action: "toggle_feature_flag", entity_type: "feature_flags", target_company_id: selectedOrg, details: { feature_key: key, enabled } });
     toast.success(`${key} ${enabled ? "activé" : "désactivé"}`);
     setSaving(false);
   };
@@ -63,6 +66,7 @@ export default function AdminFeatureFlags() {
     const map: Record<string, boolean> = {};
     FEATURE_KEYS.forEach(f => { map[f.key] = true; });
     setFlags(map);
+    logAdminAction({ action: "enable_all_features", entity_type: "feature_flags", target_company_id: selectedOrg, details: { features: FEATURE_KEYS.map(f => f.key) } });
     toast.success("Toutes les fonctionnalités activées");
     setSaving(false);
   };

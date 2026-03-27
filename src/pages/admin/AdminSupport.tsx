@@ -9,8 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { MessageSquare, RefreshCw } from "lucide-react";
+import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 
 export default function AdminSupport() {
+  const { logAdminAction } = useAdminAuditLog();
   const [tickets, setTickets] = useState<any[]>([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -36,6 +38,7 @@ export default function AdminSupport() {
       responded_at: new Date().toISOString(),
     }).eq("id", selected.id);
     if (error) { toast.error("Erreur"); return; }
+    logAdminAction({ action: "reponse_ticket", entity_type: "support_tickets", entity_id: selected.id, target_company_id: selected.company_id, details: { subject: selected.subject } });
     toast.success("Réponse envoyée");
     setSelected(null);
     setResponse("");
@@ -44,6 +47,7 @@ export default function AdminSupport() {
 
   const updateStatus = async (id: string, status: string) => {
     await supabase.from("support_tickets").update({ status }).eq("id", id);
+    logAdminAction({ action: "changement_statut_ticket", entity_type: "support_tickets", entity_id: id, details: { new_status: status } });
     toast.success("Statut mis à jour");
     fetchTickets();
   };

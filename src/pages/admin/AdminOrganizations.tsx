@@ -12,8 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Plus, Search, Building2, Ban, CheckCircle, Trash2, Eye, Star, TestTube, ArrowUpDown, Users, CalendarDays, FileText, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 
 export default function AdminOrganizations() {
+  const { logAdminAction } = useAdminAuditLog();
   const [orgs, setOrgs] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -45,6 +47,7 @@ export default function AdminOrganizations() {
     const newStatus = org.statut === "actif" ? "suspendu" : "actif";
     const { error } = await supabase.from("companies").update({ statut: newStatus }).eq("id", org.id);
     if (error) { toast.error("Erreur"); return; }
+    logAdminAction({ action: newStatus === "actif" ? "activation_organisation" : "suspension_organisation", entity_type: "companies", entity_id: org.id, target_company_id: org.id, details: { nom: org.nom, old_statut: org.statut, new_statut: newStatus } });
     toast.success(`Organisation ${newStatus === "actif" ? "activée" : "suspendue"}`);
     fetchOrgs();
   };
@@ -53,6 +56,7 @@ export default function AdminOrganizations() {
     if (!confirm(`Supprimer définitivement "${org.nom}" ? Cette action est irréversible.`)) return;
     const { error } = await supabase.from("companies").delete().eq("id", org.id);
     if (error) { toast.error("Erreur: " + error.message); return; }
+    logAdminAction({ action: "suppression_organisation", entity_type: "companies", entity_id: org.id, target_company_id: org.id, details: { nom: org.nom } });
     toast.success("Organisation supprimée");
     setDetailOrg(null);
     fetchOrgs();
@@ -61,6 +65,7 @@ export default function AdminOrganizations() {
   const setSpecialStatus = async (org: any, status: string | null) => {
     const { error } = await supabase.from("companies").update({ special_status: status } as any).eq("id", org.id);
     if (error) { toast.error("Erreur"); return; }
+    logAdminAction({ action: "statut_special", entity_type: "companies", entity_id: org.id, target_company_id: org.id, details: { nom: org.nom, special_status: status } });
     toast.success("Statut spécial mis à jour");
     fetchOrgs();
   };
@@ -68,6 +73,7 @@ export default function AdminOrganizations() {
   const changePlan = async (org: any, planId: string) => {
     const { error } = await supabase.from("companies").update({ plan_id: planId }).eq("id", org.id);
     if (error) { toast.error("Erreur"); return; }
+    logAdminAction({ action: "changement_plan", entity_type: "companies", entity_id: org.id, target_company_id: org.id, details: { nom: org.nom, old_plan_id: org.plan_id, new_plan_id: planId } });
     toast.success("Plan modifié");
     fetchOrgs();
   };
@@ -89,6 +95,7 @@ export default function AdminOrganizations() {
       plan_id: form.plan_id || null, statut: "actif",
     });
     if (error) { toast.error("Erreur: " + error.message); return; }
+    logAdminAction({ action: "creation_organisation", entity_type: "companies", details: { nom: form.nom, secteur: form.secteur, pays: form.pays } });
     toast.success("Organisation créée");
     setCreateOpen(false);
     setForm({ nom: "", secteur: "", pays: "", plan_id: "" });

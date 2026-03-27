@@ -15,6 +15,7 @@ import {
   Activity, Key, Building2, AlertTriangle, Clock, CheckCircle2, XCircle,
   Search, Ban, RefreshCw, BarChart3, Zap, Shield, TrendingUp,
 } from "lucide-react";
+import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell, Legend,
@@ -33,6 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AdminApiManagement() {
   const queryClient = useQueryClient();
+  const { logAdminAction } = useAdminAuditLog();
   const [tab, setTab] = useState("dashboard");
   const [logFilter, setLogFilter] = useState({ search: "", status: "all", period: "7" });
   const [keyFilter, setKeyFilter] = useState("");
@@ -85,8 +87,9 @@ export default function AdminApiManagement() {
       const { error } = await supabase.from("api_keys").update(update).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-api-keys"] });
+      logAdminAction({ action: variables.is_active ? "activation_cle_api" : "revocation_cle_api", entity_type: "api_keys", entity_id: variables.id, details: { is_active: variables.is_active } });
       toast({ title: "Clé API mise à jour" });
     },
   });
@@ -96,8 +99,9 @@ export default function AdminApiManagement() {
       const { error } = await supabase.from("api_keys").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["admin-api-keys"] });
+      logAdminAction({ action: "suppression_cle_api", entity_type: "api_keys", entity_id: id });
       toast({ title: "Clé API supprimée" });
     },
   });

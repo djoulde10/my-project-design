@@ -9,8 +9,10 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Edit, Package, Users, CalendarDays, HardDrive, FileText } from "lucide-react";
+import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 
 export default function AdminPlans() {
+  const { logAdminAction } = useAdminAuditLog();
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editPlan, setEditPlan] = useState<any>(null);
@@ -58,10 +60,12 @@ export default function AdminPlans() {
         ...form, sort_order: plans.length + 1,
       });
       if (error) { toast.error(error.message); return; }
+      logAdminAction({ action: "creation_plan", entity_type: "subscription_plans", details: { name: form.name, slug: form.slug, price_monthly: form.price_monthly } });
       toast.success("Plan créé");
     } else {
       const { error } = await supabase.from("subscription_plans").update(form).eq("id", editPlan.id);
       if (error) { toast.error(error.message); return; }
+      logAdminAction({ action: "modification_plan", entity_type: "subscription_plans", entity_id: editPlan.id, details: { name: form.name, changes: form } });
       toast.success("Plan mis à jour");
     }
     setEditPlan(null);
