@@ -166,16 +166,23 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
+  const { branding, displayName } = useCompanyBranding();
   const location = useLocation();
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const brandingProps = {
+    displayName,
+    logoUrl: branding.logo_url,
+    primaryColor: branding.couleur_principale,
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-[260px] flex-shrink-0 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border/40">
-          <SidebarContent user={user} signOut={signOut} location={location} isSuperAdmin={isSuperAdmin} />
+          <SidebarContent user={user} signOut={signOut} location={location} isSuperAdmin={isSuperAdmin} branding={brandingProps} />
         </aside>
       )}
 
@@ -184,7 +191,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-72 p-0 bg-sidebar text-sidebar-foreground flex flex-col">
             <SheetTitle className="sr-only">Navigation</SheetTitle>
-            <SidebarContent user={user} signOut={signOut} location={location} onNavigate={() => setMobileOpen(false)} isSuperAdmin={isSuperAdmin} />
+            <SidebarContent user={user} signOut={signOut} location={location} onNavigate={() => setMobileOpen(false)} isSuperAdmin={isSuperAdmin} branding={brandingProps} />
           </SheetContent>
         </Sheet>
       )}

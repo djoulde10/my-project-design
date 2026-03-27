@@ -133,6 +133,8 @@ ${templateContent}
     } else {
       systemPrompt = `Tu es un rédacteur professionnel de procès-verbaux de réunions d'organes de gouvernance (Conseil d'Administration, Comités).
 
+${brandingBlock}
+
 Tu dois analyser la transcription d'une réunion et générer un procès-verbal structuré et professionnel en HTML.
 
 Le procès-verbal doit suivre cette structure :
