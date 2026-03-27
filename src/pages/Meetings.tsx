@@ -52,6 +52,8 @@ export default function Meetings() {
   const [permEntityId, setPermEntityId] = useState<string | null>(null);
   const [permEntityName, setPermEntityName] = useState("");
 
+  const { branding } = useCompanyBranding();
+
   // Realtime transcription state
   const [liveTranscript, setLiveTranscript] = useState("");
   const [partialText, setPartialText] = useState("");
