@@ -887,9 +887,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
               if (!open && scribe.isConnected) stopLiveTranscription();
               if (!open) resetForm();
             }}>
-              <DialogTrigger asChild>
-                <Button variant="outline"><Upload className="w-4 h-4 mr-2" />Importer un audio</Button>
-              </DialogTrigger>
+              <PermissionGate permission="valider_pv">
+                <DialogTrigger asChild>
+                  <Button variant="outline"><Upload className="w-4 h-4 mr-2" />Importer un audio</Button>
+                </DialogTrigger>
+              </PermissionGate>
               <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle>Importer un fichier audio</DialogTitle></DialogHeader>
                 <div className="space-y-4">
