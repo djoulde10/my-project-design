@@ -12,6 +12,7 @@ import { MessageSquare, RefreshCw } from "lucide-react";
 import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 
 export default function AdminSupport() {
+  const { logAdminAction } = useAdminAuditLog();
   const [tickets, setTickets] = useState<any[]>([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
