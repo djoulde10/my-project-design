@@ -7,8 +7,9 @@ import Table from "@tiptap/extension-table";
 import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
-import Image from "@tiptap/extension-image";
+import { ResizableImage } from "@/components/editor/ResizableImageExtension";
 import TextAlign from "@tiptap/extension-text-align";
+import ImageToolbar from "@/components/editor/ImageToolbar";
 import CharacterCount from "@tiptap/extension-character-count";
 import { useEffect, useCallback, useRef } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -99,7 +100,7 @@ export default function RichTextEditor({
           class: "tiptap-table-header",
         },
       }),
-      Image.configure({
+      ResizableImage.configure({
         inline: false,
         allowBase64: true,
         HTMLAttributes: {
@@ -368,14 +369,29 @@ export default function RichTextEditor({
         </div>
       )}
 
-      {/* Bubble Menu - only in edit mode */}
+      {/* Bubble Menu for text - only in edit mode */}
       {!isPreview && !readOnly && (
-        <BubbleMenu editor={editor} className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg">
+        <BubbleMenu
+          editor={editor}
+          className="flex items-center gap-0.5 rounded-lg border border-border bg-popover p-1 shadow-lg"
+          shouldShow={({ editor }) => {
+            // Don't show text bubble menu when image is selected
+            if (editor.isActive("image")) return false;
+            return editor.state.selection.content().size > 0;
+          }}
+        >
           <BubbleButton active={editor.isActive("bold")} onClick={() => chain().toggleBold().run()} icon={<Bold className="w-3.5 h-3.5" />} />
           <BubbleButton active={editor.isActive("italic")} onClick={() => chain().toggleItalic().run()} icon={<Italic className="w-3.5 h-3.5" />} />
           <BubbleButton active={editor.isActive("underline")} onClick={() => chain().toggleUnderline().run()} icon={<UnderlineIcon className="w-3.5 h-3.5" />} />
           <BubbleButton active={editor.isActive("link")} onClick={setLink} icon={<LinkIcon className="w-3.5 h-3.5" />} />
         </BubbleMenu>
+      )}
+
+      {/* Image toolbar - shows when an image is selected */}
+      {!isPreview && !readOnly && editor.isActive("image") && (
+        <div className="flex justify-center py-1 px-2 border-b border-input bg-muted/30">
+          <ImageToolbar editor={editor} />
+        </div>
       )}
 
       <EditorContent editor={editor} />
