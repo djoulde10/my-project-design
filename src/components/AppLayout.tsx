@@ -66,21 +66,33 @@ const navSections = [
   },
 ];
 
-function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin }: {
+function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, branding }: {
   user: any;
   signOut: () => void;
   location: any;
   onNavigate?: () => void;
   isSuperAdmin?: boolean;
+  branding?: { displayName: string; logoUrl: string | null; primaryColor: string };
 }) {
+  const name = branding?.displayName || "GovBoard";
+  const logoUrl = branding?.logoUrl;
+  const primaryColor = branding?.primaryColor;
+
   return (
     <>
       <div className="px-5 py-5 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-sidebar-primary flex items-center justify-center">
-          <Shield className="w-5 h-5 text-sidebar-primary-foreground" />
-        </div>
+        {logoUrl ? (
+          <img src={logoUrl} alt={name} className="w-9 h-9 rounded-lg object-contain" />
+        ) : (
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={primaryColor ? { backgroundColor: primaryColor } : undefined}
+          >
+            <Shield className="w-5 h-5 text-sidebar-primary-foreground" />
+          </div>
+        )}
         <div>
-          <h1 className="font-bold text-base text-sidebar-accent-foreground font-['Space_Grotesk'] tracking-tight">GovBoard</h1>
+          <h1 className="font-bold text-base text-sidebar-accent-foreground font-['Space_Grotesk'] tracking-tight truncate max-w-[160px]">{name}</h1>
           <p className="text-[11px] text-sidebar-foreground/50 leading-none mt-0.5">Gouvernance d'entreprise</p>
         </div>
       </div>
