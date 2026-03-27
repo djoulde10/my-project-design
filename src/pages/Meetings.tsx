@@ -183,6 +183,9 @@ export default function Meetings() {
           meetingDate: new Date().toLocaleDateString("fr-FR"),
           templateContent,
           mode: pvMode,
+          orgName: branding.platform_name || branding.nom,
+          orgLogoUrl: branding.logo_url,
+          orgColor: branding.couleur_principale,
         },
       });
       if (pvError) throw new Error(pvError.message);
