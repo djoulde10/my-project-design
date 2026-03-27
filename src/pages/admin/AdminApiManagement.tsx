@@ -99,8 +99,9 @@ export default function AdminApiManagement() {
       const { error } = await supabase.from("api_keys").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["admin-api-keys"] });
+      logAdminAction({ action: "suppression_cle_api", entity_type: "api_keys", entity_id: id });
       toast({ title: "Clé API supprimée" });
     },
   });
