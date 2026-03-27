@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useSuperAdmin } from "@/hooks/useSuperAdmin";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCompanyBranding } from "@/hooks/useCompanyBranding";
-import NotificationBell from "@/components/NotificationBell";
+import NotificationCenter from "@/components/notifications/NotificationCenter";
 import GlobalSearch from "@/components/GlobalSearch";
 import {
   LayoutDashboard,
