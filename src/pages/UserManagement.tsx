@@ -168,9 +168,11 @@ export default function UserManagement() {
           <p className="text-muted-foreground">Créer, modifier et gérer les comptes utilisateurs</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Nouvel utilisateur</Button>
-          </DialogTrigger>
+          <PermissionGate permission="gerer_utilisateurs">
+            <DialogTrigger asChild>
+              <Button><Plus className="w-4 h-4 mr-2" />Nouvel utilisateur</Button>
+            </DialogTrigger>
+          </PermissionGate>
           <DialogContent>
             <DialogHeader><DialogTitle>Créer un utilisateur</DialogTitle></DialogHeader>
             <div className="space-y-4">

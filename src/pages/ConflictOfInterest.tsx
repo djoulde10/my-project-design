@@ -78,9 +78,11 @@ export default function ConflictOfInterest() {
           <p className="text-sm text-muted-foreground">Déclaration et gestion des conflits d'intérêts des membres</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Nouvelle déclaration</Button>
-          </DialogTrigger>
+          <PermissionGate permission="gerer_conflits">
+            <DialogTrigger asChild>
+              <Button><Plus className="w-4 h-4 mr-2" />Nouvelle déclaration</Button>
+            </DialogTrigger>
+          </PermissionGate>
           <DialogContent>
             <DialogHeader><DialogTitle>Déclarer un conflit d'intérêt</DialogTitle></DialogHeader>
             <div className="space-y-4">
