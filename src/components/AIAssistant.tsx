@@ -96,11 +96,21 @@ export default function AIAssistant() {
     let assistantSoFar = "";
 
     try {
+      // Get the user's actual JWT token for authorization
+      const { data: sessionData } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        setMessages(prev => [...prev, { role: "assistant", content: "⚠️ Vous devez être connecté pour utiliser l'assistant IA." }]);
+        setIsLoading(false);
+        return;
+      }
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({
           messages: allMessages,
