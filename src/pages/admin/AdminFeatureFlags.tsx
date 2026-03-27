@@ -52,6 +52,7 @@ export default function AdminFeatureFlags() {
     );
     if (error) { toast.error("Erreur: " + error.message); setSaving(false); return; }
     setFlags(f => ({ ...f, [key]: enabled }));
+    logAdminAction({ action: "toggle_feature_flag", entity_type: "feature_flags", target_company_id: selectedOrg, details: { feature_key: key, enabled } });
     toast.success(`${key} ${enabled ? "activé" : "désactivé"}`);
     setSaving(false);
   };
