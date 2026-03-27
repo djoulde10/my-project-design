@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, ShieldAlert, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
+import PermissionGate from "@/components/PermissionGate";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   active: { label: "Actif", color: "bg-amber-100 text-amber-800", icon: AlertTriangle },
