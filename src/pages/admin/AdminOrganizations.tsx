@@ -95,6 +95,7 @@ export default function AdminOrganizations() {
       plan_id: form.plan_id || null, statut: "actif",
     });
     if (error) { toast.error("Erreur: " + error.message); return; }
+    logAdminAction({ action: "creation_organisation", entity_type: "companies", details: { nom: form.nom, secteur: form.secteur, pays: form.pays } });
     toast.success("Organisation créée");
     setCreateOpen(false);
     setForm({ nom: "", secteur: "", pays: "", plan_id: "" });
