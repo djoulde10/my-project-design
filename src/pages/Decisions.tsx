@@ -169,9 +169,11 @@ export default function Decisions() {
             </DropdownMenuContent>
           </DropdownMenu>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" />Nouvelle résolution</Button>
-            </DialogTrigger>
+            <PermissionGate permission="creer_decisions">
+              <DialogTrigger asChild>
+                <Button><Plus className="w-4 h-4 mr-2" />Nouvelle résolution</Button>
+              </DialogTrigger>
+            </PermissionGate>
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>Enregistrer une résolution</DialogTitle></DialogHeader>
             <div className="space-y-4">
