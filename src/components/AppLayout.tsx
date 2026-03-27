@@ -1,9 +1,11 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useSuperAdmin } from "@/hooks/useSuperAdmin";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCompanyBranding } from "@/hooks/useCompanyBranding";
+import { routePermissionMap } from "@/lib/routePermissions";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 import GlobalSearch from "@/components/GlobalSearch";
 import {
