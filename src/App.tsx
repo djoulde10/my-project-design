@@ -27,6 +27,7 @@ import PermissionsManagement from "@/pages/PermissionsManagement";
 import ApiKeys from "@/pages/ApiKeys";
 import ApiDocs from "@/pages/ApiDocs";
 import OrganizationSettings from "@/pages/OrganizationSettings";
+import HelpCenter from "@/pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 import AIAssistant from "@/components/AIAssistant";
 import CompanyBrandingTheme from "@/components/CompanyBrandingTheme";
@@ -95,6 +96,7 @@ function ProtectedApp() {
         <Route path="/api-keys" element={<ProtectedRoute><ApiKeys /></ProtectedRoute>} />
         <Route path="/api-docs" element={<ProtectedRoute><ApiDocs /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><OrganizationSettings /></ProtectedRoute>} />
+        <Route path="/help" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
 
         {/* Super Admin routes */}
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
