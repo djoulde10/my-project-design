@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users, Shield } from "lucide-react";
 import SessionCalendarActions from "@/components/SessionCalendarActions";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
+import PermissionGate from "@/components/PermissionGate";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import SessionAttendeeManager from "@/components/SessionAttendeeManager";
 import jsPDF from "jspdf";
