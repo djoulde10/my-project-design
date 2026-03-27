@@ -29,6 +29,7 @@ import ApiDocs from "@/pages/ApiDocs";
 import OrganizationSettings from "@/pages/OrganizationSettings";
 import NotFound from "./pages/NotFound";
 import AIAssistant from "@/components/AIAssistant";
+import CompanyBrandingTheme from "@/components/CompanyBrandingTheme";
 
 // Admin pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -123,6 +124,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <CompanyBrandingTheme />
           <ProtectedApp />
         </AuthProvider>
       </BrowserRouter>
