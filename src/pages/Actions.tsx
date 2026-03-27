@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, AlertTriangle, CheckCircle2, Clock, XCircle, Download, FileSpreadsheet } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
+import PermissionGate from "@/components/PermissionGate";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
