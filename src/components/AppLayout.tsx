@@ -70,13 +70,14 @@ const navSections = [
   },
 ];
 
-function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, branding }: {
+function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, branding, permissions }: {
   user: any;
   signOut: () => void;
   location: any;
   onNavigate?: () => void;
   isSuperAdmin?: boolean;
   branding?: { displayName: string; logoUrl: string | null; primaryColor: string };
+  permissions: string[];
 }) {
   const name = branding?.displayName || "GovBoard";
   const logoUrl = branding?.logoUrl;
