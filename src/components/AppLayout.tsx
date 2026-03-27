@@ -106,35 +106,43 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
 
       <ScrollArea className="flex-1 px-3 py-3">
         <nav className="space-y-5">
-          {navSections.map((section) => (
-            <div key={section.label}>
-              <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
-                {section.label}
-              </p>
-              <div className="space-y-0.5">
-                {section.items.map((item) => {
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={onNavigate}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all duration-150",
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm"
-                          : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground"
-                      )}
-                    >
-                      <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", isActive ? "text-sidebar-primary" : "")} />
-                      <span className="flex-1">{item.label}</span>
-                      {isActive && <ChevronRight className="w-3 h-3 opacity-50" />}
-                    </Link>
-                  );
-                })}
+          {navSections.map((section) => {
+            const visibleItems = section.items.filter((item) => {
+              const required = routePermissionMap[item.path];
+              if (!required) return true;
+              return required.some((p) => permissions.includes(p));
+            });
+            if (visibleItems.length === 0) return null;
+            return (
+              <div key={section.label}>
+                <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+                  {section.label}
+                </p>
+                <div className="space-y-0.5">
+                  {visibleItems.map((item) => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={onNavigate}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all duration-150",
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm"
+                            : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground"
+                        )}
+                      >
+                        <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", isActive ? "text-sidebar-primary" : "")} />
+                        <span className="flex-1">{item.label}</span>
+                        {isActive && <ChevronRight className="w-3 h-3 opacity-50" />}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
       </ScrollArea>
 
