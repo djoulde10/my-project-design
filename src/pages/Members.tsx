@@ -267,9 +267,11 @@ export default function Members() {
                         <Button variant="ghost" size="icon" onClick={() => navigate(`/members/${m.id}`)}>
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(m)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
+                        <PermissionGate permission="gerer_membres">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(m)}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </PermissionGate>
                       </div>
                     </TableCell>
                   </TableRow>
