@@ -38,6 +38,7 @@ export default function AdminSupport() {
       responded_at: new Date().toISOString(),
     }).eq("id", selected.id);
     if (error) { toast.error("Erreur"); return; }
+    logAdminAction({ action: "reponse_ticket", entity_type: "support_tickets", entity_id: selected.id, target_company_id: selected.company_id, details: { subject: selected.subject } });
     toast.success("Réponse envoyée");
     setSelected(null);
     setResponse("");
