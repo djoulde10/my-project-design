@@ -12,6 +12,7 @@ import { Plus, Edit, Package, Users, CalendarDays, HardDrive, FileText } from "l
 import { useAdminAuditLog } from "@/hooks/useAdminAuditLog";
 
 export default function AdminPlans() {
+  const { logAdminAction } = useAdminAuditLog();
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editPlan, setEditPlan] = useState<any>(null);
