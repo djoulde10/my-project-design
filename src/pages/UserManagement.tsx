@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { Plus, UserCog, Shield, Ban, CheckCircle2, Pencil, Trash2, Link } from "lucide-react";
+import PermissionGate from "@/components/PermissionGate";
 
 export default function UserManagement() {
   
