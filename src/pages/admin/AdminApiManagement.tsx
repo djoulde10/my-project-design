@@ -87,8 +87,9 @@ export default function AdminApiManagement() {
       const { error } = await supabase.from("api_keys").update(update).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-api-keys"] });
+      logAdminAction({ action: variables.is_active ? "activation_cle_api" : "revocation_cle_api", entity_type: "api_keys", entity_id: variables.id, details: { is_active: variables.is_active } });
       toast({ title: "Clé API mise à jour" });
     },
   });
