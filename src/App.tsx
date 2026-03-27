@@ -27,6 +27,7 @@ import PermissionsManagement from "@/pages/PermissionsManagement";
 import ApiKeys from "@/pages/ApiKeys";
 import ApiDocs from "@/pages/ApiDocs";
 import OrganizationSettings from "@/pages/OrganizationSettings";
+import HelpCenter from "@/pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 import AIAssistant from "@/components/AIAssistant";
 import CompanyBrandingTheme from "@/components/CompanyBrandingTheme";
