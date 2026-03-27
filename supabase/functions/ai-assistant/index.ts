@@ -328,8 +328,6 @@ function buildPageContext(page: string | null): string {
     '/users': "L'utilisateur est sur la page GESTION DES UTILISATEURS. Aide-le avec la gestion des comptes et des rôles.",
     '/settings': "L'utilisateur est sur la page PARAMÈTRES. Aide-le avec la configuration de l'organisation.",
     '/help': "L'utilisateur est sur le CENTRE D'AIDE. Propose-lui des guides et réponds à ses questions.",
-  };
-  
     '/permissions': "L'utilisateur est sur la page PERMISSIONS. Aide-le à gérer les permissions granulaires par entité.",
     '/api-keys': "L'utilisateur est sur la page CLÉS API. Aide-le à créer et gérer les accès API.",
     '/api-docs': "L'utilisateur est sur la page DOCUMENTATION API. Aide-le à comprendre et utiliser l'API REST.",
