@@ -100,7 +100,7 @@ export default function RichTextEditor({
           class: "tiptap-table-header",
         },
       }),
-      Image.configure({
+      ResizableImage.configure({
         inline: false,
         allowBase64: true,
         HTMLAttributes: {
