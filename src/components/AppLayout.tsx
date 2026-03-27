@@ -209,7 +209,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex-1 min-w-0 max-w-xl">
             <GlobalSearch />
           </div>
-          <NotificationBell />
+          <NotificationCenter />
         </header>
         <main className="flex-1 overflow-auto">
           {children}
