@@ -56,6 +56,7 @@ export default function AdminOrganizations() {
     if (!confirm(`Supprimer définitivement "${org.nom}" ? Cette action est irréversible.`)) return;
     const { error } = await supabase.from("companies").delete().eq("id", org.id);
     if (error) { toast.error("Erreur: " + error.message); return; }
+    logAdminAction({ action: "suppression_organisation", entity_type: "companies", entity_id: org.id, target_company_id: org.id, details: { nom: org.nom } });
     toast.success("Organisation supprimée");
     setDetailOrg(null);
     fetchOrgs();
