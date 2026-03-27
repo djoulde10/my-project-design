@@ -90,6 +90,7 @@ function ColorPickerField({
 export default function OrganizationSettings() {
   const { user } = useAuth();
   const companyId = useCompanyId();
+  const { invalidateCache } = useCompanyBranding();
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
