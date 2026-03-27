@@ -88,22 +88,31 @@ export function useCompanyBranding() {
       });
   }, [companyId]);
 
-  // Apply CSS custom properties dynamically
+  // Apply CSS custom properties dynamically to the actual design system tokens
   useEffect(() => {
     const root = document.documentElement;
     if (branding.couleur_principale) {
-      root.style.setProperty("--brand-primary", hexToHSL(branding.couleur_principale));
+      const hsl = hexToHSL(branding.couleur_principale);
+      root.style.setProperty("--primary", hsl);
+      root.style.setProperty("--ring", hsl);
+      root.style.setProperty("--sidebar-primary", hsl);
+      root.style.setProperty("--sidebar-ring", hsl);
     }
     if (branding.couleur_secondaire) {
-      root.style.setProperty("--brand-secondary", hexToHSL(branding.couleur_secondaire));
+      const hsl = hexToHSL(branding.couleur_secondaire);
+      root.style.setProperty("--secondary", hsl);
     }
     if (branding.couleur_accent) {
-      root.style.setProperty("--brand-accent", hexToHSL(branding.couleur_accent));
+      const hsl = hexToHSL(branding.couleur_accent);
+      root.style.setProperty("--accent", hsl);
     }
     return () => {
-      root.style.removeProperty("--brand-primary");
-      root.style.removeProperty("--brand-secondary");
-      root.style.removeProperty("--brand-accent");
+      root.style.removeProperty("--primary");
+      root.style.removeProperty("--ring");
+      root.style.removeProperty("--sidebar-primary");
+      root.style.removeProperty("--sidebar-ring");
+      root.style.removeProperty("--secondary");
+      root.style.removeProperty("--accent");
     };
   }, [branding]);
 

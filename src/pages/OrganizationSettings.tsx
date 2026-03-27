@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
+import { useCompanyBranding } from "@/hooks/useCompanyBranding";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,7 @@ function ColorPickerField({
 export default function OrganizationSettings() {
   const { user } = useAuth();
   const companyId = useCompanyId();
+  const { invalidateCache } = useCompanyBranding();
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -194,6 +196,7 @@ export default function OrganizationSettings() {
       toast.error("Erreur lors de la sauvegarde");
     } else {
       toast.success("Paramètres enregistrés avec succès");
+      invalidateCache();
       loadSettings();
     }
     setSaving(false);
