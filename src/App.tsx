@@ -31,6 +31,7 @@ import ApiDocs from "@/pages/ApiDocs";
 import OrganizationSettings from "@/pages/OrganizationSettings";
 import HelpCenter from "@/pages/HelpCenter";
 import NotFound from "./pages/NotFound";
+import AccessDenied from "@/pages/AccessDenied";
 import AIAssistant from "@/components/AIAssistant";
 import CompanyBrandingTheme from "@/components/CompanyBrandingTheme";
 
