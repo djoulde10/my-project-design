@@ -1,21 +1,77 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Bot, X, Send, Loader2, Sparkles, FileText, CalendarDays, ListTodo, AlertTriangle } from "lucide-react";
+import { Bot, X, Send, Loader2, Sparkles, FileText, CalendarDays, ListTodo, AlertTriangle, RotateCcw, Lightbulb } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
 
-const quickPrompts = [
-  { label: "Résumer les dernières sessions", icon: CalendarDays, prompt: "Peux-tu me faire un résumé des dernières sessions et des décisions importantes prises ?" },
-  { label: "Suggérer un ordre du jour", icon: FileText, prompt: "Peux-tu me suggérer un ordre du jour pour la prochaine session en te basant sur les actions en cours et les sujets récents ?" },
-  { label: "Actions en retard", icon: AlertTriangle, prompt: "Quelles sont les actions en retard ou proches de l'échéance ? Que recommandes-tu ?" },
-  { label: "Aide à la rédaction PV", icon: ListTodo, prompt: "Aide-moi à rédiger un compte rendu de réunion. Quels éléments dois-je inclure basé sur les dernières sessions ?" },
-];
+const PAGE_LABELS: Record<string, string> = {
+  "/": "Tableau de bord",
+  "/sessions": "Sessions",
+  "/members": "Membres",
+  "/agenda": "Ordre du jour",
+  "/documents": "Documents",
+  "/meetings": "Réunions & PV",
+  "/decisions": "Résolutions",
+  "/actions": "Actions",
+  "/calendar": "Calendrier",
+  "/conflicts": "Conflits d'intérêts",
+  "/approvals": "Approbations",
+  "/audit": "Journal d'audit",
+  "/users": "Utilisateurs",
+  "/settings": "Paramètres",
+  "/help": "Centre d'aide",
+};
+
+function getPageLabel(pathname: string): string {
+  return PAGE_LABELS[pathname] || Object.entries(PAGE_LABELS).find(([k]) => pathname.startsWith(k) && k !== "/")?.[1] || "Plateforme";
+}
+
+function getQuickPrompts(pathname: string, roleName: string | null) {
+  const base = [
+    { label: "Comment ça marche ?", icon: Lightbulb, prompt: `Explique-moi comment fonctionne la section "${getPageLabel(pathname)}" étape par étape.` },
+  ];
+
+  const pagePrompts: Record<string, Array<{ label: string; icon: any; prompt: string }>> = {
+    "/": [
+      { label: "Résumé de la situation", icon: CalendarDays, prompt: "Fais-moi un résumé complet de la situation actuelle : sessions récentes, actions en cours, et points importants." },
+      { label: "Suggestions d'actions", icon: Lightbulb, prompt: "Quelles actions me recommandes-tu de faire en priorité aujourd'hui ?" },
+    ],
+    "/sessions": [
+      { label: "Créer une session", icon: CalendarDays, prompt: "Guide-moi étape par étape pour créer une nouvelle session." },
+      { label: "Préparer un ordre du jour", icon: FileText, prompt: "Aide-moi à préparer un ordre du jour type pour la prochaine session." },
+    ],
+    "/meetings": [
+      { label: "Rédiger un PV", icon: FileText, prompt: "Aide-moi à rédiger un procès-verbal. Quels éléments dois-je inclure ?" },
+      { label: "Utiliser la transcription IA", icon: Sparkles, prompt: "Comment utiliser la transcription audio et la génération de PV par IA ?" },
+    ],
+    "/actions": [
+      { label: "Actions en retard", icon: AlertTriangle, prompt: "Quelles sont les actions en retard ou proches de l'échéance ? Que recommandes-tu ?" },
+      { label: "Suivre les actions", icon: ListTodo, prompt: "Comment bien suivre et mettre à jour les actions assignées ?" },
+    ],
+    "/decisions": [
+      { label: "Comprendre les votes", icon: FileText, prompt: "Explique-moi comment fonctionnent les votes et les résolutions." },
+    ],
+    "/documents": [
+      { label: "Organiser les documents", icon: FileText, prompt: "Comment bien organiser et classer les documents sur la plateforme ?" },
+    ],
+    "/users": [
+      { label: "Gérer les rôles", icon: ListTodo, prompt: "Explique-moi comment fonctionnent les rôles et les permissions." },
+    ],
+  };
+
+  const specific = pagePrompts[pathname] || pagePrompts[Object.keys(pagePrompts).find(k => pathname.startsWith(k) && k !== "/") || ""] || [
+    { label: "Résumer les sessions", icon: CalendarDays, prompt: "Résume les dernières sessions et décisions importantes." },
+  ];
+
+  return [...base, ...specific].slice(0, 4);
+}
 
 export default function AIAssistant() {
   const [open, setOpen] = useState(false);
@@ -24,12 +80,16 @@ export default function AIAssistant() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const location = useLocation();
+  const { permissions, roleName } = usePermissions();
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
+
+  useEffect(() => {
+    if (open && inputRef.current) inputRef.current.focus();
+  }, [open]);
 
   const streamChat = useCallback(async (allMessages: Msg[]) => {
     setIsLoading(true);
@@ -42,7 +102,13 @@ export default function AIAssistant() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: allMessages, context_type: "general" }),
+        body: JSON.stringify({
+          messages: allMessages,
+          context_type: "general",
+          current_page: location.pathname,
+          user_role: roleName,
+          user_permissions: permissions,
+        }),
       });
 
       if (!resp.ok) {
@@ -96,7 +162,6 @@ export default function AIAssistant() {
         }
       }
 
-      // Final flush
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split("\n")) {
           if (!raw) continue;
@@ -117,7 +182,7 @@ export default function AIAssistant() {
       setMessages(prev => [...prev, { role: "assistant", content: "⚠️ Erreur de connexion au service IA." }]);
     }
     setIsLoading(false);
-  }, []);
+  }, [location.pathname, roleName, permissions]);
 
   const send = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -134,6 +199,14 @@ export default function AIAssistant() {
       send(input);
     }
   };
+
+  const resetChat = () => {
+    setMessages([]);
+    setInput("");
+  };
+
+  const currentPageLabel = getPageLabel(location.pathname);
+  const quickPrompts = getQuickPrompts(location.pathname, roleName);
 
   if (!open) {
     return (
@@ -155,12 +228,24 @@ export default function AIAssistant() {
           <Sparkles className="h-5 w-5" />
           <div>
             <h3 className="font-semibold text-sm">Assistant IA</h3>
-            <p className="text-[10px] opacity-80">Suggestions uniquement • Validation requise</p>
+            <div className="flex items-center gap-1.5">
+              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 bg-primary-foreground/20 text-primary-foreground border-0">
+                {roleName || "Membre"}
+              </Badge>
+              <span className="text-[9px] opacity-70">• {currentPageLabel}</span>
+            </div>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setOpen(false)}>
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          {messages.length > 0 && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={resetChat} title="Nouvelle conversation">
+              <RotateCcw className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setOpen(false)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -169,8 +254,12 @@ export default function AIAssistant() {
           <div className="space-y-4">
             <div className="text-center py-4">
               <Bot className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-              <p className="text-sm text-muted-foreground">Comment puis-je vous aider ?</p>
-              <p className="text-xs text-muted-foreground/70 mt-1">Toutes les suggestions nécessitent votre validation</p>
+              <p className="text-sm text-muted-foreground">
+                Bonjour ! Je suis votre assistant IA.
+              </p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                Je m'adapte à votre rôle ({roleName || "Membre"}) et à la page <strong>{currentPageLabel}</strong>.
+              </p>
             </div>
             <div className="grid grid-cols-1 gap-2">
               {quickPrompts.map((qp) => (
@@ -237,7 +326,7 @@ export default function AIAssistant() {
           </Button>
         </div>
         <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
-          ⚠️ L'IA propose des suggestions — toute action doit être validée par un responsable
+          ⚠️ L'IA propose des suggestions — toute action doit être validée
         </p>
       </div>
     </div>
