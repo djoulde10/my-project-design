@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, User, Pencil, Eye, Search } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
+import PermissionGate from "@/components/PermissionGate";
 
 const qualityLabels: Record<string, string> = {
   pca: "PCA",
