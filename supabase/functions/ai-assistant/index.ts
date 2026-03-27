@@ -332,6 +332,18 @@ function buildPageContext(page: string | null): string {
     '/api-keys': "L'utilisateur est sur la page CLÉS API. Aide-le à créer et gérer les accès API.",
     '/api-docs': "L'utilisateur est sur la page DOCUMENTATION API. Aide-le à comprendre et utiliser l'API REST.",
     '/archives': "L'utilisateur est sur la page ARCHIVES. Aide-le à consulter les données archivées.",
+    '/admin': "L'utilisateur est sur le TABLEAU DE BORD SUPER ADMIN. Il supervise l'ensemble de la plateforme : organisations, revenus, utilisateurs.",
+    '/admin/organizations': "L'utilisateur est sur la page GESTION DES ORGANISATIONS (Super Admin). Il peut créer, suspendre, activer des organisations et gérer leurs plans.",
+    '/admin/plans': "L'utilisateur est sur la page PLANS & TARIFS (Super Admin). Il gère les offres d'abonnement et les limites associées.",
+    '/admin/analytics': "L'utilisateur est sur la page ANALYTICS (Super Admin). Il consulte les métriques de performance du SaaS (MRR, ARR, croissance).",
+    '/admin/billing': "L'utilisateur est sur la page FACTURATION (Super Admin). Il consulte et gère les factures de toutes les organisations.",
+    '/admin/logs': "L'utilisateur est sur la page LOGS SYSTÈME (Super Admin). Il consulte les logs techniques de la plateforme.",
+    '/admin/settings': "L'utilisateur est sur la page CONFIGURATION (Super Admin). Il gère les paramètres globaux de la plateforme.",
+    '/admin/features': "L'utilisateur est sur la page FEATURE FLAGS (Super Admin). Il active/désactive des fonctionnalités par organisation.",
+    '/admin/support': "L'utilisateur est sur la page SUPPORT (Super Admin). Il gère les tickets de support des organisations clientes.",
+    '/admin/security': "L'utilisateur est sur la page SÉCURITÉ (Super Admin). Il surveille les tentatives de connexion et la sécurité globale.",
+    '/admin/monitoring': "L'utilisateur est sur la page MONITORING (Super Admin). Il surveille l'état des services et les erreurs système.",
+    '/admin/api': "L'utilisateur est sur la page API MANAGEMENT (Super Admin). Il supervise l'utilisation de l'API publique par les organisations.",
   };
   
   const key = Object.keys(contexts).sort((a, b) => b.length - a.length).find(k => page === k || (k !== '/' && page.startsWith(k)));
