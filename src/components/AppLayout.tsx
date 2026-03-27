@@ -196,7 +196,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-[260px] flex-shrink-0 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border/40">
-          <SidebarContent user={user} signOut={signOut} location={location} isSuperAdmin={isSuperAdmin} branding={brandingProps} />
+          <SidebarContent user={user} signOut={signOut} location={location} isSuperAdmin={isSuperAdmin} branding={brandingProps} permissions={permissions} />
         </aside>
       )}
 
