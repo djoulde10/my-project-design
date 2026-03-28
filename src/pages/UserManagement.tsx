@@ -70,14 +70,7 @@ export default function UserManagement() {
       await new Promise((r) => setTimeout(r, 1000));
       await supabase.from("profiles").update({ role_id: form.role_id }).eq("id", data.user.id);
 
-      // Log action
-      await supabase.from("audit_log").insert({
-        action: "creation_utilisateur",
-        entity_type: "profiles",
-        entity_id: data.user.id,
-        user_id: user?.id,
-        details: { email: form.email, full_name: form.full_name },
-      });
+      // Audit log is now handled automatically by database triggers
     }
 
     showSuccess("user_created", "Un e-mail de confirmation a été envoyé.");
