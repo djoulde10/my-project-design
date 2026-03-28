@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -374,7 +375,10 @@ function CommentBubble({
         </div>
         <p
           className="text-sm mt-0.5 whitespace-pre-wrap"
-          dangerouslySetInnerHTML={{ __html: formatContent(comment.content) }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formatContent(comment.content), {
+            ALLOWED_TAGS: ['span','strong','em','a','br'],
+            ALLOWED_ATTR: ['class','href','target','rel']
+          }) }}
         />
         <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {onReply && (
