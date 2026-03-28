@@ -114,13 +114,7 @@ export default function UserManagement() {
     if (error) {
       showError(error, "Impossible de lier le membre à l'utilisateur");
     } else {
-      await supabase.from("audit_log").insert({
-        action: "liaison_membre_utilisateur",
-        entity_type: "members",
-        entity_id: selectedMemberId,
-        user_id: user?.id,
-        details: { linked_user_id: linkDialog.userId },
-      });
+      // Audit log is now handled automatically by database triggers
       showSuccess("user_linked");
       setLinkDialog(null);
       setSelectedMemberId("");
