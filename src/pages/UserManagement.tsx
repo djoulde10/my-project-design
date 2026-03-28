@@ -70,14 +70,7 @@ export default function UserManagement() {
       await new Promise((r) => setTimeout(r, 1000));
       await supabase.from("profiles").update({ role_id: form.role_id }).eq("id", data.user.id);
 
-      // Log action
-      await supabase.from("audit_log").insert({
-        action: "creation_utilisateur",
-        entity_type: "profiles",
-        entity_id: data.user.id,
-        user_id: user?.id,
-        details: { email: form.email, full_name: form.full_name },
-      });
+      // Audit log is now handled automatically by database triggers
     }
 
     showSuccess("user_created", "Un e-mail de confirmation a été envoyé.");
@@ -92,13 +85,7 @@ export default function UserManagement() {
     if (error) {
       showError(error, "Impossible de modifier le rôle");
     } else {
-      await supabase.from("audit_log").insert({
-        action: "modification_role",
-        entity_type: "profiles",
-        entity_id: profileId,
-        user_id: user?.id,
-        details: { new_role_id: roleId },
-      });
+      // Audit log is now handled automatically by database triggers
       showSuccess("user_updated");
       fetchData();
     }
@@ -111,12 +98,7 @@ export default function UserManagement() {
     if (error) {
       showError(error, "Impossible de modifier le statut de l'utilisateur");
     } else {
-      await supabase.from("audit_log").insert({
-        action: newStatus === "suspendu" ? "suspension_utilisateur" : "activation_utilisateur",
-        entity_type: "profiles",
-        entity_id: profileId,
-        user_id: user?.id,
-      });
+      // Audit log is now handled automatically by database triggers
       showSuccess(newStatus === "suspendu" ? "user_suspended" : "user_activated");
       fetchData();
     }
@@ -132,13 +114,7 @@ export default function UserManagement() {
     if (error) {
       showError(error, "Impossible de lier le membre à l'utilisateur");
     } else {
-      await supabase.from("audit_log").insert({
-        action: "liaison_membre_utilisateur",
-        entity_type: "members",
-        entity_id: selectedMemberId,
-        user_id: user?.id,
-        details: { linked_user_id: linkDialog.userId },
-      });
+      // Audit log is now handled automatically by database triggers
       showSuccess("user_linked");
       setLinkDialog(null);
       setSelectedMemberId("");
