@@ -85,13 +85,7 @@ export default function UserManagement() {
     if (error) {
       showError(error, "Impossible de modifier le rôle");
     } else {
-      await supabase.from("audit_log").insert({
-        action: "modification_role",
-        entity_type: "profiles",
-        entity_id: profileId,
-        user_id: user?.id,
-        details: { new_role_id: roleId },
-      });
+      // Audit log is now handled automatically by database triggers
       showSuccess("user_updated");
       fetchData();
     }
