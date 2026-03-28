@@ -693,7 +693,10 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
               />
             ) : (
               <ScrollArea className="h-[500px]">
-                <div className="text-sm prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: viewMinute.content || "<p>Contenu vide</p>" }} />
+                <div className="text-sm prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(viewMinute.content || "<p>Contenu vide</p>", {
+                  ALLOWED_TAGS: ['p','br','strong','em','u','h1','h2','h3','h4','ul','ol','li','blockquote','a','table','thead','tbody','tr','th','td','img','span','div','sub','sup','s','hr'],
+                  ALLOWED_ATTR: ['href','class','style','src','alt','width','height','target','rel','colspan','rowspan','data-type']
+                }) }} />
               </ScrollArea>
             )}
           </CardContent>
