@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
