@@ -98,12 +98,7 @@ export default function UserManagement() {
     if (error) {
       showError(error, "Impossible de modifier le statut de l'utilisateur");
     } else {
-      await supabase.from("audit_log").insert({
-        action: newStatus === "suspendu" ? "suspension_utilisateur" : "activation_utilisateur",
-        entity_type: "profiles",
-        entity_id: profileId,
-        user_id: user?.id,
-      });
+      // Audit log is now handled automatically by database triggers
       showSuccess(newStatus === "suspendu" ? "user_suspended" : "user_activated");
       fetchData();
     }
