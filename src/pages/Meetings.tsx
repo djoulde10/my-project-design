@@ -28,6 +28,8 @@ import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
 import PermissionGate from "@/components/PermissionGate";
 import { useCompanyId } from "@/hooks/useCompanyId";
+import SignatureDialog from "@/components/signature/SignatureDialog";
+import SignatureDisplay from "@/components/signature/SignatureDisplay";
 
 // PV status helpers
 const pvStatusLabels: Record<string, string> = {
