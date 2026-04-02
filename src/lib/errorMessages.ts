@@ -180,6 +180,9 @@ export const SUCCESS_MESSAGES = {
   api_key_created: "La clé API a été créée avec succès.",
   api_key_revoked: "La clé API a été révoquée.",
 
+  // Signatures
+  document_signed: "Le document a été signé avec succès par le Président.",
+
   // Generic
   saved: "Les modifications ont été enregistrées.",
   deleted: "L'élément a été supprimé.",

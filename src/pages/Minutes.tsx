@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import CommentThread from "@/components/CommentThread";
+import SignatureDialog from "@/components/signature/SignatureDialog";
+import SignatureDisplay from "@/components/signature/SignatureDisplay";
+import PermissionGate from "@/components/PermissionGate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +13,7 @@ import CollaborativeEditor from "@/components/CollaborativeEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit3, X, MessageSquare } from "lucide-react";
+import { Plus, Edit3, X, MessageSquare, PenTool, Lock } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const pvStatusLabels: Record<string, string> = {
@@ -37,6 +40,7 @@ export default function Minutes() {
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [commentingId, setCommentingId] = useState<string | null>(null);
+  const [signingMinute, setSigningMinute] = useState<any | null>(null);
 
   const fetchAll = async () => {
     const [minRes, sessRes] = await Promise.all([
@@ -56,15 +60,29 @@ export default function Minutes() {
   };
 
   const updateStatus = async (id: string, status: PvStatus) => {
+    // Block status change on signed documents
+    const minute = minutes.find(m => m.id === id);
+    if (minute?.pv_status === "signe") {
+      showError(new Error("Document signé"), "Ce document est signé et ne peut plus être modifié");
+      setEditingId(null);
+      return;
+    }
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut du PV");
     else { showSuccess("pv_status_updated"); setEditingId(null); fetchAll(); }
   };
 
   const openCollaborativeEdit = (m: any) => {
+    if (m.pv_status === "signe") {
+      showError(new Error("Document signé"), "Ce document est signé et ne peut plus être modifié");
+      return;
+    }
     setEditingContentId(m.id);
     setEditingContent(m.content || "");
   };
+
+  const isSigned = (m: any) => m.pv_status === "signe";
+  const isReadyToSign = (m: any) => m.pv_status === "valide";
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -94,7 +112,7 @@ export default function Minutes() {
                 <Select value={pvForm.pv_status} onValueChange={(v) => setPvForm({ ...pvForm, pv_status: v as PvStatus })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(pvStatusLabels).map(([k, v]) => (
+                    {Object.entries(pvStatusLabels).filter(([k]) => k !== "signe").map(([k, v]) => (
                       <SelectItem key={k} value={k}>{v}</SelectItem>
                     ))}
                   </SelectContent>
@@ -152,13 +170,18 @@ export default function Minutes() {
                 minutes.map((m) => (
                   <React.Fragment key={m.id}>
                   <TableRow className={editingContentId === m.id ? "bg-primary/5" : ""}>
-                    <TableCell className="font-medium">{(m as any).sessions?.title}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {isSigned(m) && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                        {(m as any).sessions?.title}
+                      </div>
+                    </TableCell>
                     <TableCell>
-                      {editingId === m.id ? (
+                      {editingId === m.id && !isSigned(m) ? (
                         <Select value={editStatus} onValueChange={(v) => { const s = v as PvStatus; setEditStatus(s); updateStatus(m.id, s); }}>
                           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {Object.entries(pvStatusLabels).map(([k, v]) => (
+                            {Object.entries(pvStatusLabels).filter(([k]) => k !== "signe").map(([k, v]) => (
                               <SelectItem key={k} value={k}>{v}</SelectItem>
                             ))}
                           </SelectContent>
@@ -172,18 +195,45 @@ export default function Minutes() {
                     <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openCollaborativeEdit(m)}>
-                          <Edit3 className="w-4 h-4 mr-1" /> Éditer
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
-                          Statut
-                        </Button>
+                        {!isSigned(m) && (
+                          <Button variant="ghost" size="sm" onClick={() => openCollaborativeEdit(m)}>
+                            <Edit3 className="w-4 h-4 mr-1" /> Éditer
+                          </Button>
+                        )}
+                        {!isSigned(m) && (
+                          <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
+                            Statut
+                          </Button>
+                        )}
+                        {/* Sign button — only for validated PVs and authorized users */}
+                        {isReadyToSign(m) && (
+                          <PermissionGate permission="signer_pv">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-primary hover:text-primary"
+                              onClick={() => setSigningMinute(m)}
+                            >
+                              <PenTool className="w-4 h-4 mr-1" /> Signer
+                            </Button>
+                          </PermissionGate>
+                        )}
                         <Button variant="ghost" size="sm" onClick={() => setCommentingId(commentingId === m.id ? null : m.id)}>
                           <MessageSquare className="w-4 h-4 mr-1" /> Commentaires
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
+
+                  {/* Signature display for signed documents */}
+                  {isSigned(m) && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="p-4">
+                        <SignatureDisplay entityType="minute" entityId={m.id} />
+                      </TableCell>
+                    </TableRow>
+                  )}
+
                   {commentingId === m.id && (
                     <TableRow>
                       <TableCell colSpan={4} className="p-4 bg-muted/20">
@@ -198,6 +248,18 @@ export default function Minutes() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Signature dialog */}
+      {signingMinute && (
+        <SignatureDialog
+          open={!!signingMinute}
+          onOpenChange={(open) => { if (!open) setSigningMinute(null); }}
+          entityType="minute"
+          entityId={signingMinute.id}
+          entityLabel={signingMinute.sessions?.title || "Procès-verbal"}
+          onSigned={() => { setSigningMinute(null); fetchAll(); }}
+        />
+      )}
     </div>
   );
 }

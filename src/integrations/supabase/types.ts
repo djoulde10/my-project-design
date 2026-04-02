@@ -1644,6 +1644,8 @@ export type Database = {
           entity_type: string
           id: string
           ip_address: string | null
+          signature_image: string | null
+          signature_type: string | null
           signed_at: string
           signed_by: string
         }
@@ -1653,6 +1655,8 @@ export type Database = {
           entity_type: string
           id?: string
           ip_address?: string | null
+          signature_image?: string | null
+          signature_type?: string | null
           signed_at?: string
           signed_by: string
         }
@@ -1662,6 +1666,8 @@ export type Database = {
           entity_type?: string
           id?: string
           ip_address?: string | null
+          signature_image?: string | null
+          signature_type?: string | null
           signed_at?: string
           signed_by?: string
         }
