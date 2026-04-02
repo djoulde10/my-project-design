@@ -28,6 +28,8 @@ import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
 import PermissionGate from "@/components/PermissionGate";
 import { useCompanyId } from "@/hooks/useCompanyId";
+import SignatureDialog from "@/components/signature/SignatureDialog";
+import SignatureDisplay from "@/components/signature/SignatureDisplay";
 
 // PV status helpers
 const pvStatusLabels: Record<string, string> = {
@@ -108,7 +110,7 @@ export default function Meetings() {
 
   // Signatures
   const [minuteSignatures, setMinuteSignatures] = useState<any[]>([]);
-  const [signing, setSigning] = useState(false);
+  const [signingMinute, setSigningMinute] = useState<any | null>(null);
 
   // Realtime scribe hook
   const scribe = useScribe({
@@ -579,29 +581,8 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
     setMinuteSignatures(data ?? []);
   };
 
-  const signMinute = async (minuteId: string) => {
-    setSigning(true);
-    const { error } = await supabase.from("signatures").insert({
-      entity_type: "minute",
-      entity_id: minuteId,
-      signed_by: user?.id,
-    });
-    if (error) {
-      showError(error, "Impossible de signer le procès-verbal");
-    } else {
-      showSuccess("decision_signed");
-      await fetchSignatures(minuteId);
-      // Also update PV status to "signe" if validated
-      if (viewMinute?.pv_status === "valide") {
-        await supabase.from("minutes").update({ pv_status: "signe", signed_at: new Date().toISOString() }).eq("id", minuteId);
-        setViewMinute({ ...viewMinute, pv_status: "signe", signed_at: new Date().toISOString() });
-        fetchAll();
-      }
-    }
-    setSigning(false);
-  };
-
-  const userHasSigned = (minuteId: string) => minuteSignatures.some((s) => s.signed_by === user?.id && s.entity_id === minuteId);
+  const isSigned = (m: any) => m?.pv_status === "signe";
+  const isReadyToSign = (m: any) => m?.pv_status === "valide";
 
   // ========== MINUTE DETAIL VIEW ==========
   if (viewMinute) {
@@ -623,7 +604,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            {!isEditing && (
+            {!isEditing && !isSigned(viewMinute) && (
               <Button variant="outline" onClick={() => { setIsEditing(true); setEditingContent(viewMinute.content || ""); }}>
                 <Edit className="w-4 h-4 mr-2" />Éditer en temps réel
               </Button>
@@ -652,12 +633,14 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             >
               <History className="w-4 h-4 mr-2" />Versions
             </Button>
-            {!isEditing && viewMinute.pv_status !== "brouillon" && !userHasSigned(viewMinute.id) && (
-              <Button onClick={() => signMinute(viewMinute.id)} disabled={signing}>
-                <PenTool className="w-4 h-4 mr-2" />{signing ? "Signature..." : "Signer"}
-              </Button>
+            {!isEditing && isReadyToSign(viewMinute) && !isSigned(viewMinute) && (
+              <PermissionGate permission="signer_pv">
+                <Button onClick={() => setSigningMinute(viewMinute)} className="text-primary">
+                  <PenTool className="w-4 h-4 mr-2" />Signer le document
+                </Button>
+              </PermissionGate>
             )}
-            {userHasSigned(viewMinute.id) && (
+            {isSigned(viewMinute) && (
               <Badge className="bg-emerald-100 text-emerald-800 gap-1"><CheckCircle2 className="w-3 h-3" />Signé</Badge>
             )}
           </div>
@@ -716,26 +699,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
 
         <CommentThread entityType="minute" entityId={viewMinute.id} />
 
-        {/* Signatures */}
-        {minuteSignatures.length > 0 && (
-          <Card>
-            <CardHeader><CardTitle className="text-base flex items-center gap-2"><PenTool className="w-4 h-4" />Signatures ({minuteSignatures.length})</CardTitle></CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {minuteSignatures.map((sig: any) => (
-                  <div key={sig.id} className="flex items-center justify-between text-sm border-b pb-2 last:border-0">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span className="font-medium">{(sig as any).profiles?.full_name ?? "Utilisateur"}</span>
-                    </div>
-                    <span className="text-muted-foreground text-xs">
-                      {new Date(sig.signed_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Signature display for signed documents */}
+        {isSigned(viewMinute) && (
+          <SignatureDisplay entityType="minute" entityId={viewMinute.id} />
         )}
 
         <MinuteVersionHistory
@@ -1188,6 +1154,22 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           entityType="meeting"
           entityId={permEntityId}
           entityName={permEntityName}
+        />
+      )}
+      {signingMinute && (
+        <SignatureDialog
+          open={!!signingMinute}
+          onOpenChange={(open) => { if (!open) setSigningMinute(null); }}
+          entityType="minute"
+          entityId={signingMinute.id}
+          entityLabel={signingMinute.sessions?.title || viewMinute?.sessions?.title || "Procès-verbal"}
+          onSigned={() => {
+            setSigningMinute(null);
+            if (viewMinute) {
+              setViewMinute({ ...viewMinute, pv_status: "signe", signed_at: new Date().toISOString() });
+            }
+            fetchAll();
+          }}
         />
       )}
     </div>
