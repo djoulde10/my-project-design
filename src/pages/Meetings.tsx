@@ -1155,6 +1155,21 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           entityId={permEntityId}
           entityName={permEntityName}
         />
+      {signingMinute && (
+        <SignatureDialog
+          open={!!signingMinute}
+          onOpenChange={(open) => { if (!open) setSigningMinute(null); }}
+          entityType="minute"
+          entityId={signingMinute.id}
+          entityLabel={signingMinute.sessions?.title || viewMinute?.sessions?.title || "Procès-verbal"}
+          onSigned={() => {
+            setSigningMinute(null);
+            if (viewMinute) {
+              setViewMinute({ ...viewMinute, pv_status: "signe", signed_at: new Date().toISOString() });
+            }
+            fetchAll();
+          }}
+        />
       )}
     </div>
   );
