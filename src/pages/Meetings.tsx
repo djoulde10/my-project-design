@@ -108,7 +108,7 @@ export default function Meetings() {
 
   // Signatures
   const [minuteSignatures, setMinuteSignatures] = useState<any[]>([]);
-  const [signing, setSigning] = useState(false);
+  const [signingMinute, setSigningMinute] = useState<any | null>(null);
 
   // Realtime scribe hook
   const scribe = useScribe({
