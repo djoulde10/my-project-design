@@ -1155,6 +1155,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           entityId={permEntityId}
           entityName={permEntityName}
         />
+      )}
       {signingMinute && (
         <SignatureDialog
           open={!!signingMinute}
