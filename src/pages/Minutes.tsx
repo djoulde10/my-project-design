@@ -4,6 +4,7 @@ import CommentThread from "@/components/CommentThread";
 import SignatureDialog from "@/components/signature/SignatureDialog";
 import SignatureDisplay from "@/components/signature/SignatureDisplay";
 import PermissionGate from "@/components/PermissionGate";
+import CollaborativeEditor from "@/components/CollaborativeEditor";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ import RichTextEditor from "@/components/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, MessageSquare, PenTool, Lock, XCircle } from "lucide-react";
+import { Plus, Edit3, X, MessageSquare, PenTool, Lock, XCircle } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const pvStatusLabels: Record<string, string> = {
@@ -36,6 +37,8 @@ export default function Minutes() {
   const [pvForm, setPvForm] = useState<{ session_id: string; content: string; pv_status: PvStatus }>({ session_id: "", content: "", pv_status: "brouillon" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
+  const [editingContentId, setEditingContentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
   const [commentingId, setCommentingId] = useState<string | null>(null);
   const [signingMinute, setSigningMinute] = useState<any | null>(null);
 
@@ -102,6 +105,15 @@ export default function Minutes() {
     fetchAll();
   };
 
+  const openRealtimeEdit = (m: any) => {
+    if (m.pv_status === "signe") {
+      showError(new Error("Document signé"), "Ce document est signé et ne peut plus être modifié");
+      return;
+    }
+    setEditingContentId(m.id);
+    setEditingContent(m.content || "");
+  };
+
   const isSigned = (m: any) => m.pv_status === "signe";
   const isReadyToSign = (m: any) => m.pv_status === "valide";
 
@@ -147,6 +159,31 @@ export default function Minutes() {
         </Dialog>
       </div>
 
+      {/* Collaborative editing panel */}
+      {editingContentId && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">
+                Édition en temps réel — {minutes.find(m => m.id === editingContentId)?.sessions?.title || "PV"}
+              </h3>
+              <Button variant="ghost" size="icon" onClick={() => { setEditingContentId(null); fetchAll(); }}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <CollaborativeEditor
+              documentId={editingContentId}
+              documentType="minute"
+              tableName="minutes"
+              content={editingContent}
+              onChange={setEditingContent}
+              minHeight="300px"
+              placeholder="Rédigez le procès-verbal ici..."
+            />
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -189,6 +226,11 @@ export default function Minutes() {
                     <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
+                        {!isSigned(m) && (
+                          <Button variant="ghost" size="sm" onClick={() => openRealtimeEdit(m)}>
+                            <Edit3 className="w-4 h-4 mr-1" /> Éditer
+                          </Button>
+                        )}
                         {!isSigned(m) && (
                           <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
                             Statut
