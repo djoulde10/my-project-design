@@ -992,19 +992,25 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                   ) : (
                     minutes.map((m) => (
                       <TableRow key={m.id}>
-                        <TableCell className="font-medium">{(m as any).sessions?.title || "—"}</TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {isSigned(m) && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                            {(m as any).sessions?.title || "—"}
+                          </div>
+                        </TableCell>
                         <TableCell>
-                          {editingStatusId === m.id ? (
+                          {editingStatusId === m.id && !isSigned(m) ? (
                             <Select value={editStatus} onValueChange={(v) => { setEditStatus(v as PvStatus); updateMinuteStatus(m.id, v as PvStatus); }}>
                               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                               <SelectContent>
-                                {Object.entries(pvStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                                <SelectItem value="brouillon">Brouillon</SelectItem>
+                                <SelectItem value="valide">Validé</SelectItem>
                               </SelectContent>
                             </Select>
                           ) : (
                             <Badge
-                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} cursor-pointer`}
-                              onClick={() => { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}
+                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isSigned(m) ? 'cursor-pointer' : ''}`}
+                              onClick={() => { if (!isSigned(m)) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
                             >
                               {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
                             </Badge>
@@ -1018,9 +1024,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
-                              <Edit className="w-4 h-4 mr-1" />Collaborer
-                            </Button>
+                            {!isSigned(m) && (
+                              <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
+                                <Edit className="w-4 h-4 mr-1" />Éditer
+                              </Button>
+                            )}
                             <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
                               <MessageSquare className="w-4 h-4 mr-1" />Commentaires
                             </Button>
@@ -1038,6 +1046,36 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             >
                               <History className="w-4 h-4" />
                             </Button>
+                            {/* Sign button — only for validated PVs, visible only to president */}
+                            {isReadyToSign(m) && (
+                              <PermissionGate permission="signer_pv">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-primary hover:text-primary"
+                                  onClick={() => setSigningMinute(m)}
+                                >
+                                  <PenTool className="w-4 h-4 mr-1" /> Signer
+                                </Button>
+                              </PermissionGate>
+                            )}
+                            {/* Cancel signature — only for admins */}
+                            {isSigned(m) && (
+                              <PermissionGate permission="gerer_utilisateurs">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => {
+                                    if (window.confirm("Êtes-vous sûr de vouloir annuler la signature de ce document ?")) {
+                                      cancelSignature(m.id);
+                                    }
+                                  }}
+                                >
+                                  <XCircle className="w-4 h-4 mr-1" /> Annuler signature
+                                </Button>
+                              </PermissionGate>
+                            )}
                             <PermissionGate permission="gerer_utilisateurs">
                               <Button variant="ghost" size="sm" onClick={() => { setPermEntityId(m.id); setPermEntityName(m.sessions?.title || m.title || "Réunion"); }}>
                                 <Shield className="w-4 h-4" />
