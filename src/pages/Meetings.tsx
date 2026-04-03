@@ -584,6 +584,32 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
   const isSigned = (m: any) => m?.pv_status === "signe";
   const isReadyToSign = (m: any) => m?.pv_status === "valide";
 
+  const cancelSignature = async (minuteId: string) => {
+    const { error: sigError } = await supabase
+      .from("signatures")
+      .delete()
+      .eq("entity_type", "minute")
+      .eq("entity_id", minuteId);
+
+    if (sigError) {
+      showError(sigError, "Impossible de supprimer la signature");
+      return;
+    }
+
+    const { error: updateError } = await supabase
+      .from("minutes")
+      .update({ pv_status: "valide", signed_at: null } as any)
+      .eq("id", minuteId);
+
+    if (updateError) {
+      showError(updateError, "Impossible de réinitialiser le statut du PV");
+      return;
+    }
+
+    showSuccess("pv_status_updated");
+    fetchAll();
+  };
+
   // ========== MINUTE DETAIL VIEW ==========
   if (viewMinute) {
     return (
