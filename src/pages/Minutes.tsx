@@ -159,6 +159,31 @@ export default function Minutes() {
         </Dialog>
       </div>
 
+      {/* Collaborative editing panel */}
+      {editingContentId && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">
+                Édition en temps réel — {minutes.find(m => m.id === editingContentId)?.sessions?.title || "PV"}
+              </h3>
+              <Button variant="ghost" size="icon" onClick={() => { setEditingContentId(null); fetchAll(); }}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <CollaborativeEditor
+              documentId={editingContentId}
+              documentType="minute"
+              tableName="minutes"
+              content={editingContent}
+              onChange={setEditingContent}
+              minHeight="300px"
+              placeholder="Rédigez le procès-verbal ici..."
+            />
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardContent className="p-0">
           <Table>
