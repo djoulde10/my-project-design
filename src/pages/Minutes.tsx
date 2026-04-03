@@ -105,6 +105,15 @@ export default function Minutes() {
     fetchAll();
   };
 
+  const openRealtimeEdit = (m: any) => {
+    if (m.pv_status === "signe") {
+      showError(new Error("Document signé"), "Ce document est signé et ne peut plus être modifié");
+      return;
+    }
+    setEditingContentId(m.id);
+    setEditingContent(m.content || "");
+  };
+
   const isSigned = (m: any) => m.pv_status === "signe";
   const isReadyToSign = (m: any) => m.pv_status === "valide";
 
