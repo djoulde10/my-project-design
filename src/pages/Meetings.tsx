@@ -954,7 +954,8 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                     <Select value={pvForm.pv_status} onValueChange={(v) => setPvForm({ ...pvForm, pv_status: v as PvStatus })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {Object.entries(pvStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                        <SelectItem value="brouillon">Brouillon</SelectItem>
+                        <SelectItem value="valide">Validé</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
