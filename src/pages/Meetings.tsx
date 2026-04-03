@@ -353,6 +353,17 @@ export default function Meetings() {
   };
 
   const updateMinuteStatus = async (id: string, status: PvStatus) => {
+    const minute = minutes.find(m => m.id === id);
+    if (minute?.pv_status === "signe") {
+      showError(new Error("Document signé"), "Ce document est signé et ne peut plus être modifié");
+      setEditingStatusId(null);
+      return;
+    }
+    if (status === "signe") {
+      showError(new Error("Action non autorisée"), "Le statut 'Signé' ne peut être défini que via la signature électronique");
+      setEditingStatusId(null);
+      return;
+    }
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut du PV");
     else { showSuccess("pv_status_updated"); setEditingStatusId(null); fetchAll(); }
