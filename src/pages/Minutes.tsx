@@ -227,6 +227,11 @@ export default function Minutes() {
                     <TableCell>
                       <div className="flex items-center gap-1">
                         {!isSigned(m) && (
+                          <Button variant="ghost" size="sm" onClick={() => openRealtimeEdit(m)}>
+                            <Edit3 className="w-4 h-4 mr-1" /> Éditer
+                          </Button>
+                        )}
+                        {!isSigned(m) && (
                           <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
                             Statut
                           </Button>
