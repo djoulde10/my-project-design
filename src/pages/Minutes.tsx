@@ -9,11 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import RichTextEditor from "@/components/RichTextEditor";
-import CollaborativeEditor from "@/components/CollaborativeEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit3, X, MessageSquare, PenTool, Lock } from "lucide-react";
+import { Plus, MessageSquare, PenTool, Lock, XCircle } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 
 const pvStatusLabels: Record<string, string> = {
@@ -37,8 +36,6 @@ export default function Minutes() {
   const [pvForm, setPvForm] = useState<{ session_id: string; content: string; pv_status: PvStatus }>({ session_id: "", content: "", pv_status: "brouillon" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
-  const [editingContentId, setEditingContentId] = useState<string | null>(null);
-  const [editingContent, setEditingContent] = useState("");
   const [commentingId, setCommentingId] = useState<string | null>(null);
   const [signingMinute, setSigningMinute] = useState<any | null>(null);
 
@@ -60,10 +57,15 @@ export default function Minutes() {
   };
 
   const updateStatus = async (id: string, status: PvStatus) => {
-    // Block status change on signed documents
     const minute = minutes.find(m => m.id === id);
     if (minute?.pv_status === "signe") {
       showError(new Error("Document signé"), "Ce document est signé et ne peut plus être modifié");
+      setEditingId(null);
+      return;
+    }
+    // Block manual setting to "signe" — only signature flow can do that
+    if (status === "signe") {
+      showError(new Error("Action non autorisée"), "Le statut 'Signé' ne peut être défini que via la signature électronique");
       setEditingId(null);
       return;
     }
@@ -72,13 +74,32 @@ export default function Minutes() {
     else { showSuccess("pv_status_updated"); setEditingId(null); fetchAll(); }
   };
 
-  const openCollaborativeEdit = (m: any) => {
-    if (m.pv_status === "signe") {
-      showError(new Error("Document signé"), "Ce document est signé et ne peut plus être modifié");
+  const cancelSignature = async (minuteId: string) => {
+    // Delete the signature record
+    const { error: sigError } = await supabase
+      .from("signatures")
+      .delete()
+      .eq("entity_type", "minute")
+      .eq("entity_id", minuteId);
+
+    if (sigError) {
+      showError(sigError, "Impossible de supprimer la signature");
       return;
     }
-    setEditingContentId(m.id);
-    setEditingContent(m.content || "");
+
+    // Reset minute status to "valide"
+    const { error: updateError } = await supabase
+      .from("minutes")
+      .update({ pv_status: "valide", signed_at: null } as any)
+      .eq("id", minuteId);
+
+    if (updateError) {
+      showError(updateError, "Impossible de réinitialiser le statut du PV");
+      return;
+    }
+
+    showSuccess("pv_status_updated");
+    fetchAll();
   };
 
   const isSigned = (m: any) => m.pv_status === "signe";
@@ -112,9 +133,8 @@ export default function Minutes() {
                 <Select value={pvForm.pv_status} onValueChange={(v) => setPvForm({ ...pvForm, pv_status: v as PvStatus })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(pvStatusLabels).filter(([k]) => k !== "signe").map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
+                    <SelectItem value="brouillon">Brouillon</SelectItem>
+                    <SelectItem value="valide">Validé</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -126,31 +146,6 @@ export default function Minutes() {
           </DialogContent>
         </Dialog>
       </div>
-
-      {/* Collaborative editing panel */}
-      {editingContentId && (
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">
-                Édition collaborative — {minutes.find(m => m.id === editingContentId)?.sessions?.title || "PV"}
-              </h3>
-              <Button variant="ghost" size="icon" onClick={() => { setEditingContentId(null); fetchAll(); }}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            <CollaborativeEditor
-              documentId={editingContentId}
-              documentType="minute"
-              tableName="minutes"
-              content={editingContent}
-              onChange={setEditingContent}
-              minHeight="300px"
-              placeholder="Rédigez le procès-verbal ici..."
-            />
-          </CardContent>
-        </Card>
-      )}
 
       <Card>
         <CardContent className="p-0">
@@ -169,7 +164,7 @@ export default function Minutes() {
               ) : (
                 minutes.map((m) => (
                   <React.Fragment key={m.id}>
-                  <TableRow className={editingContentId === m.id ? "bg-primary/5" : ""}>
+                  <TableRow>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {isSigned(m) && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
@@ -181,9 +176,8 @@ export default function Minutes() {
                         <Select value={editStatus} onValueChange={(v) => { const s = v as PvStatus; setEditStatus(s); updateStatus(m.id, s); }}>
                           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {Object.entries(pvStatusLabels).filter(([k]) => k !== "signe").map(([k, v]) => (
-                              <SelectItem key={k} value={k}>{v}</SelectItem>
-                            ))}
+                            <SelectItem value="brouillon">Brouillon</SelectItem>
+                            <SelectItem value="valide">Validé</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
@@ -196,16 +190,11 @@ export default function Minutes() {
                     <TableCell>
                       <div className="flex items-center gap-1">
                         {!isSigned(m) && (
-                          <Button variant="ghost" size="sm" onClick={() => openCollaborativeEdit(m)}>
-                            <Edit3 className="w-4 h-4 mr-1" /> Éditer
-                          </Button>
-                        )}
-                        {!isSigned(m) && (
                           <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
                             Statut
                           </Button>
                         )}
-                        {/* Sign button — only for validated PVs and authorized users */}
+                        {/* Sign button — only for validated PVs, visible only to president (signer_pv permission) */}
                         {isReadyToSign(m) && (
                           <PermissionGate permission="signer_pv">
                             <Button
@@ -215,6 +204,23 @@ export default function Minutes() {
                               onClick={() => setSigningMinute(m)}
                             >
                               <PenTool className="w-4 h-4 mr-1" /> Signer
+                            </Button>
+                          </PermissionGate>
+                        )}
+                        {/* Cancel signature — only for admins (gerer_utilisateurs permission) */}
+                        {isSigned(m) && (
+                          <PermissionGate permission="gerer_utilisateurs">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => {
+                                if (window.confirm("Êtes-vous sûr de vouloir annuler la signature de ce document ? Cette action est irréversible.")) {
+                                  cancelSignature(m.id);
+                                }
+                              }}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" /> Annuler signature
                             </Button>
                           </PermissionGate>
                         )}
