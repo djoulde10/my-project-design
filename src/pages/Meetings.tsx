@@ -363,8 +363,6 @@ export default function Meetings() {
   };
 
   const updateMinuteStatus = async (id: string, status: PvStatus) => {
-    const minute = minutes.find(m => m.id === id);
-    if (minute?.pv_status === "signe") {
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut du PV");
     else { showSuccess("pv_status_updated"); setEditingStatusId(null); fetchAll(); }
