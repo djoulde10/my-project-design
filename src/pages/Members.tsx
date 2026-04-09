@@ -17,16 +17,17 @@ import PermissionGate from "@/components/PermissionGate";
 
 const qualityLabels: Record<string, string> = {
   pca: "PCA",
-  administrateur: "Administrateur",
-  president_comite: "Président du Comité",
+  president_comite_audit: "Président du Comité d'Audit",
+  membre: "Membre",
   secretariat_juridique: "Secrétariat juridique",
+  membre_direction: "Membre de la Direction",
   autre: "Autre",
 };
 
-const qualityOptions = ["pca", "administrateur", "president_comite", "secretariat_juridique", "autre"] as const;
+const qualityOptions = ["pca", "president_comite_audit", "membre", "secretariat_juridique", "membre_direction", "autre"] as const;
 
 const emptyForm = {
-  organ_id: "", full_name: "", quality: "autre" as "pca" | "administrateur" | "president_comite" | "secretariat_juridique" | "autre",
+  organ_id: "", full_name: "", quality: "autre" as "pca" | "president_comite_audit" | "membre" | "secretariat_juridique" | "membre_direction" | "autre",
   mandate_start: "", mandate_end: "", email: "", phone: "",
   titre_poste: "", organisation: "", bio: "", linkedin_url: "", adresse: "", date_naissance: "", nationalite: "",
 };

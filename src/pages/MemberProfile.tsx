@@ -11,9 +11,10 @@ import { Separator } from "@/components/ui/separator";
 
 const qualityLabels: Record<string, string> = {
   pca: "Président du Conseil d'Administration",
-  administrateur: "Administrateur",
-  president_comite: "Président du Comité",
+  president_comite_audit: "Président du Comité d'Audit",
+  membre: "Membre",
   secretariat_juridique: "Secrétariat juridique",
+  membre_direction: "Membre de la Direction",
   autre: "Autre",
 };
 

@@ -1940,6 +1940,9 @@ export type Database = {
         | "president_comite"
         | "secretariat_juridique"
         | "autre"
+        | "president_comite_audit"
+        | "membre"
+        | "membre_direction"
       organ_type: "ca" | "comite_audit"
       pv_status: "brouillon" | "valide" | "signe"
       session_status:
@@ -2086,6 +2089,9 @@ export const Constants = {
         "president_comite",
         "secretariat_juridique",
         "autre",
+        "president_comite_audit",
+        "membre",
+        "membre_direction",
       ],
       organ_type: ["ca", "comite_audit"],
       pv_status: ["brouillon", "valide", "signe"],
