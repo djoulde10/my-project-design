@@ -980,16 +980,13 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    (isReadOnly ? minutes.filter((m) => m.pv_status === "valide" || m.pv_status === "signe") : minutes).map((m) => (
+                    (isReadOnly ? minutes.filter((m) => m.pv_status === "valide") : minutes).map((m) => (
                       <TableRow key={m.id}>
                         <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            {isSigned(m) && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                             {(m as any).sessions?.title || "—"}
-                          </div>
                         </TableCell>
                         <TableCell>
-                          {!isReadOnly && !isPresident && editingStatusId === m.id && !isSigned(m) ? (
+                          {!isReadOnly && !isPresident && editingStatusId === m.id ? (
                             <Select value={editStatus} onValueChange={(v) => { setEditStatus(v as PvStatus); updateMinuteStatus(m.id, v as PvStatus); }}>
                               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                               <SelectContent>
@@ -999,8 +996,8 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             </Select>
                           ) : (
                             <Badge
-                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isPresident && !isSigned(m) ? 'cursor-pointer' : ''}`}
-                              onClick={() => { if (!isReadOnly && !isPresident && !isSigned(m)) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
+                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isPresident ? 'cursor-pointer' : ''}`}
+                              onClick={() => { if (!isReadOnly && !isPresident) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
                             >
                               {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
                             </Badge>
@@ -1036,36 +1033,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             >
                               <History className="w-4 h-4" />
                             </Button>
-                            {/* Sign button — only for validated PVs, visible only to president */}
-                            {isReadyToSign(m) && (
-                              <PermissionGate permission="signer_pv">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-primary hover:text-primary"
-                                  onClick={() => setSigningMinute(m)}
-                                >
-                                  <PenTool className="w-4 h-4 mr-1" /> Signer
-                                </Button>
-                              </PermissionGate>
-                            )}
-                            {/* Cancel signature — only for admins */}
-                            {isSigned(m) && (
-                              <PermissionGate permission="gerer_utilisateurs">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive"
-                                  onClick={() => {
-                                    if (window.confirm("Êtes-vous sûr de vouloir annuler la signature de ce document ?")) {
-                                      cancelSignature(m.id);
-                                    }
-                                  }}
-                                >
-                                  <XCircle className="w-4 h-4 mr-1" /> Annuler signature
-                                </Button>
-                              </PermissionGate>
-                            )}
                             <PermissionGate permission="gerer_utilisateurs">
                               <Button variant="ghost" size="sm" onClick={() => { setPermEntityId(m.id); setPermEntityName(m.sessions?.title || m.title || "Réunion"); }}>
                                 <Shield className="w-4 h-4" />
@@ -1183,22 +1150,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           entityType="meeting"
           entityId={permEntityId}
           entityName={permEntityName}
-        />
-      )}
-      {signingMinute && (
-        <SignatureDialog
-          open={!!signingMinute}
-          onOpenChange={(open) => { if (!open) setSigningMinute(null); }}
-          entityType="minute"
-          entityId={signingMinute.id}
-          entityLabel={signingMinute.sessions?.title || viewMinute?.sessions?.title || "Procès-verbal"}
-          onSigned={() => {
-            setSigningMinute(null);
-            if (viewMinute) {
-              setViewMinute({ ...viewMinute, pv_status: "signe", signed_at: new Date().toISOString() });
-            }
-            fetchAll();
-          }}
         />
       )}
     </div>
