@@ -30,6 +30,7 @@ import PermissionGate from "@/components/PermissionGate";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { useCompanyId } from "@/hooks/useCompanyId";
+import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 import SignatureDialog from "@/components/signature/SignatureDialog";
 import SignatureDisplay from "@/components/signature/SignatureDisplay";
 
@@ -52,6 +53,7 @@ export default function Meetings() {
   const companyId = useCompanyId();
   const { hasPermission } = usePermissions();
   const isDirectionMember = useIsDirectionMember();
+  const { isPresident } = usePresidentOrganRestriction();
   const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
