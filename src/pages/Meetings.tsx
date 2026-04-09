@@ -604,7 +604,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            {!isEditing && !isPresident && !isSigned(viewMinute) && (
+            {!isEditing && !isPresident && (
               <Button variant="outline" onClick={() => { setIsEditing(true); setEditingContent(viewMinute.content || ""); }}>
                 <Edit className="w-4 h-4 mr-2" />Éditer en temps réel
               </Button>
@@ -1011,7 +1011,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {!isReadOnly && !isPresident && !isSigned(m) && (
+                            {!isReadOnly && !isPresident && (
                               <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
                                 <Edit className="w-4 h-4 mr-1" />Éditer
                               </Button>
