@@ -23,7 +23,7 @@ import {
   Gavel,
   Menu,
   Calendar,
-  ShieldAlert,
+  
   Key,
   Settings,
   HelpCircle,
