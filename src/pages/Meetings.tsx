@@ -365,15 +365,6 @@ export default function Meetings() {
   const updateMinuteStatus = async (id: string, status: PvStatus) => {
     const minute = minutes.find(m => m.id === id);
     if (minute?.pv_status === "signe") {
-      showError(new Error("Document signé"), "Ce document est signé et ne peut plus être modifié");
-      setEditingStatusId(null);
-      return;
-    }
-    if (status === "signe") {
-      showError(new Error("Action non autorisée"), "Le statut 'Signé' ne peut être défini que via la signature électronique");
-      setEditingStatusId(null);
-      return;
-    }
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut du PV");
     else { showSuccess("pv_status_updated"); setEditingStatusId(null); fetchAll(); }
@@ -592,44 +583,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
   }
 
   // Fetch signatures when viewing a minute
-  const fetchSignatures = async (minuteId: string) => {
-    const { data } = await supabase
-      .from("signatures")
-      .select("*, profiles:signed_by(full_name)")
-      .eq("entity_type", "minute")
-      .eq("entity_id", minuteId)
-      .order("signed_at", { ascending: false });
-    setMinuteSignatures(data ?? []);
-  };
-
-  const isSigned = (m: any) => m?.pv_status === "signe";
-  const isReadyToSign = (m: any) => m?.pv_status === "valide";
-
-  const cancelSignature = async (minuteId: string) => {
-    const { error: sigError } = await supabase
-      .from("signatures")
-      .delete()
-      .eq("entity_type", "minute")
-      .eq("entity_id", minuteId);
-
-    if (sigError) {
-      showError(sigError, "Impossible de supprimer la signature");
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from("minutes")
-      .update({ pv_status: "valide", signed_at: null } as any)
-      .eq("id", minuteId);
-
-    if (updateError) {
-      showError(updateError, "Impossible de réinitialiser le statut du PV");
-      return;
-    }
-
-    showSuccess("pv_status_updated");
-    fetchAll();
-  };
 
   // ========== MINUTE DETAIL VIEW ==========
   if (viewMinute) {
@@ -680,16 +633,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             >
               <History className="w-4 h-4 mr-2" />Versions
             </Button>
-            {!isEditing && isReadyToSign(viewMinute) && !isSigned(viewMinute) && (
-              <PermissionGate permission="signer_pv">
-                <Button onClick={() => setSigningMinute(viewMinute)} className="text-primary">
-                  <PenTool className="w-4 h-4 mr-2" />Signer le document
-                </Button>
-              </PermissionGate>
-            )}
-            {isSigned(viewMinute) && (
-              <Badge className="bg-emerald-100 text-emerald-800 gap-1"><CheckCircle2 className="w-3 h-3" />Signé</Badge>
-            )}
           </div>
         </div>
 
@@ -746,10 +689,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
 
         <CommentThread entityType="minute" entityId={viewMinute.id} />
 
-        {/* Signature display for signed documents */}
-        {isSigned(viewMinute) && (
-          <SignatureDisplay entityType="minute" entityId={viewMinute.id} />
-        )}
 
         <MinuteVersionHistory
           minuteId={versionHistoryMinuteId}
