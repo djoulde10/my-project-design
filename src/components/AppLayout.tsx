@@ -23,7 +23,7 @@ import {
   Gavel,
   Menu,
   Calendar,
-  
+  ClipboardCheck,
   Key,
   Settings,
   HelpCircle,
@@ -40,6 +40,7 @@ const navSections = [
     items: [
       { label: "Tableau de bord", icon: LayoutDashboard, path: "/" },
       { label: "Sessions", icon: CalendarDays, path: "/sessions" },
+      { label: "Réunion Comité d'Audit", icon: ClipboardCheck, path: "/audit-meetings" },
       { label: "Membres", icon: Users, path: "/members" },
       { label: "Calendrier", icon: Calendar, path: "/calendar" },
     ],

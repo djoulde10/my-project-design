@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users, Shield } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Link, Users, Shield } from "lucide-react";
 import SessionCalendarActions from "@/components/SessionCalendarActions";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import PermissionGate from "@/components/PermissionGate";
@@ -37,9 +37,8 @@ interface AgendaItemDraft {
   files: File[];
 }
 
-export default function Sessions() {
+export default function AuditMeetings() {
   const { user } = useAuth();
-  
   const companyId = useCompanyId();
   const [sessions, setSessions] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
@@ -61,12 +60,12 @@ export default function Sessions() {
       .from("sessions")
       .select("*, organs(name, type)")
       .order("session_date", { ascending: false });
-    setSessions(data ?? []);
+    setSessions((data ?? []).filter((s: any) => s.organs?.type === "comite_audit"));
   };
 
   const fetchOrgans = async () => {
     const { data } = await supabase.from("organs").select("*");
-    setOrgans(data ?? []);
+    setOrgans((data ?? []).filter((o: any) => o.type === "comite_audit"));
   };
 
   useEffect(() => { fetchSessions(); fetchOrgans(); }, []);
@@ -106,7 +105,7 @@ export default function Sessions() {
     };
     const { data: session, error } = await supabase.from("sessions").insert([payload]).select().single();
     if (error || !session) {
-      showError(error, "Impossible de créer la session");
+      showError(error, "Impossible de créer la réunion");
       return;
     }
 
@@ -175,20 +174,17 @@ export default function Sessions() {
 
   const updateSessionStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("sessions").update({ status: status as any }).eq("id", id);
-    if (error) showError(error, "Impossible de mettre à jour le statut de la session");
+    if (error) showError(error, "Impossible de mettre à jour le statut");
     else { showSuccess("session_status_updated"); fetchSessions(); }
   };
 
   const generateBoardPacket = async (session: any) => {
-    showInfo("Génération du Board Packet en cours…");
-
-    // Fetch full session data
+    showInfo("Génération du dossier en cours…");
     const [agRes, attRes, docsRes] = await Promise.all([
       supabase.from("agenda_items").select("*, members(full_name)").eq("session_id", session.id).order("order_index"),
       supabase.from("session_attendees").select("*, members(full_name, quality, email)").eq("session_id", session.id),
       supabase.from("documents").select("*").eq("session_id", session.id).order("created_at"),
     ]);
-
     const agendaItems = agRes.data ?? [];
     const attendees = attRes.data ?? [];
     const docs = docsRes.data ?? [];
@@ -196,7 +192,6 @@ export default function Sessions() {
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
     let y = 20;
-
     const addLine = (text: string, size = 11, bold = false) => {
       if (y > 270) { pdf.addPage(); y = 20; }
       pdf.setFontSize(size);
@@ -205,36 +200,27 @@ export default function Sessions() {
       pdf.text(lines, 20, y);
       y += lines.length * (size * 0.5) + 2;
     };
-
     const addSpacer = (h = 6) => { y += h; };
 
-    // Title page
     pdf.setFontSize(22);
     pdf.setFont("helvetica", "bold");
-    pdf.text("BOARD PACKET", pageWidth / 2, 50, { align: "center" });
+    pdf.text("DOSSIER DE RÉUNION", pageWidth / 2, 50, { align: "center" });
     pdf.setFontSize(16);
     pdf.text(session.title, pageWidth / 2, 65, { align: "center" });
     pdf.setFontSize(12);
     pdf.setFont("helvetica", "normal");
     pdf.text(new Date(session.session_date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }), pageWidth / 2, 78, { align: "center" });
     if (session.location) pdf.text(`Lieu : ${session.location}`, pageWidth / 2, 90, { align: "center" });
-    if (session.meeting_link) pdf.text(`Lien : ${session.meeting_link}`, pageWidth / 2, 100, { align: "center" });
-    pdf.text(`Organe : ${session.organs?.name ?? "—"}`, pageWidth / 2, 112, { align: "center" });
-    pdf.text(`N° ${session.numero_session ?? "—"}`, pageWidth / 2, 122, { align: "center" });
+    pdf.text(`Comité d'Audit`, pageWidth / 2, 102, { align: "center" });
 
-    // Participants
-    pdf.addPage();
-    y = 20;
-    addLine("PARTICIPANTS", 16, true);
-    addSpacer();
+    pdf.addPage(); y = 20;
+    addLine("PARTICIPANTS", 16, true); addSpacer();
     attendees.forEach((att: any, i: number) => {
       addLine(`${i + 1}. ${att.members?.full_name ?? "—"} — ${att.members?.quality ?? ""} ${att.members?.email ? `(${att.members.email})` : ""}`, 10);
     });
 
-    // Agenda
     addSpacer(10);
-    addLine("ORDRE DU JOUR", 16, true);
-    addSpacer();
+    addLine("ORDRE DU JOUR", 16, true); addSpacer();
     agendaItems.forEach((item: any, i: number) => {
       addLine(`${i + 1}. ${item.title}`, 12, true);
       if (item.description) addLine(item.description, 10);
@@ -242,170 +228,40 @@ export default function Sessions() {
       addSpacer(4);
     });
 
-    // Documents list
     if (docs.length > 0) {
       addSpacer(10);
-      addLine("DOCUMENTS ASSOCIÉS", 16, true);
-      addSpacer();
+      addLine("DOCUMENTS ASSOCIÉS", 16, true); addSpacer();
       docs.forEach((doc: any, i: number) => {
         addLine(`${i + 1}. ${doc.name} (${doc.mime_type ?? "fichier"})`, 10);
       });
     }
 
-    pdf.save(`Board_Packet_${session.numero_session ?? session.id}.pdf`);
+    pdf.save(`Reunion_Audit_${session.numero_session ?? session.id}.pdf`);
     showSuccess("board_packet_generated");
   };
-
-  const caSessions = sessions.filter((s) => (s as any).organs?.type === "ca");
-
-  const selectedOrgan = organs.find((o) => o.id === form.organ_id);
-  const caOrgans = organs.filter((o) => o.type === "ca");
-
-  const renderSessionsTable = (list: any[]) => (
-    <Card>
-      <CardContent className="p-0 overflow-x-auto">
-        <Table className="min-w-[800px]">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-8"></TableHead>
-              <TableHead>N° Session</TableHead>
-              <TableHead>Session</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Lieu</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Workflow</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {list.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                  Aucune session.
-                </TableCell>
-              </TableRow>
-            ) : (
-              list.map((s) => (
-                <>
-                  <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSessionDetails(s.id)}>
-                    <TableCell>
-                      {expandedSession === s.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{s.numero_session ?? "—"}</TableCell>
-                    <TableCell className="font-medium">{s.title}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5 text-sm">
-                        <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
-                        {new Date(s.session_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5 text-sm">
-                        {s.is_virtual ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
-                        {s.location ?? "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[s.status] ?? ""}>{statusLabels[s.status] ?? s.status}</Badge>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-1">
-                        {s.status === "brouillon" && (
-                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "validee")}>Valider</Button>
-                        )}
-                        {s.status === "validee" && (
-                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
-                        )}
-                        {s.status === "tenue" && (
-                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "cloturee")}>Clôturer</Button>
-                        )}
-                        {s.status === "cloturee" && (
-                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
-                        )}
-                        <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le Board Packet">
-                          <Package className="w-4 h-4" />
-                        </Button>
-                        <SessionCalendarActions session={s} variant="icon" />
-                        <PermissionGate permission="gerer_utilisateurs">
-                          <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
-                            <Shield className="w-4 h-4" />
-                          </Button>
-                        </PermissionGate>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  {expandedSession === s.id && sessionDetails[s.id] && (
-                    <TableRow key={`${s.id}-details`}>
-                      <TableCell colSpan={7} className="bg-muted/30 p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="font-semibold text-sm mb-2">Ordre du jour ({sessionDetails[s.id].agendaItems.length})</h4>
-                            {sessionDetails[s.id].agendaItems.map((ai, i) => (
-                              <div key={ai.id} className="text-sm mb-1 flex items-start gap-2">
-                                <Badge variant="outline" className="text-xs shrink-0">{i + 1}</Badge>
-                                <span>{ai.title}</span>
-                                <Badge variant="secondary" className="text-xs ml-auto">{ai.nature}</Badge>
-                              </div>
-                            ))}
-                          </div>
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-semibold text-sm">Participants ({sessionDetails[s.id].attendees.length})</h4>
-                              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setManageAttendeesSession({ id: s.id, organId: s.organ_id }); }}>
-                                <Users className="w-3.5 h-3.5 mr-1" />Gérer
-                              </Button>
-                            </div>
-                            {sessionDetails[s.id].attendees.map((att) => (
-                              <div key={att.id} className="text-sm mb-1 flex items-center gap-2">
-                                <span>{(att as any).members?.full_name}</span>
-                                <Badge variant={att.is_present ? "default" : "secondary"} className="text-xs">
-                                  {att.is_present ? "Présent" : "Absent"}
-                                </Badge>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        {s.meeting_link && (
-                          <div className="mt-3 pt-3 border-t">
-                            <a href={s.meeting_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
-                              <Video className="w-4 h-4" />
-                              Rejoindre la réunion en ligne
-                            </a>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold">Sessions du Conseil d'Administration</h1>
-          <p className="text-sm text-muted-foreground">Gérez les sessions du Conseil d'Administration</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Réunion du Comité d'Audit</h1>
+          <p className="text-sm text-muted-foreground">Gérez les réunions du Comité d'Audit</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <PermissionGate permission="creer_session">
             <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" />Nouvelle session</Button>
+              <Button><Plus className="w-4 h-4 mr-2" />Nouvelle réunion</Button>
             </DialogTrigger>
           </PermissionGate>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Créer une session</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Créer une réunion du Comité d'Audit</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Organe</Label>
                 <Select value={form.organ_id} onValueChange={(v) => setForm({ ...form, organ_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                   <SelectContent>
-                    {caOrgans.map((o) => (
+                    {organs.map((o) => (
                       <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -416,16 +272,6 @@ export default function Sessions() {
                 <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Type</Label>
-                  <Select value={form.session_type} onValueChange={(v) => setForm({ ...form, session_type: v as "ordinaire" | "extraordinaire" })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ordinaire">Ordinaire</SelectItem>
-                      <SelectItem value="extraordinaire">Extraordinaire</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="space-y-2">
                   <Label>Date & Heure</Label>
                   <Input type="datetime-local" value={form.session_date} onChange={(e) => setForm({ ...form, session_date: e.target.value })} />
@@ -443,7 +289,6 @@ export default function Sessions() {
                 </div>
               </div>
 
-              {/* Agenda items */}
               <div className="border-t pt-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <Label className="text-base font-semibold">Ordre du jour</Label>
@@ -501,7 +346,126 @@ export default function Sessions() {
         </Dialog>
       </div>
 
-      {renderSessionsTable(caSessions)}
+      <Card>
+        <CardContent className="p-0 overflow-x-auto">
+          <Table className="min-w-[800px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-8"></TableHead>
+                <TableHead>N° Réunion</TableHead>
+                <TableHead>Réunion</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Lieu</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Workflow</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sessions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    Aucune réunion du comité d'audit.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                sessions.map((s) => (
+                  <>
+                    <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSessionDetails(s.id)}>
+                      <TableCell>
+                        {expandedSession === s.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">{s.numero_session ?? "—"}</TableCell>
+                      <TableCell className="font-medium">{s.title}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
+                          {new Date(s.session_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5 text-sm">
+                          {s.is_virtual ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                          {s.location ?? "—"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusColors[s.status] ?? ""}>{statusLabels[s.status] ?? s.status}</Badge>
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
+                          {s.status === "brouillon" && (
+                            <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "validee")}>Valider</Button>
+                          )}
+                          {s.status === "validee" && (
+                            <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
+                          )}
+                          {s.status === "tenue" && (
+                            <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "cloturee")}>Clôturer</Button>
+                          )}
+                          {s.status === "cloturee" && (
+                            <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le dossier">
+                            <Package className="w-4 h-4" />
+                          </Button>
+                          <SessionCalendarActions session={s} variant="icon" />
+                          <PermissionGate permission="gerer_utilisateurs">
+                            <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
+                              <Shield className="w-4 h-4" />
+                            </Button>
+                          </PermissionGate>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {expandedSession === s.id && sessionDetails[s.id] && (
+                      <TableRow key={`${s.id}-details`}>
+                        <TableCell colSpan={7} className="bg-muted/30 p-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2">Ordre du jour ({sessionDetails[s.id].agendaItems.length})</h4>
+                              {sessionDetails[s.id].agendaItems.map((ai, i) => (
+                                <div key={ai.id} className="text-sm mb-1 flex items-start gap-2">
+                                  <Badge variant="outline" className="text-xs shrink-0">{i + 1}</Badge>
+                                  <span>{ai.title}</span>
+                                  <Badge variant="secondary" className="text-xs ml-auto">{ai.nature}</Badge>
+                                </div>
+                              ))}
+                            </div>
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-semibold text-sm">Participants ({sessionDetails[s.id].attendees.length})</h4>
+                                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setManageAttendeesSession({ id: s.id, organId: s.organ_id }); }}>
+                                  <Users className="w-3.5 h-3.5 mr-1" />Gérer
+                                </Button>
+                              </div>
+                              {sessionDetails[s.id].attendees.map((att) => (
+                                <div key={att.id} className="text-sm mb-1 flex items-center gap-2">
+                                  <span>{(att as any).members?.full_name}</span>
+                                  <Badge variant={att.is_present ? "default" : "secondary"} className="text-xs">
+                                    {att.is_present ? "Présent" : "Absent"}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          {s.meeting_link && (
+                            <div className="mt-3 pt-3 border-t">
+                              <a href={s.meeting_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+                                <Video className="w-4 h-4" />
+                                Rejoindre la réunion en ligne
+                              </a>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {manageAttendeesSession && (
         <SessionAttendeeManager
