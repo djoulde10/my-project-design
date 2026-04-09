@@ -235,7 +235,7 @@ export default function Sessions() {
     else { showSuccess("session_status_updated"); fetchSessions(); }
   };
 
-  const openEditSession = (s: any) => {
+  const openEditSession = async (s: any) => {
     setEditingSession(s);
     setForm({
       organ_id: s.organ_id,
@@ -246,25 +246,117 @@ export default function Sessions() {
       is_virtual: s.is_virtual,
       meeting_link: s.meeting_link || "",
     });
+    // Load existing agenda items
+    const { data: existingItems } = await supabase
+      .from("agenda_items")
+      .select("*")
+      .eq("session_id", s.id)
+      .order("order_index");
+    setEditAgendaItems(existingItems ?? []);
+    setEditAgendaDrafts([]);
+    setDeletedAgendaIds([]);
     setEditOpen(true);
+  };
+
+  const updateEditAgendaItem = (idx: number, field: string, value: any) => {
+    const updated = [...editAgendaItems];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setEditAgendaItems(updated);
+  };
+
+  const removeEditAgendaItem = (idx: number) => {
+    const item = editAgendaItems[idx];
+    if (item.id) setDeletedAgendaIds((prev) => [...prev, item.id]);
+    setEditAgendaItems(editAgendaItems.filter((_, i) => i !== idx));
+  };
+
+  const addEditAgendaDraft = () => {
+    setEditAgendaDrafts([...editAgendaDrafts, { title: "", description: "", nature: "information", files: [] }]);
+  };
+
+  const updateEditAgendaDraft = (idx: number, field: string, value: any) => {
+    const updated = [...editAgendaDrafts];
+    (updated[idx] as any)[field] = value;
+    setEditAgendaDrafts(updated);
+  };
+
+  const removeEditAgendaDraft = (idx: number) => {
+    setEditAgendaDrafts(editAgendaDrafts.filter((_, i) => i !== idx));
   };
 
   const handleEditSave = async () => {
     if (!editingSession) return;
-    const { error } = await supabase.from("sessions").update({
-      title: form.title,
-      session_type: form.session_type as any,
-      session_date: form.session_date,
-      location: form.location,
-      is_virtual: form.is_virtual,
-      meeting_link: form.meeting_link || null,
-    }).eq("id", editingSession.id);
-    if (error) { showError(error, "Impossible de modifier la session"); return; }
-    showSuccess("session_updated");
-    setEditOpen(false);
-    setEditingSession(null);
-    setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
-    fetchSessions();
+    setEditSaving(true);
+    try {
+      // 1. Update session fields (including organ_id)
+      const { error } = await supabase.from("sessions").update({
+        organ_id: form.organ_id,
+        title: form.title,
+        session_type: form.session_type as any,
+        session_date: form.session_date,
+        location: form.location,
+        is_virtual: form.is_virtual,
+        meeting_link: form.meeting_link || null,
+      }).eq("id", editingSession.id);
+      if (error) { showError(error, "Impossible de modifier la session"); return; }
+
+      // 2. Delete removed agenda items
+      for (const id of deletedAgendaIds) {
+        await supabase.from("documents").delete().eq("agenda_item_id", id);
+        await supabase.from("agenda_items").delete().eq("id", id);
+      }
+
+      // 3. Update existing agenda items
+      for (let i = 0; i < editAgendaItems.length; i++) {
+        const item = editAgendaItems[i];
+        await supabase.from("agenda_items").update({
+          title: item.title,
+          description: item.description || null,
+          nature: item.nature,
+          order_index: i,
+        }).eq("id", item.id);
+      }
+
+      // 4. Insert new agenda items
+      for (let i = 0; i < editAgendaDrafts.length; i++) {
+        const draft = editAgendaDrafts[i];
+        if (!draft.title) continue;
+        const { data: agendaItem } = await supabase.from("agenda_items").insert([{
+          session_id: editingSession.id,
+          title: draft.title,
+          description: draft.description || null,
+          nature: draft.nature,
+          order_index: editAgendaItems.length + i,
+        }]).select().single();
+
+        if (agendaItem) {
+          for (const file of draft.files) {
+            const filePath = `${companyId}/${editingSession.id}/${agendaItem.id}/${Date.now()}_${file.name}`;
+            const { error: upErr } = await supabase.storage.from("session-documents").upload(filePath, file);
+            if (!upErr) {
+              await supabase.from("documents").insert([{
+                session_id: editingSession.id,
+                agenda_item_id: agendaItem.id,
+                name: file.name,
+                file_path: filePath,
+                file_size: file.size,
+                mime_type: file.type,
+                uploaded_by: user?.id,
+              }]);
+            }
+          }
+        }
+      }
+
+      showSuccess("session_updated");
+      setEditOpen(false);
+      setEditingSession(null);
+      setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
+      fetchSessions();
+      if (expandedSession === editingSession.id) loadSessionDetails(editingSession.id);
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   const handleDeleteSession = async () => {
