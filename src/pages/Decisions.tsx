@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Gavel, PenTool, CheckCircle2, Download, FileSpreadsheet, MessageSquare, Shield } from "lucide-react";
+import { Plus, Gavel, Download, FileSpreadsheet, MessageSquare, Shield } from "lucide-react";
 import CommentThread from "@/components/CommentThread";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import { showSuccess, showError } from "@/lib/toastHelpers";
@@ -46,8 +46,6 @@ export default function Decisions() {
   const [sessions, setSessions] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
-  const [signatures, setSignatures] = useState<Record<string, any[]>>({});
-  const [signingId, setSigningId] = useState<string | null>(null);
   const [filterStatut, setFilterStatut] = useState<string>("all");
   const [searchText, setSearchText] = useState("");
   const [commentingId, setCommentingId] = useState<string | null>(null);
@@ -80,39 +78,8 @@ export default function Decisions() {
       setSessions(sessRes.data ?? []);
     }
     setMembers(memRes.data ?? []);
-
-    // Fetch all decision signatures
-    const { data: sigs } = await supabase
-      .from("signatures")
-      .select("*")
-      .eq("entity_type", "decision")
-      .order("signed_at");
-    const grouped: Record<string, any[]> = {};
-    (sigs ?? []).forEach((s: any) => {
-      if (!grouped[s.entity_id]) grouped[s.entity_id] = [];
-      grouped[s.entity_id].push(s);
-    });
-    setSignatures(grouped);
   };
 
-  const signDecision = async (decisionId: string) => {
-    setSigningId(decisionId);
-    const { error } = await supabase.from("signatures").insert({
-      entity_type: "decision",
-      entity_id: decisionId,
-      signed_by: user?.id,
-    });
-    if (error) {
-      showError(error, "Impossible de signer la résolution");
-    } else {
-      showSuccess("decision_signed");
-      fetchAll();
-    }
-    setSigningId(null);
-  };
-
-  const userSignedDecision = (decisionId: string) =>
-    (signatures[decisionId] ?? []).some((s: any) => s.signed_by === user?.id);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -300,7 +267,7 @@ export default function Decisions() {
                 <TableHead>Responsable</TableHead>
                 <TableHead>Date effet</TableHead>
                 <TableHead>Statut</TableHead>
-                <TableHead>Signature</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -314,8 +281,6 @@ export default function Decisions() {
                   <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucune résolution</TableCell></TableRow>
                 );
                 return filtered.map((d) => {
-                  const sigs = signatures[d.id] ?? [];
-                  const signed = userSignedDecision(d.id);
                   return (
                     <React.Fragment key={d.id}>
                     <TableRow>
@@ -335,15 +300,6 @@ export default function Decisions() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                        {signed ? (
-                          <Badge className="bg-emerald-100 text-emerald-800 gap-1"><CheckCircle2 className="w-3 h-3" />Signé ({sigs.length})</Badge>
-                        ) : (
-                          <PermissionGate permission="signer_pv">
-                            <Button size="sm" variant="outline" onClick={() => signDecision(d.id)} disabled={signingId === d.id}>
-                              <PenTool className="w-3 h-3 mr-1" />{signingId === d.id ? "..." : "Signer"}
-                            </Button>
-                          </PermissionGate>
-                        )}
                         <Button variant="ghost" size="sm" onClick={() => setCommentingId(commentingId === d.id ? null : d.id)}>
                           <MessageSquare className="w-3.5 h-3.5" />
                         </Button>
