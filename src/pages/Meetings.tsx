@@ -28,6 +28,7 @@ import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
 import PermissionGate from "@/components/PermissionGate";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import SignatureDialog from "@/components/signature/SignatureDialog";
 import SignatureDisplay from "@/components/signature/SignatureDisplay";
@@ -50,6 +51,7 @@ export default function Meetings() {
   const { user } = useAuth();
   const companyId = useCompanyId();
   const { hasPermission } = usePermissions();
+  const isDirectionMember = useIsDirectionMember();
   const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
