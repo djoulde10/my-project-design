@@ -353,9 +353,9 @@ export default function Sessions() {
                           <div>
                             <div className="flex items-center justify-between mb-2">
                               <h4 className="font-semibold text-sm">Participants ({sessionDetails[s.id].attendees.length})</h4>
-                              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setManageAttendeesSession({ id: s.id, organId: s.organ_id }); }}>
+                              {!isReadOnly && <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setManageAttendeesSession({ id: s.id, organId: s.organ_id }); }}>
                                 <Users className="w-3.5 h-3.5 mr-1" />Gérer
-                              </Button>
+                              </Button>}
                             </div>
                             {sessionDetails[s.id].attendees.map((att) => (
                               <div key={att.id} className="text-sm mb-1 flex items-center gap-2">
