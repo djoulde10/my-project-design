@@ -58,6 +58,10 @@ export default function Sessions() {
   const [editingSession, setEditingSession] = useState<any | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
+  const [editAgendaItems, setEditAgendaItems] = useState<any[]>([]);
+  const [editAgendaDrafts, setEditAgendaDrafts] = useState<AgendaItemDraft[]>([]);
+  const [deletedAgendaIds, setDeletedAgendaIds] = useState<string[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
 
   const [form, setForm] = useState({
     organ_id: "", title: "", session_type: "ordinaire" as "ordinaire" | "extraordinaire",
@@ -231,7 +235,7 @@ export default function Sessions() {
     else { showSuccess("session_status_updated"); fetchSessions(); }
   };
 
-  const openEditSession = (s: any) => {
+  const openEditSession = async (s: any) => {
     setEditingSession(s);
     setForm({
       organ_id: s.organ_id,
@@ -242,25 +246,117 @@ export default function Sessions() {
       is_virtual: s.is_virtual,
       meeting_link: s.meeting_link || "",
     });
+    // Load existing agenda items
+    const { data: existingItems } = await supabase
+      .from("agenda_items")
+      .select("*")
+      .eq("session_id", s.id)
+      .order("order_index");
+    setEditAgendaItems(existingItems ?? []);
+    setEditAgendaDrafts([]);
+    setDeletedAgendaIds([]);
     setEditOpen(true);
+  };
+
+  const updateEditAgendaItem = (idx: number, field: string, value: any) => {
+    const updated = [...editAgendaItems];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setEditAgendaItems(updated);
+  };
+
+  const removeEditAgendaItem = (idx: number) => {
+    const item = editAgendaItems[idx];
+    if (item.id) setDeletedAgendaIds((prev) => [...prev, item.id]);
+    setEditAgendaItems(editAgendaItems.filter((_, i) => i !== idx));
+  };
+
+  const addEditAgendaDraft = () => {
+    setEditAgendaDrafts([...editAgendaDrafts, { title: "", description: "", nature: "information", files: [] }]);
+  };
+
+  const updateEditAgendaDraft = (idx: number, field: string, value: any) => {
+    const updated = [...editAgendaDrafts];
+    (updated[idx] as any)[field] = value;
+    setEditAgendaDrafts(updated);
+  };
+
+  const removeEditAgendaDraft = (idx: number) => {
+    setEditAgendaDrafts(editAgendaDrafts.filter((_, i) => i !== idx));
   };
 
   const handleEditSave = async () => {
     if (!editingSession) return;
-    const { error } = await supabase.from("sessions").update({
-      title: form.title,
-      session_type: form.session_type as any,
-      session_date: form.session_date,
-      location: form.location,
-      is_virtual: form.is_virtual,
-      meeting_link: form.meeting_link || null,
-    }).eq("id", editingSession.id);
-    if (error) { showError(error, "Impossible de modifier la session"); return; }
-    showSuccess("session_updated");
-    setEditOpen(false);
-    setEditingSession(null);
-    setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
-    fetchSessions();
+    setEditSaving(true);
+    try {
+      // 1. Update session fields (including organ_id)
+      const { error } = await supabase.from("sessions").update({
+        organ_id: form.organ_id,
+        title: form.title,
+        session_type: form.session_type as any,
+        session_date: form.session_date,
+        location: form.location,
+        is_virtual: form.is_virtual,
+        meeting_link: form.meeting_link || null,
+      }).eq("id", editingSession.id);
+      if (error) { showError(error, "Impossible de modifier la session"); return; }
+
+      // 2. Delete removed agenda items
+      for (const id of deletedAgendaIds) {
+        await supabase.from("documents").delete().eq("agenda_item_id", id);
+        await supabase.from("agenda_items").delete().eq("id", id);
+      }
+
+      // 3. Update existing agenda items
+      for (let i = 0; i < editAgendaItems.length; i++) {
+        const item = editAgendaItems[i];
+        await supabase.from("agenda_items").update({
+          title: item.title,
+          description: item.description || null,
+          nature: item.nature,
+          order_index: i,
+        }).eq("id", item.id);
+      }
+
+      // 4. Insert new agenda items
+      for (let i = 0; i < editAgendaDrafts.length; i++) {
+        const draft = editAgendaDrafts[i];
+        if (!draft.title) continue;
+        const { data: agendaItem } = await supabase.from("agenda_items").insert([{
+          session_id: editingSession.id,
+          title: draft.title,
+          description: draft.description || null,
+          nature: draft.nature,
+          order_index: editAgendaItems.length + i,
+        }]).select().single();
+
+        if (agendaItem) {
+          for (const file of draft.files) {
+            const filePath = `${companyId}/${editingSession.id}/${agendaItem.id}/${Date.now()}_${file.name}`;
+            const { error: upErr } = await supabase.storage.from("session-documents").upload(filePath, file);
+            if (!upErr) {
+              await supabase.from("documents").insert([{
+                session_id: editingSession.id,
+                agenda_item_id: agendaItem.id,
+                name: file.name,
+                file_path: filePath,
+                file_size: file.size,
+                mime_type: file.type,
+                uploaded_by: user?.id,
+              }]);
+            }
+          }
+        }
+      }
+
+      showSuccess("session_updated");
+      setEditOpen(false);
+      setEditingSession(null);
+      setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
+      fetchSessions();
+      if (expandedSession === editingSession.id) loadSessionDetails(editingSession.id);
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   const handleDeleteSession = async () => {
@@ -668,9 +764,20 @@ export default function Sessions() {
 
       {/* Edit Session Dialog */}
       <Dialog open={editOpen} onOpenChange={(o) => { if (!o) { setEditOpen(false); setEditingSession(null); } }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Modifier la session</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Organe</Label>
+              <Select value={form.organ_id} onValueChange={(v) => setForm({ ...form, organ_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                <SelectContent>
+                  {caOrgans.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label>Titre</Label>
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -693,16 +800,114 @@ export default function Sessions() {
             </div>
             <div className="space-y-2">
               <Label>Lieu</Label>
-              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Salle de réunion / Lien visio" />
             </div>
             <div className="space-y-2">
-              <Label>Lien de réunion en ligne</Label>
-              <Input value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} />
+              <Label>Lien de réunion en ligne (Teams, Zoom...)</Label>
+              <div className="flex items-center gap-2">
+                <Link className="w-4 h-4 text-muted-foreground" />
+                <Input value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} placeholder="https://teams.microsoft.com/..." />
+              </div>
+            </div>
+
+            {/* Existing agenda items */}
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Ordre du jour</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addEditAgendaDraft}>
+                  <Plus className="w-3 h-3 mr-1" />Ajouter un point
+                </Button>
+              </div>
+
+              {editAgendaItems.map((item, idx) => (
+                <Card key={item.id} className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Point {idx + 1}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeEditAgendaItem(idx)}>
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                  <Input placeholder="Titre du point" value={item.title} onChange={(e) => updateEditAgendaItem(idx, "title", e.target.value)} />
+                  <Suspense fallback={<div className="h-16 flex items-center justify-center text-muted-foreground text-sm">Chargement…</div>}>
+                    <RichTextEditor
+                      content={item.description || ""}
+                      onChange={(html) => updateEditAgendaItem(idx, "description", html)}
+                      minHeight="80px"
+                      placeholder="Description (optionnel)"
+                    />
+                  </Suspense>
+                  <Select value={item.nature} onValueChange={(v) => updateEditAgendaItem(idx, "nature", v)}>
+                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="information">Information</SelectItem>
+                      <SelectItem value="decision">Décision</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Card>
+              ))}
+
+              {/* New agenda drafts */}
+              {editAgendaDrafts.map((draft, idx) => (
+                <Card key={`new-${idx}`} className="p-4 space-y-3 border-dashed">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-primary">Nouveau point {editAgendaItems.length + idx + 1}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeEditAgendaDraft(idx)}>
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                  <Input placeholder="Titre du point" value={draft.title} onChange={(e) => updateEditAgendaDraft(idx, "title", e.target.value)} />
+                  <Suspense fallback={<div className="h-16 flex items-center justify-center text-muted-foreground text-sm">Chargement…</div>}>
+                    <RichTextEditor
+                      content={draft.description}
+                      onChange={(html) => updateEditAgendaDraft(idx, "description", html)}
+                      minHeight="80px"
+                      placeholder="Description (optionnel)"
+                    />
+                  </Suspense>
+                  <div className="flex items-center gap-4">
+                    <Select value={draft.nature} onValueChange={(v) => updateEditAgendaDraft(idx, "nature", v)}>
+                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="information">Information</SelectItem>
+                        <SelectItem value="decision">Décision</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Label className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1.5">
+                      <FileUp className="w-3.5 h-3.5" />
+                      Documents
+                      <input type="file" multiple className="hidden" onChange={(e) => {
+                        if (!e.target.files) return;
+                        const updated = [...editAgendaDrafts];
+                        updated[idx].files = [...updated[idx].files, ...Array.from(e.target.files)];
+                        setEditAgendaDrafts(updated);
+                      }} />
+                    </Label>
+                  </div>
+                  {draft.files.length > 0 && (
+                    <div className="space-y-1">
+                      {draft.files.map((f, fi) => (
+                        <div key={fi} className="flex items-center justify-between text-xs bg-muted rounded px-2 py-1">
+                          <span className="truncate">{f.name}</span>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => {
+                            const updated = [...editAgendaDrafts];
+                            updated[idx].files.splice(fi, 1);
+                            setEditAgendaDrafts(updated);
+                          }}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              ))}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setEditOpen(false); setEditingSession(null); }}>Annuler</Button>
-            <Button onClick={handleEditSave} disabled={!form.title || !form.session_date}>Enregistrer</Button>
+            <Button onClick={handleEditSave} disabled={!form.title || !form.session_date || editSaving}>
+              {editSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Enregistrement…</> : "Enregistrer"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
