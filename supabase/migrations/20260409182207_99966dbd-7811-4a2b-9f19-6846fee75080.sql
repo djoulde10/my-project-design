@@ -1,0 +1,18 @@
+
+ALTER TABLE public.actions
+  ADD COLUMN IF NOT EXISTS numero_dossier TEXT,
+  ADD COLUMN IF NOT EXISTS date_introduction DATE,
+  ADD COLUMN IF NOT EXISTS action_type TEXT DEFAULT 'Demanderesse',
+  ADD COLUMN IF NOT EXISTS partie_adverse TEXT,
+  ADD COLUMN IF NOT EXISTS objet_litige TEXT,
+  ADD COLUMN IF NOT EXISTS type_contentieux TEXT,
+  ADD COLUMN IF NOT EXISTS mode_reglement TEXT,
+  ADD COLUMN IF NOT EXISTS juridiction TEXT,
+  ADD COLUMN IF NOT EXISTS avocat_conseil TEXT,
+  ADD COLUMN IF NOT EXISTS montant_en_jeu NUMERIC,
+  ADD COLUMN IF NOT EXISTS devise TEXT DEFAULT 'GNF',
+  ADD COLUMN IF NOT EXISTS probabilite_reussite TEXT,
+  ADD COLUMN IF NOT EXISTS derniere_action TEXT,
+  ADD COLUMN IF NOT EXISTS prochaine_action TEXT,
+  ADD COLUMN IF NOT EXISTS observations TEXT,
+  ADD COLUMN IF NOT EXISTS provisions TEXT DEFAULT 'NON';
