@@ -133,15 +133,25 @@ export default function Meetings() {
   const fetchAll = useCallback(async () => {
     const [tplRes, sessRes, minRes, memRes] = await Promise.all([
       supabase.from("meeting_templates").select("*").order("created_at", { ascending: false }),
-      supabase.from("sessions").select("id, title").order("session_date", { ascending: false }),
-      supabase.from("minutes").select("*, sessions(title)").order("created_at", { ascending: false }),
+      supabase.from("sessions").select("id, title, organs(type)").order("session_date", { ascending: false }),
+      supabase.from("minutes").select("*, sessions(title, organs(type))").order("created_at", { ascending: false }),
       supabase.from("members").select("id, full_name").eq("is_active", true).order("full_name"),
     ]);
-    setTemplates(tplRes.data ?? []);
-    setSessions(sessRes.data ?? []);
-    setMinutes(minRes.data ?? []);
+    
+    // Filter for "Membre de la Direction": only comite_audit data
+    if (isDirectionMember) {
+      const auditSessions = (sessRes.data ?? []).filter((s: any) => s.organs?.type === "comite_audit");
+      const auditMinutes = (minRes.data ?? []).filter((m: any) => m.sessions?.organs?.type === "comite_audit");
+      setTemplates(tplRes.data ?? []);
+      setSessions(auditSessions);
+      setMinutes(auditMinutes);
+    } else {
+      setTemplates(tplRes.data ?? []);
+      setSessions(sessRes.data ?? []);
+      setMinutes(minRes.data ?? []);
+    }
     setMembers(memRes.data ?? []);
-  }, []);
+  }, [isDirectionMember]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
   useEffect(() => { if (viewMinute?.id) fetchSignatures(viewMinute.id); }, [viewMinute?.id]);
