@@ -258,10 +258,9 @@ export default function Sessions() {
   };
 
   const caSessions = sessions.filter((s) => (s as any).organs?.type === "ca");
-  const auditSessions = sessions.filter((s) => (s as any).organs?.type === "comite_audit");
 
   const selectedOrgan = organs.find((o) => o.id === form.organ_id);
-  const isAudit = selectedOrgan?.type === "comite_audit";
+  const caOrgans = organs.filter((o) => o.type === "ca");
 
   const renderSessionsTable = (list: any[]) => (
     <Card>
@@ -390,8 +389,8 @@ export default function Sessions() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold">Sessions</h1>
-          <p className="text-sm text-muted-foreground">Gérez les sessions du CA et du Comité d'Audit</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Sessions du Conseil d'Administration</h1>
+          <p className="text-sm text-muted-foreground">Gérez les sessions du Conseil d'Administration</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <PermissionGate permission="creer_session">
@@ -407,7 +406,7 @@ export default function Sessions() {
                 <Select value={form.organ_id} onValueChange={(v) => setForm({ ...form, organ_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                   <SelectContent>
-                    {organs.map((o) => (
+                    {caOrgans.map((o) => (
                       <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -418,18 +417,16 @@ export default function Sessions() {
                 <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                {!isAudit && (
-                  <div className="space-y-2">
-                    <Label>Type</Label>
-                    <Select value={form.session_type} onValueChange={(v) => setForm({ ...form, session_type: v as "ordinaire" | "extraordinaire" })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ordinaire">Ordinaire</SelectItem>
-                        <SelectItem value="extraordinaire">Extraordinaire</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label>Type</Label>
+                  <Select value={form.session_type} onValueChange={(v) => setForm({ ...form, session_type: v as "ordinaire" | "extraordinaire" })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ordinaire">Ordinaire</SelectItem>
+                      <SelectItem value="extraordinaire">Extraordinaire</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
                   <Label>Date & Heure</Label>
                   <Input type="datetime-local" value={form.session_date} onChange={(e) => setForm({ ...form, session_date: e.target.value })} />
@@ -505,18 +502,7 @@ export default function Sessions() {
         </Dialog>
       </div>
 
-      <Tabs defaultValue="ca">
-        <TabsList>
-          <TabsTrigger value="ca">Conseil d'Administration</TabsTrigger>
-          <TabsTrigger value="audit">Comité d'Audit</TabsTrigger>
-        </TabsList>
-        <TabsContent value="ca" className="mt-4">
-          {renderSessionsTable(caSessions)}
-        </TabsContent>
-        <TabsContent value="audit" className="mt-4">
-          {renderSessionsTable(auditSessions)}
-        </TabsContent>
-      </Tabs>
+      {renderSessionsTable(caSessions)}
 
       {manageAttendeesSession && (
         <SessionAttendeeManager
