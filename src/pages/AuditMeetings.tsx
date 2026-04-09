@@ -395,7 +395,14 @@ export default function AuditMeetings() {
                       </Button>
                     </div>
                     <Input placeholder="Titre du point" value={draft.title} onChange={(e) => updateAgendaDraft(idx, "title", e.target.value)} />
-                    <Textarea placeholder="Description (optionnel)" className="min-h-[60px]" value={draft.description} onChange={(e) => updateAgendaDraft(idx, "description", e.target.value)} />
+                    <Suspense fallback={<div className="h-16 flex items-center justify-center text-muted-foreground text-sm">Chargement…</div>}>
+                      <RichTextEditor
+                        content={draft.description}
+                        onChange={(html) => updateAgendaDraft(idx, "description", html)}
+                        minHeight="80px"
+                        placeholder="Description (optionnel)"
+                      />
+                    </Suspense>
                     <div className="flex items-center gap-4">
                       <div className="flex-1">
                         <Label className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1.5">
