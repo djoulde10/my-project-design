@@ -226,6 +226,48 @@ export default function AuditMeetings() {
     else { showSuccess("session_status_updated"); fetchSessions(); }
   };
 
+  const openEditSession = (s: any) => {
+    setEditingSession(s);
+    setForm({
+      organ_id: s.organ_id,
+      title: s.title,
+      session_type: s.session_type,
+      session_date: s.session_date ? new Date(s.session_date).toISOString().slice(0, 16) : "",
+      location: s.location || "",
+      is_virtual: s.is_virtual,
+      meeting_link: s.meeting_link || "",
+    });
+    setEditOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editingSession) return;
+    const { error } = await supabase.from("sessions").update({
+      title: form.title,
+      session_date: form.session_date,
+      location: form.location,
+      is_virtual: form.is_virtual,
+      meeting_link: form.meeting_link || null,
+    }).eq("id", editingSession.id);
+    if (error) { showError(error, "Impossible de modifier la réunion"); return; }
+    showSuccess("session_updated");
+    setEditOpen(false);
+    setEditingSession(null);
+    setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
+    fetchSessions();
+  };
+
+  const handleDeleteSession = async () => {
+    if (!deleteSessionId) return;
+    await supabase.from("session_attendees").delete().eq("session_id", deleteSessionId);
+    await supabase.from("documents").delete().eq("session_id", deleteSessionId);
+    await supabase.from("agenda_items").delete().eq("session_id", deleteSessionId);
+    const { error } = await supabase.from("sessions").delete().eq("id", deleteSessionId);
+    if (error) { showError(error, "Impossible de supprimer la réunion"); }
+    else { showSuccess("session_deleted"); fetchSessions(); }
+    setDeleteSessionId(null);
+  };
+
   const generateBoardPacket = async (session: any) => {
     showInfo("Génération du dossier en cours…");
     const [agRes, attRes, docsRes] = await Promise.all([
