@@ -797,7 +797,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       </div>
 
       {/* ===== RECORDING SECTION ===== */}
-      {!isReadOnly && (
+      {!isReadOnly && !isPresident && (
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-2 mb-1">
@@ -899,7 +899,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           <TabsTrigger value="pv" className="gap-2">
             <ClipboardCheck className="w-4 h-4" />Procès-verbaux
           </TabsTrigger>
-          {!isReadOnly && (
+          {!isReadOnly && !isPresident && (
             <TabsTrigger value="templates" className="gap-2">
               <BookOpen className="w-4 h-4" />Modèles de PV
             </TabsTrigger>
