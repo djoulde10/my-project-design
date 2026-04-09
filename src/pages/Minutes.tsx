@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit3, X, MessageSquare, PenTool, Lock, XCircle } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const pvStatusLabels: Record<string, string> = {
   brouillon: "Brouillon",
