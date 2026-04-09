@@ -6,6 +6,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCompanyBranding } from "@/hooks/useCompanyBranding";
 import { routePermissionMap } from "@/lib/routePermissions";
+import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 import GlobalSearch from "@/components/GlobalSearch";
 import {
@@ -109,6 +110,8 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
         <nav className="space-y-5">
           {navSections.map((section) => {
             const visibleItems = section.items.filter((item) => {
+              // Hide CA-only routes for "Membre de la Direction"
+              if (isDirectionMember && caOnlyPaths.includes(item.path)) return false;
               const required = routePermissionMap[item.path];
               if (!required) return true;
               return required.some((p) => permissions.includes(p));
