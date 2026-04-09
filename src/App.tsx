@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { getRequiredPermissions } from "@/lib/routePermissions";
+import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import AppLayout from "@/components/AppLayout";
 import AdminLayout from "@/components/AdminLayout";
 import Auth from "@/pages/Auth";
@@ -50,13 +51,22 @@ import AdminApiManagement from "@/pages/admin/AdminApiManagement";
 
 const queryClient = new QueryClient();
 
+// CA-only routes that "Membre de la Direction" cannot access
+const directionBlockedPaths = ["/sessions", "/members", "/calendar"];
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const { permissions, loading: permLoading } = usePermissions();
+  const isDirectionMember = useIsDirectionMember();
   const location = useLocation();
 
   if (loading || permLoading) return <div className="flex items-center justify-center h-screen text-muted-foreground">Chargement...</div>;
   if (!user) return <Navigate to="/auth" replace />;
+
+  // Block "Membre de la Direction" from CA-only routes
+  if (isDirectionMember && directionBlockedPaths.some(p => location.pathname === p || location.pathname.startsWith(p + "/"))) {
+    return <AppLayout><AccessDenied /></AppLayout>;
+  }
 
   const required = getRequiredPermissions(location.pathname);
   if (required && !required.some((p) => permissions.includes(p))) {

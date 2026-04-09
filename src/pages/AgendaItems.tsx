@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import PermissionGate from "@/components/PermissionGate";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,7 +24,7 @@ const emptyForm = {
 
 export default function AgendaItems() {
   const { user } = useAuth();
-  
+  const isDirectionMember = useIsDirectionMember();
   const companyId = useCompanyId();
   const [items, setItems] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -44,12 +45,18 @@ export default function AgendaItems() {
 
   const fetchAll = async () => {
     const [itemsRes, sessionsRes, membersRes] = await Promise.all([
-      supabase.from("agenda_items").select("*, sessions(title), members(full_name)").order("order_index"),
-      supabase.from("sessions").select("id, title").in("status", ["brouillon", "validee"]).order("session_date", { ascending: false }),
+      supabase.from("agenda_items").select("*, sessions(title, organs(type)), members(full_name)").order("order_index"),
+      supabase.from("sessions").select("id, title, organs(type)").in("status", ["brouillon", "validee"]).order("session_date", { ascending: false }),
       supabase.from("members").select("id, full_name").eq("is_active", true),
     ]);
-    setItems(itemsRes.data ?? []);
-    setSessions(sessionsRes.data ?? []);
+    
+    if (isDirectionMember) {
+      setItems((itemsRes.data ?? []).filter((i: any) => i.sessions?.organs?.type === "comite_audit"));
+      setSessions((sessionsRes.data ?? []).filter((s: any) => s.organs?.type === "comite_audit"));
+    } else {
+      setItems(itemsRes.data ?? []);
+      setSessions(sessionsRes.data ?? []);
+    }
     setMembers(membersRes.data ?? []);
 
     // Fetch documents linked to agenda items

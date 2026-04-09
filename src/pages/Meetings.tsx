@@ -28,6 +28,7 @@ import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
 import PermissionGate from "@/components/PermissionGate";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import SignatureDialog from "@/components/signature/SignatureDialog";
 import SignatureDisplay from "@/components/signature/SignatureDisplay";
@@ -50,6 +51,7 @@ export default function Meetings() {
   const { user } = useAuth();
   const companyId = useCompanyId();
   const { hasPermission } = usePermissions();
+  const isDirectionMember = useIsDirectionMember();
   const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -131,15 +133,25 @@ export default function Meetings() {
   const fetchAll = useCallback(async () => {
     const [tplRes, sessRes, minRes, memRes] = await Promise.all([
       supabase.from("meeting_templates").select("*").order("created_at", { ascending: false }),
-      supabase.from("sessions").select("id, title").order("session_date", { ascending: false }),
-      supabase.from("minutes").select("*, sessions(title)").order("created_at", { ascending: false }),
+      supabase.from("sessions").select("id, title, organs(type)").order("session_date", { ascending: false }),
+      supabase.from("minutes").select("*, sessions(title, organs(type))").order("created_at", { ascending: false }),
       supabase.from("members").select("id, full_name").eq("is_active", true).order("full_name"),
     ]);
-    setTemplates(tplRes.data ?? []);
-    setSessions(sessRes.data ?? []);
-    setMinutes(minRes.data ?? []);
+    
+    // Filter for "Membre de la Direction": only comite_audit data
+    if (isDirectionMember) {
+      const auditSessions = (sessRes.data ?? []).filter((s: any) => s.organs?.type === "comite_audit");
+      const auditMinutes = (minRes.data ?? []).filter((m: any) => m.sessions?.organs?.type === "comite_audit");
+      setTemplates(tplRes.data ?? []);
+      setSessions(auditSessions);
+      setMinutes(auditMinutes);
+    } else {
+      setTemplates(tplRes.data ?? []);
+      setSessions(sessRes.data ?? []);
+      setMinutes(minRes.data ?? []);
+    }
     setMembers(memRes.data ?? []);
-  }, []);
+  }, [isDirectionMember]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
   useEffect(() => { if (viewMinute?.id) fetchSignatures(viewMinute.id); }, [viewMinute?.id]);

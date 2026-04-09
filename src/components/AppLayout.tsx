@@ -6,6 +6,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCompanyBranding } from "@/hooks/useCompanyBranding";
 import { routePermissionMap } from "@/lib/routePermissions";
+import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 import GlobalSearch from "@/components/GlobalSearch";
 import {
@@ -71,7 +72,10 @@ const navSections = [
   },
 ];
 
-function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, branding, permissions }: {
+// Routes hidden for "Membre de la Direction" (CA-only routes)
+const caOnlyPaths = ["/sessions", "/members", "/calendar"];
+
+function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, branding, permissions, isDirectionMember }: {
   user: any;
   signOut: () => void;
   location: any;
@@ -79,6 +83,7 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
   isSuperAdmin?: boolean;
   branding?: { displayName: string; logoUrl: string | null; primaryColor: string };
   permissions: string[];
+  isDirectionMember?: boolean;
 }) {
   const name = branding?.displayName || "GovBoard";
   const logoUrl = branding?.logoUrl;
@@ -109,6 +114,8 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
         <nav className="space-y-5">
           {navSections.map((section) => {
             const visibleItems = section.items.filter((item) => {
+              // Hide CA-only routes for "Membre de la Direction"
+              if (isDirectionMember && caOnlyPaths.includes(item.path)) return false;
               const required = routePermissionMap[item.path];
               if (!required) return true;
               return required.some((p) => permissions.includes(p));
@@ -181,6 +188,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
   const { permissions } = usePermissions();
+  const isDirectionMember = useIsDirectionMember();
   const { branding, displayName } = useCompanyBranding();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -197,7 +205,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-[260px] flex-shrink-0 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border/40">
-          <SidebarContent user={user} signOut={signOut} location={location} isSuperAdmin={isSuperAdmin} branding={brandingProps} permissions={permissions} />
+          <SidebarContent user={user} signOut={signOut} location={location} isSuperAdmin={isSuperAdmin} branding={brandingProps} permissions={permissions} isDirectionMember={isDirectionMember} />
         </aside>
       )}
 
@@ -206,7 +214,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-72 p-0 bg-sidebar text-sidebar-foreground flex flex-col">
             <SheetTitle className="sr-only">Navigation</SheetTitle>
-            <SidebarContent user={user} signOut={signOut} location={location} onNavigate={() => setMobileOpen(false)} isSuperAdmin={isSuperAdmin} branding={brandingProps} permissions={permissions} />
+            <SidebarContent user={user} signOut={signOut} location={location} onNavigate={() => setMobileOpen(false)} isSuperAdmin={isSuperAdmin} branding={brandingProps} permissions={permissions} isDirectionMember={isDirectionMember} />
           </SheetContent>
         </Sheet>
       )}
