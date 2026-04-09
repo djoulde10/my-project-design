@@ -27,6 +27,7 @@ import MeetingAIAnalysis from "@/components/MeetingAIAnalysis";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
 import PermissionGate from "@/components/PermissionGate";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import SignatureDialog from "@/components/signature/SignatureDialog";
 import SignatureDisplay from "@/components/signature/SignatureDisplay";
@@ -48,6 +49,8 @@ export default function Meetings() {
   
   const { user } = useAuth();
   const companyId = useCompanyId();
+  const { hasPermission } = usePermissions();
+  const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [minutes, setMinutes] = useState<any[]>([]);
@@ -780,6 +783,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       </div>
 
       {/* ===== RECORDING SECTION ===== */}
+      {!isReadOnly && (
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-2 mb-1">
@@ -862,6 +866,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           )}
         </CardContent>
       </Card>
+      )}
 
       {(uploadTranscribing || generating) && (
         <Card className="border-primary/20 bg-primary/5">
@@ -880,9 +885,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           <TabsTrigger value="pv" className="gap-2">
             <ClipboardCheck className="w-4 h-4" />Procès-verbaux
           </TabsTrigger>
-          <TabsTrigger value="templates" className="gap-2">
-            <BookOpen className="w-4 h-4" />Modèles de PV
-          </TabsTrigger>
+          {!isReadOnly && (
+            <TabsTrigger value="templates" className="gap-2">
+              <BookOpen className="w-4 h-4" />Modèles de PV
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* ===== UNIFIED PV TAB ===== */}
@@ -1018,16 +1025,16 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {minutes.length === 0 ? (
+                  {(isReadOnly ? minutes.filter((m) => m.pv_status === "valide" || m.pv_status === "signe") : minutes).length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                         <FileText className="w-10 h-10 mx-auto mb-2 opacity-40" />
                         <p className="font-medium">Aucun procès-verbal</p>
-                        <p className="text-sm">Créez un PV manuellement ou utilisez l'enregistrement IA.</p>
+                        {!isReadOnly && <p className="text-sm">Créez un PV manuellement ou utilisez l'enregistrement IA.</p>}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    minutes.map((m) => (
+                    (isReadOnly ? minutes.filter((m) => m.pv_status === "valide" || m.pv_status === "signe") : minutes).map((m) => (
                       <TableRow key={m.id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
@@ -1036,7 +1043,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                           </div>
                         </TableCell>
                         <TableCell>
-                          {editingStatusId === m.id && !isSigned(m) ? (
+                          {!isReadOnly && editingStatusId === m.id && !isSigned(m) ? (
                             <Select value={editStatus} onValueChange={(v) => { setEditStatus(v as PvStatus); updateMinuteStatus(m.id, v as PvStatus); }}>
                               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                               <SelectContent>
@@ -1046,8 +1053,8 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             </Select>
                           ) : (
                             <Badge
-                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isSigned(m) ? 'cursor-pointer' : ''}`}
-                              onClick={() => { if (!isSigned(m)) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
+                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isSigned(m) ? 'cursor-pointer' : ''}`}
+                              onClick={() => { if (!isReadOnly && !isSigned(m)) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
                             >
                               {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
                             </Badge>
@@ -1061,7 +1068,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {!isSigned(m) && (
+                            {!isReadOnly && !isSigned(m) && (
                               <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
                                 <Edit className="w-4 h-4 mr-1" />Éditer
                               </Button>
