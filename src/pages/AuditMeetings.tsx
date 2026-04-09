@@ -371,6 +371,33 @@ export default function AuditMeetings() {
                   </Card>
                 ))}
               </div>
+
+              {/* AI Convocation Letter */}
+              {agendaDrafts.filter(d => d.title).length > 0 && (
+                <div className="border-t pt-4 space-y-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={generateConvocation}
+                    disabled={generatingConvocation}
+                  >
+                    {generatingConvocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {generatingConvocation ? "Génération en cours…" : "Générer la lettre de convocation (IA)"}
+                  </Button>
+                  {convocationText && (
+                    <div className="bg-muted rounded-lg p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold">Lettre de convocation</span>
+                        <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(convocationText); showInfo("Copié dans le presse-papiers"); }}>
+                          Copier
+                        </Button>
+                      </div>
+                      <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{convocationText}</pre>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
