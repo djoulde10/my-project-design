@@ -783,6 +783,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       </div>
 
       {/* ===== RECORDING SECTION ===== */}
+      {!isReadOnly && (
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-2 mb-1">
@@ -865,6 +866,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           )}
         </CardContent>
       </Card>
+      )}
 
       {(uploadTranscribing || generating) && (
         <Card className="border-primary/20 bg-primary/5">
