@@ -16,45 +16,93 @@ export type Database = {
     Tables: {
       actions: {
         Row: {
+          action_type: string | null
+          avocat_conseil: string | null
           company_id: string | null
           completion_date: string | null
           created_at: string
+          date_introduction: string | null
           decision_id: string | null
+          derniere_action: string | null
           description: string | null
+          devise: string | null
           due_date: string | null
           id: string
+          juridiction: string | null
+          mode_reglement: string | null
+          montant_en_jeu: number | null
+          numero_dossier: string | null
+          objet_litige: string | null
+          observations: string | null
+          partie_adverse: string | null
+          probabilite_reussite: string | null
+          prochaine_action: string | null
+          provisions: string | null
           responsible_member_id: string | null
           solution_id: string | null
           status: Database["public"]["Enums"]["action_status"]
           title: string
+          type_contentieux: string | null
           updated_at: string
         }
         Insert: {
+          action_type?: string | null
+          avocat_conseil?: string | null
           company_id?: string | null
           completion_date?: string | null
           created_at?: string
+          date_introduction?: string | null
           decision_id?: string | null
+          derniere_action?: string | null
           description?: string | null
+          devise?: string | null
           due_date?: string | null
           id?: string
+          juridiction?: string | null
+          mode_reglement?: string | null
+          montant_en_jeu?: number | null
+          numero_dossier?: string | null
+          objet_litige?: string | null
+          observations?: string | null
+          partie_adverse?: string | null
+          probabilite_reussite?: string | null
+          prochaine_action?: string | null
+          provisions?: string | null
           responsible_member_id?: string | null
           solution_id?: string | null
           status?: Database["public"]["Enums"]["action_status"]
           title: string
+          type_contentieux?: string | null
           updated_at?: string
         }
         Update: {
+          action_type?: string | null
+          avocat_conseil?: string | null
           company_id?: string | null
           completion_date?: string | null
           created_at?: string
+          date_introduction?: string | null
           decision_id?: string | null
+          derniere_action?: string | null
           description?: string | null
+          devise?: string | null
           due_date?: string | null
           id?: string
+          juridiction?: string | null
+          mode_reglement?: string | null
+          montant_en_jeu?: number | null
+          numero_dossier?: string | null
+          objet_litige?: string | null
+          observations?: string | null
+          partie_adverse?: string | null
+          probabilite_reussite?: string | null
+          prochaine_action?: string | null
+          provisions?: string | null
           responsible_member_id?: string | null
           solution_id?: string | null
           status?: Database["public"]["Enums"]["action_status"]
           title?: string
+          type_contentieux?: string | null
           updated_at?: string
         }
         Relationships: [
