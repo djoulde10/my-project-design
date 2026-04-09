@@ -154,7 +154,7 @@ export default function Meetings() {
       setMinutes(minRes.data ?? []);
     }
     setMembers(memRes.data ?? []);
-  }, [isDirectionMember]);
+  }, [isDirectionMember, isPCAReadOnlyForAudit]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
   useEffect(() => { fetchAll(); }, [fetchAll]);
