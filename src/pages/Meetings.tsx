@@ -1043,7 +1043,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                           </div>
                         </TableCell>
                         <TableCell>
-                          {editingStatusId === m.id && !isSigned(m) ? (
+                          {!isReadOnly && editingStatusId === m.id && !isSigned(m) ? (
                             <Select value={editStatus} onValueChange={(v) => { setEditStatus(v as PvStatus); updateMinuteStatus(m.id, v as PvStatus); }}>
                               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                               <SelectContent>
@@ -1053,8 +1053,8 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             </Select>
                           ) : (
                             <Badge
-                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isSigned(m) ? 'cursor-pointer' : ''}`}
-                              onClick={() => { if (!isSigned(m)) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
+                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isSigned(m) ? 'cursor-pointer' : ''}`}
+                              onClick={() => { if (!isReadOnly && !isSigned(m)) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
                             >
                               {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
                             </Badge>
