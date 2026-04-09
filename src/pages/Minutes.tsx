@@ -214,7 +214,7 @@ export default function Minutes() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {editingId === m.id && !isSigned(m) ? (
+                      {!isReadOnly && editingId === m.id && !isSigned(m) ? (
                         <Select value={editStatus} onValueChange={(v) => { const s = v as PvStatus; setEditStatus(s); updateStatus(m.id, s); }}>
                           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                           <SelectContent>
