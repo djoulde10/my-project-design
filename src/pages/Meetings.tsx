@@ -1068,7 +1068,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {!isSigned(m) && (
+                            {!isReadOnly && !isSigned(m) && (
                               <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
                                 <Edit className="w-4 h-4 mr-1" />Éditer
                               </Button>
