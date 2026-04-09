@@ -18,6 +18,7 @@ import PermissionGate from "@/components/PermissionGate";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import SessionAttendeeManager from "@/components/SessionAttendeeManager";
+const RichTextEditor = lazy(() => import("@/components/RichTextEditor"));
 import jsPDF from "jspdf";
 
 const statusColors: Record<string, string> = {
