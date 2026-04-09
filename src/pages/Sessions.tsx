@@ -55,6 +55,10 @@ export default function Sessions() {
   const [permEntityId, setPermEntityId] = useState<string | null>(null);
   const [permEntityName, setPermEntityName] = useState("");
 
+  const [editingSession, setEditingSession] = useState<any | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
+
   const [form, setForm] = useState({
     organ_id: "", title: "", session_type: "ordinaire" as "ordinaire" | "extraordinaire",
     session_date: "", location: "", is_virtual: false, meeting_link: "",
