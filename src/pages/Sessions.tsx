@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users, Shield } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users, Shield, Sparkles, Loader2 } from "lucide-react";
 import SessionCalendarActions from "@/components/SessionCalendarActions";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import PermissionGate from "@/components/PermissionGate";
@@ -58,6 +58,44 @@ export default function Sessions() {
     session_date: "", location: "", is_virtual: false, meeting_link: "",
   });
   const [agendaDrafts, setAgendaDrafts] = useState<AgendaItemDraft[]>([]);
+  const [generatingConvocation, setGeneratingConvocation] = useState(false);
+  const [convocationText, setConvocationText] = useState<string | null>(null);
+
+  const generateConvocation = async () => {
+    if (agendaDrafts.filter(d => d.title).length === 0) {
+      showError(null, "Ajoutez au moins un point à l'ordre du jour");
+      return;
+    }
+    setGeneratingConvocation(true);
+    setConvocationText(null);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) { showError(null, "Vous devez être connecté"); return; }
+
+      const selectedOrganName = organs.find(o => o.id === form.organ_id)?.name || "l'organe";
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-convocation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify({
+          organ_name: selectedOrganName,
+          session_title: form.title,
+          session_date: form.session_date,
+          location: form.location,
+          meeting_link: form.meeting_link,
+          agenda_items: agendaDrafts.filter(d => d.title).map((d, i) => ({ order: i + 1, title: d.title, description: d.description })),
+        }),
+      });
+      if (!resp.ok) { showError(null, "Erreur lors de la génération"); return; }
+      const result = await resp.json();
+      setConvocationText(result.letter);
+    } catch (e) {
+      console.error(e);
+      showError(e, "Erreur lors de la génération de la convocation");
+    } finally {
+      setGeneratingConvocation(false);
+    }
+  };
 
   const fetchSessions = async () => {
     const { data } = await supabase
@@ -153,6 +191,7 @@ export default function Sessions() {
     setOpen(false);
     setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
     setAgendaDrafts([]);
+    setConvocationText(null);
     fetchSessions();
   };
 
@@ -465,13 +504,6 @@ export default function Sessions() {
                     <Input placeholder="Titre du point" value={draft.title} onChange={(e) => updateAgendaDraft(idx, "title", e.target.value)} />
                     <Textarea placeholder="Description (optionnel)" className="min-h-[60px]" value={draft.description} onChange={(e) => updateAgendaDraft(idx, "description", e.target.value)} />
                     <div className="flex items-center gap-4">
-                      <Select value={draft.nature} onValueChange={(v) => updateAgendaDraft(idx, "nature", v)}>
-                        <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="information">Information</SelectItem>
-                          <SelectItem value="decision">Décision</SelectItem>
-                        </SelectContent>
-                      </Select>
                       <div className="flex-1">
                         <Label className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1.5">
                           <FileUp className="w-3.5 h-3.5" />
@@ -495,6 +527,33 @@ export default function Sessions() {
                   </Card>
                 ))}
               </div>
+
+              {/* AI Convocation Letter */}
+              {agendaDrafts.filter(d => d.title).length > 0 && (
+                <div className="border-t pt-4 space-y-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={generateConvocation}
+                    disabled={generatingConvocation}
+                  >
+                    {generatingConvocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {generatingConvocation ? "Génération en cours…" : "Générer la lettre de convocation (IA)"}
+                  </Button>
+                  {convocationText && (
+                    <div className="bg-muted rounded-lg p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold">Lettre de convocation</span>
+                        <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(convocationText); showInfo("Copié dans le presse-papiers"); }}>
+                          Copier
+                        </Button>
+                      </div>
+                      <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{convocationText}</pre>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
