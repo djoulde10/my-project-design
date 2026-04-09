@@ -1622,6 +1622,7 @@ export type Database = {
       sessions: {
         Row: {
           company_id: string | null
+          convocation_letter: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -1638,6 +1639,7 @@ export type Database = {
         }
         Insert: {
           company_id?: string | null
+          convocation_letter?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1654,6 +1656,7 @@ export type Database = {
         }
         Update: {
           company_id?: string | null
+          convocation_letter?: string | null
           created_at?: string
           created_by?: string | null
           id?: string

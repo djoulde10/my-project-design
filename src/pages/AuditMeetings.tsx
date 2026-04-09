@@ -7,16 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Link, Users, Shield, Sparkles, Loader2, Pencil } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Link, Users, Shield, Sparkles, Loader2, Pencil, CheckCircle, Eye } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import SessionCalendarActions from "@/components/SessionCalendarActions";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import PermissionGate from "@/components/PermissionGate";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
+import { usePermissions } from "@/hooks/usePermissions";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import SessionAttendeeManager from "@/components/SessionAttendeeManager";
 const RichTextEditor = lazy(() => import("@/components/RichTextEditor"));
@@ -43,8 +43,12 @@ interface AgendaItemDraft {
 export default function AuditMeetings() {
   const { user } = useAuth();
   const companyId = useCompanyId();
-  const { isReadOnlyForOrgan } = usePresidentOrganRestriction();
+  const { isReadOnlyForOrgan, roleName } = usePresidentOrganRestriction();
+  const { hasPermission } = usePermissions();
   const isReadOnly = isReadOnlyForOrgan("comite_audit");
+  const isPresident = roleName === "Président du Comité d'Audit";
+  const isSecretariat = roleName === "Secrétariat juridique";
+
   const [sessions, setSessions] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
@@ -57,6 +61,21 @@ export default function AuditMeetings() {
   const [editingSession, setEditingSession] = useState<any | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
+  const [editAgendaItems, setEditAgendaItems] = useState<any[]>([]);
+  const [editAgendaDrafts, setEditAgendaDrafts] = useState<AgendaItemDraft[]>([]);
+  const [deletedAgendaIds, setDeletedAgendaIds] = useState<string[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Validation dialog state
+  const [validationSession, setValidationSession] = useState<any | null>(null);
+  const [validationConvocation, setValidationConvocation] = useState<string>("");
+  const [validationOpen, setValidationOpen] = useState(false);
+  const [validating, setValidating] = useState(false);
+
+  // View convocation dialog
+  const [viewConvocationSession, setViewConvocationSession] = useState<any | null>(null);
+
+  const [convocationText, setConvocationText] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     organ_id: "", title: "", session_type: "ordinaire" as "ordinaire" | "extraordinaire",
@@ -64,7 +83,6 @@ export default function AuditMeetings() {
   });
   const [agendaDrafts, setAgendaDrafts] = useState<AgendaItemDraft[]>([]);
   const [generatingConvocation, setGeneratingConvocation] = useState(false);
-  const [convocationText, setConvocationText] = useState<string | null>(null);
 
   const generateConvocation = async () => {
     if (agendaDrafts.filter(d => d.title).length === 0) {
@@ -149,11 +167,14 @@ export default function AuditMeetings() {
   };
 
   const handleCreate = async () => {
-    const payload = {
+    const payload: any = {
       ...form,
       meeting_link: form.meeting_link || null,
       created_by: user?.id,
     };
+    if (convocationText) {
+      payload.convocation_letter = convocationText;
+    }
     const { data: session, error } = await supabase.from("sessions").insert([payload]).select().single();
     if (error || !session) {
       showError(error, "Impossible de créer la réunion");
@@ -230,7 +251,38 @@ export default function AuditMeetings() {
     else { showSuccess("session_status_updated"); fetchSessions(); }
   };
 
-  const openEditSession = (s: any) => {
+  // Open validation dialog
+  const openValidationDialog = async (s: any) => {
+    const { data: freshSession } = await supabase
+      .from("sessions")
+      .select("*")
+      .eq("id", s.id)
+      .single();
+    setValidationSession(freshSession || s);
+    setValidationConvocation((freshSession as any)?.convocation_letter || "");
+    setValidationOpen(true);
+  };
+
+  const handleValidate = async () => {
+    if (!validationSession) return;
+    setValidating(true);
+    try {
+      const updateData: any = { status: "validee" as any };
+      if (validationConvocation) {
+        updateData.convocation_letter = validationConvocation;
+      }
+      const { error } = await supabase.from("sessions").update(updateData).eq("id", validationSession.id);
+      if (error) { showError(error, "Impossible de valider la réunion"); return; }
+      showSuccess("session_status_updated");
+      setValidationOpen(false);
+      setValidationSession(null);
+      fetchSessions();
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const openEditSession = async (s: any) => {
     setEditingSession(s);
     setForm({
       organ_id: s.organ_id,
@@ -241,24 +293,119 @@ export default function AuditMeetings() {
       is_virtual: s.is_virtual,
       meeting_link: s.meeting_link || "",
     });
+    const { data: existingItems } = await supabase
+      .from("agenda_items")
+      .select("*")
+      .eq("session_id", s.id)
+      .order("order_index");
+    setEditAgendaItems(existingItems ?? []);
+    setEditAgendaDrafts([]);
+    setDeletedAgendaIds([]);
+    const { data: freshSession } = await supabase.from("sessions").select("convocation_letter").eq("id", s.id).single();
+    setConvocationText((freshSession as any)?.convocation_letter || null);
     setEditOpen(true);
+  };
+
+  const updateEditAgendaItem = (idx: number, field: string, value: any) => {
+    const updated = [...editAgendaItems];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setEditAgendaItems(updated);
+  };
+
+  const removeEditAgendaItem = (idx: number) => {
+    const item = editAgendaItems[idx];
+    if (item.id) setDeletedAgendaIds((prev) => [...prev, item.id]);
+    setEditAgendaItems(editAgendaItems.filter((_, i) => i !== idx));
+  };
+
+  const addEditAgendaDraft = () => {
+    setEditAgendaDrafts([...editAgendaDrafts, { title: "", description: "", nature: "information", files: [] }]);
+  };
+
+  const updateEditAgendaDraft = (idx: number, field: string, value: any) => {
+    const updated = [...editAgendaDrafts];
+    (updated[idx] as any)[field] = value;
+    setEditAgendaDrafts(updated);
+  };
+
+  const removeEditAgendaDraft = (idx: number) => {
+    setEditAgendaDrafts(editAgendaDrafts.filter((_, i) => i !== idx));
   };
 
   const handleEditSave = async () => {
     if (!editingSession) return;
-    const { error } = await supabase.from("sessions").update({
-      title: form.title,
-      session_date: form.session_date,
-      location: form.location,
-      is_virtual: form.is_virtual,
-      meeting_link: form.meeting_link || null,
-    }).eq("id", editingSession.id);
-    if (error) { showError(error, "Impossible de modifier la réunion"); return; }
-    showSuccess("session_updated");
-    setEditOpen(false);
-    setEditingSession(null);
-    setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
-    fetchSessions();
+    setEditSaving(true);
+    try {
+      const updateData: any = {
+        organ_id: form.organ_id,
+        title: form.title,
+        session_type: form.session_type as any,
+        session_date: form.session_date,
+        location: form.location,
+        is_virtual: form.is_virtual,
+        meeting_link: form.meeting_link || null,
+      };
+      if (convocationText !== null) {
+        updateData.convocation_letter = convocationText;
+      }
+      const { error } = await supabase.from("sessions").update(updateData).eq("id", editingSession.id);
+      if (error) { showError(error, "Impossible de modifier la réunion"); return; }
+
+      for (const id of deletedAgendaIds) {
+        await supabase.from("documents").delete().eq("agenda_item_id", id);
+        await supabase.from("agenda_items").delete().eq("id", id);
+      }
+
+      for (let i = 0; i < editAgendaItems.length; i++) {
+        const item = editAgendaItems[i];
+        await supabase.from("agenda_items").update({
+          title: item.title,
+          description: item.description || null,
+          nature: item.nature,
+          order_index: i,
+        }).eq("id", item.id);
+      }
+
+      for (let i = 0; i < editAgendaDrafts.length; i++) {
+        const draft = editAgendaDrafts[i];
+        if (!draft.title) continue;
+        const { data: agendaItem } = await supabase.from("agenda_items").insert([{
+          session_id: editingSession.id,
+          title: draft.title,
+          description: draft.description || null,
+          nature: draft.nature,
+          order_index: editAgendaItems.length + i,
+        }]).select().single();
+
+        if (agendaItem) {
+          for (const file of draft.files) {
+            const filePath = `${companyId}/${editingSession.id}/${agendaItem.id}/${Date.now()}_${file.name}`;
+            const { error: upErr } = await supabase.storage.from("session-documents").upload(filePath, file);
+            if (!upErr) {
+              await supabase.from("documents").insert([{
+                session_id: editingSession.id,
+                agenda_item_id: agendaItem.id,
+                name: file.name,
+                file_path: filePath,
+                file_size: file.size,
+                mime_type: file.type,
+                uploaded_by: user?.id,
+              }]);
+            }
+          }
+        }
+      }
+
+      showSuccess("session_updated");
+      setEditOpen(false);
+      setEditingSession(null);
+      setConvocationText(null);
+      setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
+      fetchSessions();
+      if (expandedSession === editingSession.id) loadSessionDetails(editingSession.id);
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   const handleDeleteSession = async () => {
@@ -332,6 +479,21 @@ export default function AuditMeetings() {
 
     pdf.save(`Reunion_Audit_${session.numero_session ?? session.id}.pdf`);
     showSuccess("board_packet_generated");
+  };
+
+  // Determine who can edit a session based on status
+  const canEditSession = (s: any): boolean => {
+    if (s.status === "brouillon") {
+      return !isReadOnly && (hasPermission("modifier_session") || isPresident);
+    }
+    if (s.status === "validee") {
+      return isPresident;
+    }
+    return false;
+  };
+
+  const canDeleteSession = (s: any): boolean => {
+    return !isReadOnly && s.status === "brouillon" && hasPermission("modifier_session");
   };
 
   return (
@@ -485,7 +647,7 @@ export default function AuditMeetings() {
                 <TableHead>Date</TableHead>
                 <TableHead>Lieu</TableHead>
                 <TableHead>Statut</TableHead>
-                <TableHead>Workflow</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -521,8 +683,11 @@ export default function AuditMeetings() {
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
-                          {!isReadOnly && s.status === "brouillon" && (
-                            <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "validee")}>Valider</Button>
+                          {/* Validate: only president can validate brouillon */}
+                          {isPresident && s.status === "brouillon" && (
+                            <Button size="sm" variant="outline" onClick={() => openValidationDialog(s)} className="gap-1">
+                              <CheckCircle className="w-3.5 h-3.5" />Valider
+                            </Button>
                           )}
                           {!isReadOnly && s.status === "validee" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
@@ -533,30 +698,33 @@ export default function AuditMeetings() {
                           {!isReadOnly && s.status === "cloturee" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
                           )}
-                        {!isReadOnly && s.status === "brouillon" && (
-                          <PermissionGate permission="modifier_session">
+                          {/* View convocation letter */}
+                          {(s as any).convocation_letter && (
+                            <Button size="sm" variant="ghost" onClick={() => setViewConvocationSession(s)} title="Voir la convocation">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {/* Edit: brouillon = secretariat+president, validee = president only */}
+                          {canEditSession(s) && (
                             <Button size="sm" variant="ghost" onClick={() => openEditSession(s)} title="Modifier">
                               <Pencil className="w-4 h-4" />
                             </Button>
-                          </PermissionGate>
-                        )}
-                        {!isReadOnly && s.status === "brouillon" && (
-                          <PermissionGate permission="modifier_session">
+                          )}
+                          {canDeleteSession(s) && (
                             <Button size="sm" variant="ghost" onClick={() => setDeleteSessionId(s.id)} title="Supprimer">
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
-                          </PermissionGate>
-                        )}
-                        <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le dossier">
-                          <Package className="w-4 h-4" />
-                        </Button>
-                        <SessionCalendarActions session={s} variant="icon" />
-                        {!isReadOnly && <PermissionGate permission="gerer_utilisateurs">
-                          <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
-                            <Shield className="w-4 h-4" />
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le dossier">
+                            <Package className="w-4 h-4" />
                           </Button>
-                        </PermissionGate>}
-                      </div>
+                          <SessionCalendarActions session={s} variant="icon" />
+                          {!isReadOnly && <PermissionGate permission="gerer_utilisateurs">
+                            <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
+                              <Shield className="w-4 h-4" />
+                            </Button>
+                          </PermissionGate>}
+                        </div>
                       </TableCell>
                     </TableRow>
                     {expandedSession === s.id && sessionDetails[s.id] && (
@@ -628,18 +796,91 @@ export default function AuditMeetings() {
         />
       )}
 
+      {/* Validation Dialog */}
+      <Dialog open={validationOpen} onOpenChange={(o) => { if (!o) { setValidationOpen(false); setValidationSession(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-primary" />
+              Valider la réunion : {validationSession?.title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Veuillez relire la lettre de convocation ci-dessous. Vous pouvez la modifier si nécessaire avant de valider.
+              </p>
+            </div>
+            {validationConvocation ? (
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Lettre de convocation</Label>
+                <Suspense fallback={<div className="h-40 flex items-center justify-center text-muted-foreground text-sm">Chargement…</div>}>
+                  <RichTextEditor
+                    content={validationConvocation}
+                    onChange={(html) => setValidationConvocation(html)}
+                    minHeight="300px"
+                    placeholder="Lettre de convocation..."
+                  />
+                </Suspense>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Aucune lettre de convocation n'a été générée pour cette réunion.</p>
+                <p className="text-sm mt-1">Vous pouvez tout de même valider.</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setValidationOpen(false); setValidationSession(null); }}>Annuler</Button>
+            <Button onClick={handleValidate} disabled={validating} className="gap-2">
+              {validating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+              {validating ? "Validation en cours…" : "Valider la réunion"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Convocation Letter Dialog */}
+      <Dialog open={!!viewConvocationSession} onOpenChange={(o) => { if (!o) setViewConvocationSession(null); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Lettre de convocation — {viewConvocationSession?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: (viewConvocationSession as any)?.convocation_letter || "" }} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewConvocationSession(null)}>Fermer</Button>
+            <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText((viewConvocationSession as any)?.convocation_letter || ""); showInfo("Copié"); }}>
+              Copier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Session Dialog */}
-      <Dialog open={editOpen} onOpenChange={(o) => { if (!o) { setEditOpen(false); setEditingSession(null); } }}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={editOpen} onOpenChange={(o) => { if (!o) { setEditOpen(false); setEditingSession(null); setConvocationText(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Modifier la réunion</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Organe</Label>
+              <Select value={form.organ_id} onValueChange={(v) => setForm({ ...form, organ_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                <SelectContent>
+                  {organs.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label>Titre</Label>
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             </div>
-            <div className="space-y-2">
-              <Label>Date & Heure</Label>
-              <Input type="datetime-local" value={form.session_date} onChange={(e) => setForm({ ...form, session_date: e.target.value })} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Date & Heure</Label>
+                <Input type="datetime-local" value={form.session_date} onChange={(e) => setForm({ ...form, session_date: e.target.value })} />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Lieu</Label>
@@ -647,12 +888,127 @@ export default function AuditMeetings() {
             </div>
             <div className="space-y-2">
               <Label>Lien de réunion en ligne</Label>
-              <Input value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} />
+              <div className="flex items-center gap-2">
+                <Link className="w-4 h-4 text-muted-foreground" />
+                <Input value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} />
+              </div>
+            </div>
+
+            {/* Existing agenda items */}
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Ordre du jour</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addEditAgendaDraft}>
+                  <Plus className="w-3 h-3 mr-1" />Ajouter un point
+                </Button>
+              </div>
+
+              {editAgendaItems.map((item, idx) => (
+                <Card key={item.id} className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Point {idx + 1}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeEditAgendaItem(idx)}>
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                  <Input placeholder="Titre du point" value={item.title} onChange={(e) => updateEditAgendaItem(idx, "title", e.target.value)} />
+                  <Suspense fallback={<div className="h-16 flex items-center justify-center text-muted-foreground text-sm">Chargement…</div>}>
+                    <RichTextEditor
+                      content={item.description || ""}
+                      onChange={(html) => updateEditAgendaItem(idx, "description", html)}
+                      minHeight="80px"
+                      placeholder="Description (optionnel)"
+                    />
+                  </Suspense>
+                  <Select value={item.nature} onValueChange={(v) => updateEditAgendaItem(idx, "nature", v)}>
+                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="information">Information</SelectItem>
+                      <SelectItem value="decision">Décision</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Card>
+              ))}
+
+              {/* New agenda drafts */}
+              {editAgendaDrafts.map((draft, idx) => (
+                <Card key={`new-${idx}`} className="p-4 space-y-3 border-dashed">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-primary">Nouveau point {editAgendaItems.length + idx + 1}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeEditAgendaDraft(idx)}>
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                  <Input placeholder="Titre du point" value={draft.title} onChange={(e) => updateEditAgendaDraft(idx, "title", e.target.value)} />
+                  <Suspense fallback={<div className="h-16 flex items-center justify-center text-muted-foreground text-sm">Chargement…</div>}>
+                    <RichTextEditor
+                      content={draft.description}
+                      onChange={(html) => updateEditAgendaDraft(idx, "description", html)}
+                      minHeight="80px"
+                      placeholder="Description (optionnel)"
+                    />
+                  </Suspense>
+                  <div className="flex items-center gap-4">
+                    <Select value={draft.nature} onValueChange={(v) => updateEditAgendaDraft(idx, "nature", v)}>
+                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="information">Information</SelectItem>
+                        <SelectItem value="decision">Décision</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Label className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1.5">
+                      <FileUp className="w-3.5 h-3.5" />
+                      Documents
+                      <input type="file" multiple className="hidden" onChange={(e) => {
+                        if (!e.target.files) return;
+                        const updated = [...editAgendaDrafts];
+                        updated[idx].files = [...updated[idx].files, ...Array.from(e.target.files)];
+                        setEditAgendaDrafts(updated);
+                      }} />
+                    </Label>
+                  </div>
+                  {draft.files.length > 0 && (
+                    <div className="space-y-1">
+                      {draft.files.map((f, fi) => (
+                        <div key={fi} className="flex items-center justify-between text-xs bg-muted rounded px-2 py-1">
+                          <span className="truncate">{f.name}</span>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => {
+                            const updated = [...editAgendaDrafts];
+                            updated[idx].files.splice(fi, 1);
+                            setEditAgendaDrafts(updated);
+                          }}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              ))}
+            </div>
+
+            {/* Convocation letter in edit mode */}
+            <div className="border-t pt-4 space-y-3">
+              <Label className="text-base font-semibold">Lettre de convocation</Label>
+              {convocationText ? (
+                <Suspense fallback={<div className="h-40 flex items-center justify-center text-muted-foreground text-sm">Chargement…</div>}>
+                  <RichTextEditor
+                    content={convocationText}
+                    onChange={(html) => setConvocationText(html)}
+                    minHeight="200px"
+                    placeholder="Lettre de convocation..."
+                  />
+                </Suspense>
+              ) : (
+                <p className="text-sm text-muted-foreground">Aucune lettre de convocation générée.</p>
+              )}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditOpen(false); setEditingSession(null); }}>Annuler</Button>
-            <Button onClick={handleEditSave} disabled={!form.title || !form.session_date}>Enregistrer</Button>
+            <Button variant="outline" onClick={() => { setEditOpen(false); setEditingSession(null); setConvocationText(null); }}>Annuler</Button>
+            <Button onClick={handleEditSave} disabled={!form.title || !form.session_date || editSaving}>
+              {editSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Enregistrement…</> : "Enregistrer"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
