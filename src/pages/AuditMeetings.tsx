@@ -388,14 +388,21 @@ export default function AuditMeetings() {
                     {generatingConvocation ? "Génération en cours…" : "Générer la lettre de convocation (IA)"}
                   </Button>
                   {convocationText && (
-                    <div className="bg-muted rounded-lg p-4 space-y-2">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold">Lettre de convocation</span>
                         <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(convocationText); showInfo("Copié dans le presse-papiers"); }}>
                           Copier
                         </Button>
                       </div>
-                      <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">{convocationText}</pre>
+                      <Suspense fallback={<div className="h-40 flex items-center justify-center text-muted-foreground text-sm">Chargement de l'éditeur…</div>}>
+                        <RichTextEditor
+                          content={convocationText}
+                          onChange={(html) => setConvocationText(html)}
+                          minHeight="300px"
+                          placeholder="Lettre de convocation..."
+                        />
+                      </Suspense>
                     </div>
                   )}
                 </div>
