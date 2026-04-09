@@ -141,6 +141,13 @@ export default function Meetings() {
       setTemplates(tplRes.data ?? []);
       setSessions(auditSessions);
       setMinutes(auditMinutes);
+    } else if (isPCAReadOnlyForAudit) {
+      // PCA: exclude comite_audit sessions — they can only manage CA meetings here
+      const caSessions = (sessRes.data ?? []).filter((s: any) => s.organs?.type !== "comite_audit");
+      const caMinutes = (minRes.data ?? []).filter((m: any) => m.sessions?.organs?.type !== "comite_audit");
+      setTemplates(tplRes.data ?? []);
+      setSessions(caSessions);
+      setMinutes(caMinutes);
     } else {
       setTemplates(tplRes.data ?? []);
       setSessions(sessRes.data ?? []);
