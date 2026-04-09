@@ -24,8 +24,6 @@ import Archives from "@/pages/Archives";
 import AuditLog from "@/pages/AuditLog";
 import UserManagement from "@/pages/UserManagement";
 import MemberProfile from "@/pages/MemberProfile";
-import Approvals from "@/pages/Approvals";
-import PermissionsManagement from "@/pages/PermissionsManagement";
 import ApiKeys from "@/pages/ApiKeys";
 import ApiDocs from "@/pages/ApiDocs";
 import OrganizationSettings from "@/pages/OrganizationSettings";
@@ -103,8 +101,6 @@ function ProtectedApp() {
         <Route path="/archives" element={<ProtectedRoute><Archives /></ProtectedRoute>} />
         <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
-        <Route path="/approvals" element={<ProtectedRoute><Approvals /></ProtectedRoute>} />
-        <Route path="/permissions" element={<ProtectedRoute><PermissionsManagement /></ProtectedRoute>} />
         <Route path="/api-keys" element={<ProtectedRoute><ApiKeys /></ProtectedRoute>} />
         <Route path="/api-docs" element={<ProtectedRoute><ApiDocs /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><OrganizationSettings /></ProtectedRoute>} />
