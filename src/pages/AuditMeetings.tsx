@@ -57,6 +57,8 @@ export default function AuditMeetings() {
     session_date: "", location: "", is_virtual: false, meeting_link: "",
   });
   const [agendaDrafts, setAgendaDrafts] = useState<AgendaItemDraft[]>([]);
+  const [generatingConvocation, setGeneratingConvocation] = useState(false);
+  const [convocationText, setConvocationText] = useState<string | null>(null);
 
   const fetchSessions = async () => {
     const { data } = await supabase
