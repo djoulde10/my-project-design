@@ -35,7 +35,7 @@ const ERROR_PATTERNS: ErrorPattern[] = [
   { test: /violates row-level security policy for table "actions"/i, message: "Vous n'avez pas le droit de gérer les actions. Contactez votre administrateur." },
   { test: /violates row-level security policy for table "approval_requests"/i, message: "Vous n'avez pas le droit de gérer les approbations. Contactez votre administrateur." },
   { test: /violates row-level security policy for table "conflict_of_interests"/i, message: "Vous n'avez pas le droit de gérer les conflits d'intérêts. Contactez votre administrateur." },
-  { test: /violates row-level security policy for table "signatures"/i, message: "Vous n'avez pas le droit de signer ce document. Contactez votre administrateur." },
+  
   { test: /violates row-level security policy for table "profiles"/i, message: "Vous n'avez pas le droit de modifier ce profil. Contactez votre administrateur." },
   { test: /violates row-level security policy for table "api_keys"/i, message: "Vous n'avez pas le droit de gérer les clés API. Contactez votre administrateur." },
   { test: /violates row-level security policy for table "comments"/i, message: "Vous n'avez pas le droit de gérer ce commentaire. Contactez votre administrateur." },
@@ -144,7 +144,6 @@ export const SUCCESS_MESSAGES = {
 
   // Decisions / Resolutions
   decision_created: "La résolution a été enregistrée.",
-  decision_signed: "La résolution a été signée avec succès.",
 
   // Actions
   action_created: "L'action a été créée.",
@@ -180,8 +179,6 @@ export const SUCCESS_MESSAGES = {
   api_key_created: "La clé API a été créée avec succès.",
   api_key_revoked: "La clé API a été révoquée.",
 
-  // Signatures
-  document_signed: "Le document a été signé avec succès par le Président.",
 
   // Generic
   saved: "Les modifications ont été enregistrées.",

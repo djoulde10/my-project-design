@@ -44,7 +44,7 @@ const entityLabels: Record<string, string> = {
   session_attendees: "Participants",
   decisions: "Résolutions",
   organs: "Organes",
-  signatures: "Signatures",
+  
   meetings: "Réunions",
   meeting_templates: "Modèles",
   profiles: "Profils",

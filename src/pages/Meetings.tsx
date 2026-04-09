@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2,
-  ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2, Brain, MessageSquare, Shield, XCircle, Lock
+  ClipboardCheck, History, Edit, Save, FileDown, CheckCircle2, Brain, MessageSquare, Shield
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
@@ -31,21 +31,17 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
-import SignatureDialog from "@/components/signature/SignatureDialog";
-import SignatureDisplay from "@/components/signature/SignatureDisplay";
 
 // PV status helpers
 const pvStatusLabels: Record<string, string> = {
   brouillon: "Brouillon",
   valide: "Validé",
-  signe: "Signé",
 };
 const pvStatusColors: Record<string, string> = {
   brouillon: "bg-muted text-muted-foreground",
   valide: "bg-primary/10 text-primary",
-  signe: "bg-emerald-100 text-emerald-800",
 };
-type PvStatus = "brouillon" | "valide" | "signe";
+type PvStatus = "brouillon" | "valide";
 
 export default function Meetings() {
   
@@ -115,9 +111,6 @@ export default function Meetings() {
   const [versionHistoryMinuteId, setVersionHistoryMinuteId] = useState<string>("");
   const [versionHistoryContent, setVersionHistoryContent] = useState<string | null>(null);
 
-  // Signatures
-  const [minuteSignatures, setMinuteSignatures] = useState<any[]>([]);
-  const [signingMinute, setSigningMinute] = useState<any | null>(null);
 
   // Realtime scribe hook
   const scribe = useScribe({
@@ -156,7 +149,7 @@ export default function Meetings() {
   }, [isDirectionMember]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
-  useEffect(() => { if (viewMinute?.id) fetchSignatures(viewMinute.id); }, [viewMinute?.id]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   // ========== REALTIME RECORDING ==========
   const startLiveTranscription = async () => {
@@ -372,15 +365,6 @@ export default function Meetings() {
   const updateMinuteStatus = async (id: string, status: PvStatus) => {
     const minute = minutes.find(m => m.id === id);
     if (minute?.pv_status === "signe") {
-      showError(new Error("Document signé"), "Ce document est signé et ne peut plus être modifié");
-      setEditingStatusId(null);
-      return;
-    }
-    if (status === "signe") {
-      showError(new Error("Action non autorisée"), "Le statut 'Signé' ne peut être défini que via la signature électronique");
-      setEditingStatusId(null);
-      return;
-    }
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut du PV");
     else { showSuccess("pv_status_updated"); setEditingStatusId(null); fetchAll(); }
@@ -599,44 +583,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
   }
 
   // Fetch signatures when viewing a minute
-  const fetchSignatures = async (minuteId: string) => {
-    const { data } = await supabase
-      .from("signatures")
-      .select("*, profiles:signed_by(full_name)")
-      .eq("entity_type", "minute")
-      .eq("entity_id", minuteId)
-      .order("signed_at", { ascending: false });
-    setMinuteSignatures(data ?? []);
-  };
-
-  const isSigned = (m: any) => m?.pv_status === "signe";
-  const isReadyToSign = (m: any) => m?.pv_status === "valide";
-
-  const cancelSignature = async (minuteId: string) => {
-    const { error: sigError } = await supabase
-      .from("signatures")
-      .delete()
-      .eq("entity_type", "minute")
-      .eq("entity_id", minuteId);
-
-    if (sigError) {
-      showError(sigError, "Impossible de supprimer la signature");
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from("minutes")
-      .update({ pv_status: "valide", signed_at: null } as any)
-      .eq("id", minuteId);
-
-    if (updateError) {
-      showError(updateError, "Impossible de réinitialiser le statut du PV");
-      return;
-    }
-
-    showSuccess("pv_status_updated");
-    fetchAll();
-  };
 
   // ========== MINUTE DETAIL VIEW ==========
   if (viewMinute) {
@@ -687,16 +633,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             >
               <History className="w-4 h-4 mr-2" />Versions
             </Button>
-            {!isEditing && isReadyToSign(viewMinute) && !isSigned(viewMinute) && (
-              <PermissionGate permission="signer_pv">
-                <Button onClick={() => setSigningMinute(viewMinute)} className="text-primary">
-                  <PenTool className="w-4 h-4 mr-2" />Signer le document
-                </Button>
-              </PermissionGate>
-            )}
-            {isSigned(viewMinute) && (
-              <Badge className="bg-emerald-100 text-emerald-800 gap-1"><CheckCircle2 className="w-3 h-3" />Signé</Badge>
-            )}
           </div>
         </div>
 
@@ -753,10 +689,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
 
         <CommentThread entityType="minute" entityId={viewMinute.id} />
 
-        {/* Signature display for signed documents */}
-        {isSigned(viewMinute) && (
-          <SignatureDisplay entityType="minute" entityId={viewMinute.id} />
-        )}
 
         <MinuteVersionHistory
           minuteId={versionHistoryMinuteId}
@@ -1048,16 +980,13 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    (isReadOnly ? minutes.filter((m) => m.pv_status === "valide" || m.pv_status === "signe") : minutes).map((m) => (
+                    (isReadOnly ? minutes.filter((m) => m.pv_status === "valide") : minutes).map((m) => (
                       <TableRow key={m.id}>
                         <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            {isSigned(m) && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                             {(m as any).sessions?.title || "—"}
-                          </div>
                         </TableCell>
                         <TableCell>
-                          {!isReadOnly && !isPresident && editingStatusId === m.id && !isSigned(m) ? (
+                          {!isReadOnly && !isPresident && editingStatusId === m.id ? (
                             <Select value={editStatus} onValueChange={(v) => { setEditStatus(v as PvStatus); updateMinuteStatus(m.id, v as PvStatus); }}>
                               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                               <SelectContent>
@@ -1067,8 +996,8 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             </Select>
                           ) : (
                             <Badge
-                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isPresident && !isSigned(m) ? 'cursor-pointer' : ''}`}
-                              onClick={() => { if (!isReadOnly && !isPresident && !isSigned(m)) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
+                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isPresident ? 'cursor-pointer' : ''}`}
+                              onClick={() => { if (!isReadOnly && !isPresident) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
                             >
                               {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
                             </Badge>
@@ -1104,36 +1033,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             >
                               <History className="w-4 h-4" />
                             </Button>
-                            {/* Sign button — only for validated PVs, visible only to president */}
-                            {isReadyToSign(m) && (
-                              <PermissionGate permission="signer_pv">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-primary hover:text-primary"
-                                  onClick={() => setSigningMinute(m)}
-                                >
-                                  <PenTool className="w-4 h-4 mr-1" /> Signer
-                                </Button>
-                              </PermissionGate>
-                            )}
-                            {/* Cancel signature — only for admins */}
-                            {isSigned(m) && (
-                              <PermissionGate permission="gerer_utilisateurs">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive"
-                                  onClick={() => {
-                                    if (window.confirm("Êtes-vous sûr de vouloir annuler la signature de ce document ?")) {
-                                      cancelSignature(m.id);
-                                    }
-                                  }}
-                                >
-                                  <XCircle className="w-4 h-4 mr-1" /> Annuler signature
-                                </Button>
-                              </PermissionGate>
-                            )}
                             <PermissionGate permission="gerer_utilisateurs">
                               <Button variant="ghost" size="sm" onClick={() => { setPermEntityId(m.id); setPermEntityName(m.sessions?.title || m.title || "Réunion"); }}>
                                 <Shield className="w-4 h-4" />
@@ -1251,22 +1150,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           entityType="meeting"
           entityId={permEntityId}
           entityName={permEntityName}
-        />
-      )}
-      {signingMinute && (
-        <SignatureDialog
-          open={!!signingMinute}
-          onOpenChange={(open) => { if (!open) setSigningMinute(null); }}
-          entityType="minute"
-          entityId={signingMinute.id}
-          entityLabel={signingMinute.sessions?.title || viewMinute?.sessions?.title || "Procès-verbal"}
-          onSigned={() => {
-            setSigningMinute(null);
-            if (viewMinute) {
-              setViewMinute({ ...viewMinute, pv_status: "signe", signed_at: new Date().toISOString() });
-            }
-            fetchAll();
-          }}
         />
       )}
     </div>

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import CommentThread from "@/components/CommentThread";
-import SignatureDialog from "@/components/signature/SignatureDialog";
-import SignatureDisplay from "@/components/signature/SignatureDisplay";
 import PermissionGate from "@/components/PermissionGate";
 import CollaborativeEditor from "@/components/CollaborativeEditor";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +11,7 @@ import RichTextEditor from "@/components/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit3, X, MessageSquare, PenTool, Lock, XCircle } from "lucide-react";
+import { Plus, Edit3, X, MessageSquare } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
@@ -21,16 +19,14 @@ import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestricti
 const pvStatusLabels: Record<string, string> = {
   brouillon: "Brouillon",
   valide: "Validé",
-  signe: "Signé",
 };
 
 const pvStatusColors: Record<string, string> = {
   brouillon: "bg-muted text-muted-foreground",
   valide: "bg-primary/10 text-primary",
-  signe: "bg-emerald-100 text-emerald-800",
 };
 
-type PvStatus = "brouillon" | "valide" | "signe";
+type PvStatus = "brouillon" | "valide";
 
 export default function Minutes() {
   const { hasPermission } = usePermissions();
@@ -45,7 +41,6 @@ export default function Minutes() {
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [commentingId, setCommentingId] = useState<string | null>(null);
-  const [signingMinute, setSigningMinute] = useState<any | null>(null);
 
   const fetchAll = async () => {
     const [minRes, sessRes] = await Promise.all([
@@ -65,62 +60,15 @@ export default function Minutes() {
   };
 
   const updateStatus = async (id: string, status: PvStatus) => {
-    const minute = minutes.find(m => m.id === id);
-    if (minute?.pv_status === "signe") {
-      showError(new Error("Document signé"), "Ce document est signé et ne peut plus être modifié");
-      setEditingId(null);
-      return;
-    }
-    // Block manual setting to "signe" — only signature flow can do that
-    if (status === "signe") {
-      showError(new Error("Action non autorisée"), "Le statut 'Signé' ne peut être défini que via la signature électronique");
-      setEditingId(null);
-      return;
-    }
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut du PV");
     else { showSuccess("pv_status_updated"); setEditingId(null); fetchAll(); }
   };
 
-  const cancelSignature = async (minuteId: string) => {
-    // Delete the signature record
-    const { error: sigError } = await supabase
-      .from("signatures")
-      .delete()
-      .eq("entity_type", "minute")
-      .eq("entity_id", minuteId);
-
-    if (sigError) {
-      showError(sigError, "Impossible de supprimer la signature");
-      return;
-    }
-
-    // Reset minute status to "valide"
-    const { error: updateError } = await supabase
-      .from("minutes")
-      .update({ pv_status: "valide", signed_at: null } as any)
-      .eq("id", minuteId);
-
-    if (updateError) {
-      showError(updateError, "Impossible de réinitialiser le statut du PV");
-      return;
-    }
-
-    showSuccess("pv_status_updated");
-    fetchAll();
-  };
-
   const openRealtimeEdit = (m: any) => {
-    if (m.pv_status === "signe") {
-      showError(new Error("Document signé"), "Ce document est signé et ne peut plus être modifié");
-      return;
-    }
     setEditingContentId(m.id);
     setEditingContent(m.content || "");
   };
-
-  const isSigned = (m: any) => m.pv_status === "signe";
-  const isReadyToSign = (m: any) => m.pv_status === "valide";
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -203,20 +151,17 @@ export default function Minutes() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(isReadOnly ? minutes.filter(m => m.pv_status === "valide" || m.pv_status === "signe") : minutes).length === 0 ? (
+              {(isReadOnly ? minutes.filter(m => m.pv_status === "valide") : minutes).length === 0 ? (
                 <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun PV</TableCell></TableRow>
               ) : (
-                (isReadOnly ? minutes.filter(m => m.pv_status === "valide" || m.pv_status === "signe") : minutes).map((m) => (
+                (isReadOnly ? minutes.filter(m => m.pv_status === "valide") : minutes).map((m) => (
                   <React.Fragment key={m.id}>
                   <TableRow>
                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        {isSigned(m) && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
-                        {(m as any).sessions?.title}
-                      </div>
+                      {(m as any).sessions?.title}
                     </TableCell>
                     <TableCell>
-                      {!isReadOnly && !isPresident && editingId === m.id && !isSigned(m) ? (
+                      {!isReadOnly && !isPresident && editingId === m.id ? (
                         <Select value={editStatus} onValueChange={(v) => { const s = v as PvStatus; setEditStatus(s); updateStatus(m.id, s); }}>
                           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -233,45 +178,15 @@ export default function Minutes() {
                     <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        {!isReadOnly && !isPresident && !isSigned(m) && (
+                        {!isReadOnly && !isPresident && (
                           <Button variant="ghost" size="sm" onClick={() => openRealtimeEdit(m)}>
                             <Edit3 className="w-4 h-4 mr-1" /> Éditer
                           </Button>
                         )}
-                        {!isReadOnly && !isPresident && !isSigned(m) && (
+                        {!isReadOnly && !isPresident && (
                           <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
                             Statut
                           </Button>
-                        )}
-                        {/* Sign button — only for validated PVs, visible only to president (signer_pv permission) */}
-                        {isReadyToSign(m) && (
-                          <PermissionGate permission="signer_pv">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-primary hover:text-primary"
-                              onClick={() => setSigningMinute(m)}
-                            >
-                              <PenTool className="w-4 h-4 mr-1" /> Signer
-                            </Button>
-                          </PermissionGate>
-                        )}
-                        {/* Cancel signature — only for admins (gerer_utilisateurs permission) */}
-                        {isSigned(m) && (
-                          <PermissionGate permission="gerer_utilisateurs">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => {
-                                if (window.confirm("Êtes-vous sûr de vouloir annuler la signature de ce document ? Cette action est irréversible.")) {
-                                  cancelSignature(m.id);
-                                }
-                              }}
-                            >
-                              <XCircle className="w-4 h-4 mr-1" /> Annuler signature
-                            </Button>
-                          </PermissionGate>
                         )}
                         <Button variant="ghost" size="sm" onClick={() => setCommentingId(commentingId === m.id ? null : m.id)}>
                           <MessageSquare className="w-4 h-4 mr-1" /> Commentaires
@@ -279,15 +194,6 @@ export default function Minutes() {
                       </div>
                     </TableCell>
                   </TableRow>
-
-                  {/* Signature display for signed documents */}
-                  {isSigned(m) && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="p-4">
-                        <SignatureDisplay entityType="minute" entityId={m.id} />
-                      </TableCell>
-                    </TableRow>
-                  )}
 
                   {commentingId === m.id && (
                     <TableRow>
@@ -304,17 +210,6 @@ export default function Minutes() {
         </CardContent>
       </Card>
 
-      {/* Signature dialog */}
-      {signingMinute && (
-        <SignatureDialog
-          open={!!signingMinute}
-          onOpenChange={(open) => { if (!open) setSigningMinute(null); }}
-          entityType="minute"
-          entityId={signingMinute.id}
-          entityLabel={signingMinute.sessions?.title || "Procès-verbal"}
-          onSigned={() => { setSigningMinute(null); fetchAll(); }}
-        />
-      )}
     </div>
   );
 }
