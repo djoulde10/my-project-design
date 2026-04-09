@@ -190,6 +190,7 @@ export default function AuditMeetings() {
     setOpen(false);
     setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
     setAgendaDrafts([]);
+    setConvocationText(null);
     fetchSessions();
   };
 
