@@ -39,7 +39,7 @@ const voteLabels: Record<string, string> = {
 
 export default function Decisions() {
   
-  const { user } = useAuth();
+  
   const isDirectionMember = useIsDirectionMember();
   const [decisions, setDecisions] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
