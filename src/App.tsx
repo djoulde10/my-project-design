@@ -19,6 +19,7 @@ import Decisions from "@/pages/Decisions";
 import Meetings from "@/pages/Meetings";
 import Actions from "@/pages/Actions";
 import CalendarPage from "@/pages/Calendar";
+import AuditMeetings from "@/pages/AuditMeetings";
 
 import Archives from "@/pages/Archives";
 import AuditLog from "@/pages/AuditLog";
@@ -97,7 +98,8 @@ function ProtectedApp() {
         <Route path="/decisions" element={<ProtectedRoute><Decisions /></ProtectedRoute>} />
         <Route path="/actions" element={<ProtectedRoute><Actions /></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
-        
+        <Route path="/audit-meetings" element={<ProtectedRoute><AuditMeetings /></ProtectedRoute>} />
+
         <Route path="/archives" element={<ProtectedRoute><Archives /></ProtectedRoute>} />
         <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
