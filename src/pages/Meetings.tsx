@@ -658,7 +658,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            {!isEditing && !isSigned(viewMinute) && (
+            {!isEditing && !isPresident && !isSigned(viewMinute) && (
               <Button variant="outline" onClick={() => { setIsEditing(true); setEditingContent(viewMinute.content || ""); }}>
                 <Edit className="w-4 h-4 mr-2" />Éditer en temps réel
               </Button>
@@ -1057,7 +1057,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                           </div>
                         </TableCell>
                         <TableCell>
-                          {!isReadOnly && editingStatusId === m.id && !isSigned(m) ? (
+                          {!isReadOnly && !isPresident && editingStatusId === m.id && !isSigned(m) ? (
                             <Select value={editStatus} onValueChange={(v) => { setEditStatus(v as PvStatus); updateMinuteStatus(m.id, v as PvStatus); }}>
                               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                               <SelectContent>
@@ -1067,8 +1067,8 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             </Select>
                           ) : (
                             <Badge
-                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isSigned(m) ? 'cursor-pointer' : ''}`}
-                              onClick={() => { if (!isReadOnly && !isSigned(m)) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
+                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isPresident && !isSigned(m) ? 'cursor-pointer' : ''}`}
+                              onClick={() => { if (!isReadOnly && !isPresident && !isSigned(m)) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
                             >
                               {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
                             </Badge>
