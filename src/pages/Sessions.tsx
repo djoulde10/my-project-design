@@ -42,6 +42,8 @@ export default function Sessions() {
   const { user } = useAuth();
   
   const companyId = useCompanyId();
+  const { isReadOnlyForOrgan } = usePresidentOrganRestriction();
+  const isReadOnly = isReadOnlyForOrgan("ca");
   const [sessions, setSessions] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
   const [open, setOpen] = useState(false);

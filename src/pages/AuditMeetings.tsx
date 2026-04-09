@@ -41,6 +41,8 @@ interface AgendaItemDraft {
 export default function AuditMeetings() {
   const { user } = useAuth();
   const companyId = useCompanyId();
+  const { isReadOnlyForOrgan } = usePresidentOrganRestriction();
+  const isReadOnly = isReadOnlyForOrgan("comite_audit");
   const [sessions, setSessions] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
