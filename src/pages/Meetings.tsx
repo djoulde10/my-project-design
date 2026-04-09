@@ -30,6 +30,7 @@ import PermissionGate from "@/components/PermissionGate";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { useCompanyId } from "@/hooks/useCompanyId";
+import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 import SignatureDialog from "@/components/signature/SignatureDialog";
 import SignatureDisplay from "@/components/signature/SignatureDisplay";
 
@@ -52,6 +53,7 @@ export default function Meetings() {
   const companyId = useCompanyId();
   const { hasPermission } = usePermissions();
   const isDirectionMember = useIsDirectionMember();
+  const { isPresident } = usePresidentOrganRestriction();
   const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -656,7 +658,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            {!isEditing && !isSigned(viewMinute) && (
+            {!isEditing && !isPresident && !isSigned(viewMinute) && (
               <Button variant="outline" onClick={() => { setIsEditing(true); setEditingContent(viewMinute.content || ""); }}>
                 <Edit className="w-4 h-4 mr-2" />Éditer en temps réel
               </Button>
@@ -795,7 +797,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
       </div>
 
       {/* ===== RECORDING SECTION ===== */}
-      {!isReadOnly && (
+      {!isReadOnly && !isPresident && (
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-2 mb-1">
@@ -897,7 +899,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           <TabsTrigger value="pv" className="gap-2">
             <ClipboardCheck className="w-4 h-4" />Procès-verbaux
           </TabsTrigger>
-          {!isReadOnly && (
+          {!isReadOnly && !isPresident && (
             <TabsTrigger value="templates" className="gap-2">
               <BookOpen className="w-4 h-4" />Modèles de PV
             </TabsTrigger>
@@ -1055,7 +1057,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                           </div>
                         </TableCell>
                         <TableCell>
-                          {!isReadOnly && editingStatusId === m.id && !isSigned(m) ? (
+                          {!isReadOnly && !isPresident && editingStatusId === m.id && !isSigned(m) ? (
                             <Select value={editStatus} onValueChange={(v) => { setEditStatus(v as PvStatus); updateMinuteStatus(m.id, v as PvStatus); }}>
                               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                               <SelectContent>
@@ -1065,8 +1067,8 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             </Select>
                           ) : (
                             <Badge
-                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isSigned(m) ? 'cursor-pointer' : ''}`}
-                              onClick={() => { if (!isReadOnly && !isSigned(m)) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
+                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isPresident && !isSigned(m) ? 'cursor-pointer' : ''}`}
+                              onClick={() => { if (!isReadOnly && !isPresident && !isSigned(m)) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
                             >
                               {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
                             </Badge>
@@ -1080,7 +1082,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {!isReadOnly && !isSigned(m) && (
+                            {!isReadOnly && !isPresident && !isSigned(m) && (
                               <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
                                 <Edit className="w-4 h-4 mr-1" />Éditer
                               </Button>
