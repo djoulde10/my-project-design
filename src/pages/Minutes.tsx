@@ -201,10 +201,10 @@ export default function Minutes() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {minutes.length === 0 ? (
+              {(isReadOnly ? minutes.filter(m => m.pv_status === "valide" || m.pv_status === "signe") : minutes).length === 0 ? (
                 <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun PV</TableCell></TableRow>
               ) : (
-                minutes.map((m) => (
+                (isReadOnly ? minutes.filter(m => m.pv_status === "valide" || m.pv_status === "signe") : minutes).map((m) => (
                   <React.Fragment key={m.id}>
                   <TableRow>
                     <TableCell className="font-medium">
