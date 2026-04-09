@@ -90,7 +90,6 @@ export default function Dashboard() {
         avgClosureDays: avgDays,
         nearDueActions: nearDueRes.data ?? [],
         pendingPVs: pendingPVRes.count ?? 0,
-        pendingPVs: pendingPVRes.count ?? 0,
         sessionsByMonth,
       });
     };
