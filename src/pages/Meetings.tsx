@@ -49,7 +49,8 @@ export default function Meetings() {
   const companyId = useCompanyId();
   const { hasPermission } = usePermissions();
   const isDirectionMember = useIsDirectionMember();
-  const { isPresident } = usePresidentOrganRestriction();
+  const { isPresident, isReadOnlyForOrgan } = usePresidentOrganRestriction();
+  const isPCAReadOnlyForAudit = isReadOnlyForOrgan("comite_audit");
   const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -140,13 +141,20 @@ export default function Meetings() {
       setTemplates(tplRes.data ?? []);
       setSessions(auditSessions);
       setMinutes(auditMinutes);
+    } else if (isPCAReadOnlyForAudit) {
+      // PCA: exclude comite_audit sessions — they can only manage CA meetings here
+      const caSessions = (sessRes.data ?? []).filter((s: any) => s.organs?.type !== "comite_audit");
+      const caMinutes = (minRes.data ?? []).filter((m: any) => m.sessions?.organs?.type !== "comite_audit");
+      setTemplates(tplRes.data ?? []);
+      setSessions(caSessions);
+      setMinutes(caMinutes);
     } else {
       setTemplates(tplRes.data ?? []);
       setSessions(sessRes.data ?? []);
       setMinutes(minRes.data ?? []);
     }
     setMembers(memRes.data ?? []);
-  }, [isDirectionMember]);
+  }, [isDirectionMember, isPCAReadOnlyForAudit]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
   useEffect(() => { fetchAll(); }, [fetchAll]);
