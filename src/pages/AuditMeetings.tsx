@@ -15,6 +15,7 @@ import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, Chevron
 import SessionCalendarActions from "@/components/SessionCalendarActions";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import PermissionGate from "@/components/PermissionGate";
+import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import SessionAttendeeManager from "@/components/SessionAttendeeManager";
 import jsPDF from "jspdf";
@@ -40,6 +41,8 @@ interface AgendaItemDraft {
 export default function AuditMeetings() {
   const { user } = useAuth();
   const companyId = useCompanyId();
+  const { isReadOnlyForOrgan } = usePresidentOrganRestriction();
+  const isReadOnly = isReadOnlyForOrgan("comite_audit");
   const [sessions, setSessions] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
@@ -248,11 +251,11 @@ export default function AuditMeetings() {
           <p className="text-sm text-muted-foreground">Gérez les réunions du Comité d'Audit</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <PermissionGate permission="creer_session">
+          {!isReadOnly && <PermissionGate permission="creer_session">
             <DialogTrigger asChild>
               <Button><Plus className="w-4 h-4 mr-2" />Nouvelle réunion</Button>
             </DialogTrigger>
-          </PermissionGate>
+          </PermissionGate>}
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Créer une réunion du Comité d'Audit</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -393,27 +396,27 @@ export default function AuditMeetings() {
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
-                          {s.status === "brouillon" && (
+                          {!isReadOnly && s.status === "brouillon" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "validee")}>Valider</Button>
                           )}
-                          {s.status === "validee" && (
+                          {!isReadOnly && s.status === "validee" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
                           )}
-                          {s.status === "tenue" && (
+                          {!isReadOnly && s.status === "tenue" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "cloturee")}>Clôturer</Button>
                           )}
-                          {s.status === "cloturee" && (
+                          {!isReadOnly && s.status === "cloturee" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
                           )}
                           <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le dossier">
                             <Package className="w-4 h-4" />
                           </Button>
                           <SessionCalendarActions session={s} variant="icon" />
-                          <PermissionGate permission="gerer_utilisateurs">
+                          {!isReadOnly && <PermissionGate permission="gerer_utilisateurs">
                             <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
                               <Shield className="w-4 h-4" />
                             </Button>
-                          </PermissionGate>
+                          </PermissionGate>}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -434,9 +437,9 @@ export default function AuditMeetings() {
                             <div>
                               <div className="flex items-center justify-between mb-2">
                                 <h4 className="font-semibold text-sm">Participants ({sessionDetails[s.id].attendees.length})</h4>
-                                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setManageAttendeesSession({ id: s.id, organId: s.organ_id }); }}>
+                                {!isReadOnly && <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setManageAttendeesSession({ id: s.id, organId: s.organ_id }); }}>
                                   <Users className="w-3.5 h-3.5 mr-1" />Gérer
-                                </Button>
+                                </Button>}
                               </div>
                               {sessionDetails[s.id].attendees.map((att) => (
                                 <div key={att.id} className="text-sm mb-1 flex items-center gap-2">
