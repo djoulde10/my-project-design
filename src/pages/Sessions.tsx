@@ -92,7 +92,11 @@ export default function Sessions() {
           agenda_items: agendaDrafts.filter(d => d.title).map((d, i) => ({ order: i + 1, title: d.title, description: d.description })),
         }),
       });
-      if (!resp.ok) { showError(null, "Erreur lors de la génération"); return; }
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => null);
+        showError(null, errData?.error || "Erreur lors de la génération");
+        return;
+      }
       const result = await resp.json();
       setConvocationText(result.letter);
     } catch (e) {
