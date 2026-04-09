@@ -7,7 +7,7 @@ export type PermissionName =
   | "creer_session"
   | "modifier_session"
   | "valider_pv"
-  | "signer_pv"
+  
   | "consulter_documents"
   | "gerer_documents"
   | "gerer_membres"
