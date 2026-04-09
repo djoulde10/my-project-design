@@ -413,6 +413,20 @@ export default function Sessions() {
                         {!isReadOnly && s.status === "cloturee" && (
                           <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
                         )}
+                        {!isReadOnly && s.status === "brouillon" && (
+                          <PermissionGate permission="modifier_session">
+                            <Button size="sm" variant="ghost" onClick={() => openEditSession(s)} title="Modifier">
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          </PermissionGate>
+                        )}
+                        {!isReadOnly && s.status === "brouillon" && (
+                          <PermissionGate permission="modifier_session">
+                            <Button size="sm" variant="ghost" onClick={() => setDeleteSessionId(s.id)} title="Supprimer">
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </PermissionGate>
+                        )}
                         <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le Board Packet">
                           <Package className="w-4 h-4" />
                         </Button>
