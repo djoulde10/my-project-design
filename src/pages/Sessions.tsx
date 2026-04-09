@@ -654,6 +654,63 @@ export default function Sessions() {
           entityName={permEntityName}
         />
       )}
+
+      {/* Edit Session Dialog */}
+      <Dialog open={editOpen} onOpenChange={(o) => { if (!o) { setEditOpen(false); setEditingSession(null); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Modifier la session</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Titre</Label>
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={form.session_type} onValueChange={(v) => setForm({ ...form, session_type: v as any })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ordinaire">Ordinaire</SelectItem>
+                    <SelectItem value="extraordinaire">Extraordinaire</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Date & Heure</Label>
+                <Input type="datetime-local" value={form.session_date} onChange={(e) => setForm({ ...form, session_date: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Lieu</Label>
+              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Lien de réunion en ligne</Label>
+              <Input value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditOpen(false); setEditingSession(null); }}>Annuler</Button>
+            <Button onClick={handleEditSave} disabled={!form.title || !form.session_date}>Enregistrer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteSessionId} onOpenChange={(o) => { if (!o) setDeleteSessionId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette session ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Tous les points d'ordre du jour, documents et participants associés seront supprimés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSession} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
