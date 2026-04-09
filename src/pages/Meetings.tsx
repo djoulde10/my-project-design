@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2,
-  ClipboardCheck, History, Edit, Save, FileDown, PenTool, CheckCircle2, Brain, MessageSquare, Shield, XCircle, Lock
+  ClipboardCheck, History, Edit, Save, FileDown, CheckCircle2, Brain, MessageSquare, Shield
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
@@ -31,21 +31,17 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
-import SignatureDialog from "@/components/signature/SignatureDialog";
-import SignatureDisplay from "@/components/signature/SignatureDisplay";
 
 // PV status helpers
 const pvStatusLabels: Record<string, string> = {
   brouillon: "Brouillon",
   valide: "Validé",
-  signe: "Signé",
 };
 const pvStatusColors: Record<string, string> = {
   brouillon: "bg-muted text-muted-foreground",
   valide: "bg-primary/10 text-primary",
-  signe: "bg-emerald-100 text-emerald-800",
 };
-type PvStatus = "brouillon" | "valide" | "signe";
+type PvStatus = "brouillon" | "valide";
 
 export default function Meetings() {
   
@@ -115,9 +111,6 @@ export default function Meetings() {
   const [versionHistoryMinuteId, setVersionHistoryMinuteId] = useState<string>("");
   const [versionHistoryContent, setVersionHistoryContent] = useState<string | null>(null);
 
-  // Signatures
-  const [minuteSignatures, setMinuteSignatures] = useState<any[]>([]);
-  const [signingMinute, setSigningMinute] = useState<any | null>(null);
 
   // Realtime scribe hook
   const scribe = useScribe({
@@ -156,7 +149,7 @@ export default function Meetings() {
   }, [isDirectionMember]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
-  useEffect(() => { if (viewMinute?.id) fetchSignatures(viewMinute.id); }, [viewMinute?.id]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   // ========== REALTIME RECORDING ==========
   const startLiveTranscription = async () => {
