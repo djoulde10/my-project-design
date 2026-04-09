@@ -127,6 +127,7 @@ export default function Minutes() {
           <h1 className="text-2xl font-bold">Procès-verbaux</h1>
           <p className="text-muted-foreground">Gestion des procès-verbaux des sessions</p>
         </div>
+        {!isReadOnly && (
         <Dialog open={pvOpen} onOpenChange={setPvOpen}>
           <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV</Button></DialogTrigger>
           <DialogContent className="max-w-2xl">
@@ -160,6 +161,7 @@ export default function Minutes() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {/* Collaborative editing panel */}
