@@ -144,7 +144,6 @@ export const SUCCESS_MESSAGES = {
 
   // Decisions / Resolutions
   decision_created: "La résolution a été enregistrée.",
-  decision_signed: "La résolution a été signée avec succès.",
 
   // Actions
   action_created: "L'action a été créée.",

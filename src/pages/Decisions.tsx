@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
 import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
