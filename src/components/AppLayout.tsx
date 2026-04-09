@@ -188,6 +188,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
   const { permissions } = usePermissions();
+  const isDirectionMember = useIsDirectionMember();
   const { branding, displayName } = useCompanyBranding();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -204,7 +205,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-[260px] flex-shrink-0 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border/40">
-          <SidebarContent user={user} signOut={signOut} location={location} isSuperAdmin={isSuperAdmin} branding={brandingProps} permissions={permissions} />
+          <SidebarContent user={user} signOut={signOut} location={location} isSuperAdmin={isSuperAdmin} branding={brandingProps} permissions={permissions} isDirectionMember={isDirectionMember} />
         </aside>
       )}
 
