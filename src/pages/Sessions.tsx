@@ -764,9 +764,20 @@ export default function Sessions() {
 
       {/* Edit Session Dialog */}
       <Dialog open={editOpen} onOpenChange={(o) => { if (!o) { setEditOpen(false); setEditingSession(null); } }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Modifier la session</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Organe</Label>
+              <Select value={form.organ_id} onValueChange={(v) => setForm({ ...form, organ_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                <SelectContent>
+                  {caOrgans.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label>Titre</Label>
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -789,16 +800,114 @@ export default function Sessions() {
             </div>
             <div className="space-y-2">
               <Label>Lieu</Label>
-              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Salle de réunion / Lien visio" />
             </div>
             <div className="space-y-2">
-              <Label>Lien de réunion en ligne</Label>
-              <Input value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} />
+              <Label>Lien de réunion en ligne (Teams, Zoom...)</Label>
+              <div className="flex items-center gap-2">
+                <Link className="w-4 h-4 text-muted-foreground" />
+                <Input value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} placeholder="https://teams.microsoft.com/..." />
+              </div>
+            </div>
+
+            {/* Existing agenda items */}
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Ordre du jour</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addEditAgendaDraft}>
+                  <Plus className="w-3 h-3 mr-1" />Ajouter un point
+                </Button>
+              </div>
+
+              {editAgendaItems.map((item, idx) => (
+                <Card key={item.id} className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Point {idx + 1}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeEditAgendaItem(idx)}>
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                  <Input placeholder="Titre du point" value={item.title} onChange={(e) => updateEditAgendaItem(idx, "title", e.target.value)} />
+                  <Suspense fallback={<div className="h-16 flex items-center justify-center text-muted-foreground text-sm">Chargement…</div>}>
+                    <RichTextEditor
+                      content={item.description || ""}
+                      onChange={(html) => updateEditAgendaItem(idx, "description", html)}
+                      minHeight="80px"
+                      placeholder="Description (optionnel)"
+                    />
+                  </Suspense>
+                  <Select value={item.nature} onValueChange={(v) => updateEditAgendaItem(idx, "nature", v)}>
+                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="information">Information</SelectItem>
+                      <SelectItem value="decision">Décision</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Card>
+              ))}
+
+              {/* New agenda drafts */}
+              {editAgendaDrafts.map((draft, idx) => (
+                <Card key={`new-${idx}`} className="p-4 space-y-3 border-dashed">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-primary">Nouveau point {editAgendaItems.length + idx + 1}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeEditAgendaDraft(idx)}>
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                  <Input placeholder="Titre du point" value={draft.title} onChange={(e) => updateEditAgendaDraft(idx, "title", e.target.value)} />
+                  <Suspense fallback={<div className="h-16 flex items-center justify-center text-muted-foreground text-sm">Chargement…</div>}>
+                    <RichTextEditor
+                      content={draft.description}
+                      onChange={(html) => updateEditAgendaDraft(idx, "description", html)}
+                      minHeight="80px"
+                      placeholder="Description (optionnel)"
+                    />
+                  </Suspense>
+                  <div className="flex items-center gap-4">
+                    <Select value={draft.nature} onValueChange={(v) => updateEditAgendaDraft(idx, "nature", v)}>
+                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="information">Information</SelectItem>
+                        <SelectItem value="decision">Décision</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Label className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1.5">
+                      <FileUp className="w-3.5 h-3.5" />
+                      Documents
+                      <input type="file" multiple className="hidden" onChange={(e) => {
+                        if (!e.target.files) return;
+                        const updated = [...editAgendaDrafts];
+                        updated[idx].files = [...updated[idx].files, ...Array.from(e.target.files)];
+                        setEditAgendaDrafts(updated);
+                      }} />
+                    </Label>
+                  </div>
+                  {draft.files.length > 0 && (
+                    <div className="space-y-1">
+                      {draft.files.map((f, fi) => (
+                        <div key={fi} className="flex items-center justify-between text-xs bg-muted rounded px-2 py-1">
+                          <span className="truncate">{f.name}</span>
+                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => {
+                            const updated = [...editAgendaDrafts];
+                            updated[idx].files.splice(fi, 1);
+                            setEditAgendaDrafts(updated);
+                          }}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              ))}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setEditOpen(false); setEditingSession(null); }}>Annuler</Button>
-            <Button onClick={handleEditSave} disabled={!form.title || !form.session_date}>Enregistrer</Button>
+            <Button onClick={handleEditSave} disabled={!form.title || !form.session_date || editSaving}>
+              {editSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Enregistrement…</> : "Enregistrer"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
