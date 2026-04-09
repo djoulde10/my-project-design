@@ -251,11 +251,11 @@ export default function AuditMeetings() {
           <p className="text-sm text-muted-foreground">Gérez les réunions du Comité d'Audit</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <PermissionGate permission="creer_session">
+          {!isReadOnly && <PermissionGate permission="creer_session">
             <DialogTrigger asChild>
               <Button><Plus className="w-4 h-4 mr-2" />Nouvelle réunion</Button>
             </DialogTrigger>
-          </PermissionGate>
+          </PermissionGate>}
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Créer une réunion du Comité d'Audit</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -396,27 +396,27 @@ export default function AuditMeetings() {
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
-                          {s.status === "brouillon" && (
+                          {!isReadOnly && s.status === "brouillon" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "validee")}>Valider</Button>
                           )}
-                          {s.status === "validee" && (
+                          {!isReadOnly && s.status === "validee" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
                           )}
-                          {s.status === "tenue" && (
+                          {!isReadOnly && s.status === "tenue" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "cloturee")}>Clôturer</Button>
                           )}
-                          {s.status === "cloturee" && (
+                          {!isReadOnly && s.status === "cloturee" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
                           )}
                           <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le dossier">
                             <Package className="w-4 h-4" />
                           </Button>
                           <SessionCalendarActions session={s} variant="icon" />
-                          <PermissionGate permission="gerer_utilisateurs">
+                          {!isReadOnly && <PermissionGate permission="gerer_utilisateurs">
                             <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
                               <Shield className="w-4 h-4" />
                             </Button>
-                          </PermissionGate>
+                          </PermissionGate>}
                         </div>
                       </TableCell>
                     </TableRow>
