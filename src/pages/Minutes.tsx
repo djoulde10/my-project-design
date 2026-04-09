@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Edit3, X, MessageSquare, PenTool, Lock, XCircle } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { usePermissions } from "@/hooks/usePermissions";
+import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 
 const pvStatusLabels: Record<string, string> = {
   brouillon: "Brouillon",
@@ -33,6 +34,7 @@ type PvStatus = "brouillon" | "valide" | "signe";
 
 export default function Minutes() {
   const { hasPermission } = usePermissions();
+  const { isPresident } = usePresidentOrganRestriction();
   const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [minutes, setMinutes] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
