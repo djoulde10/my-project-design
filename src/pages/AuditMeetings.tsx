@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Link, Users, Shield, Sparkles, Loader2 } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Link, Users, Shield, Sparkles, Loader2, Pencil } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import SessionCalendarActions from "@/components/SessionCalendarActions";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import PermissionGate from "@/components/PermissionGate";
@@ -52,6 +53,10 @@ export default function AuditMeetings() {
   const [manageAttendeesSession, setManageAttendeesSession] = useState<{ id: string; organId: string } | null>(null);
   const [permEntityId, setPermEntityId] = useState<string | null>(null);
   const [permEntityName, setPermEntityName] = useState("");
+
+  const [editingSession, setEditingSession] = useState<any | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     organ_id: "", title: "", session_type: "ordinaire" as "ordinaire" | "extraordinaire",
@@ -219,6 +224,48 @@ export default function AuditMeetings() {
     const { error } = await supabase.from("sessions").update({ status: status as any }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut");
     else { showSuccess("session_status_updated"); fetchSessions(); }
+  };
+
+  const openEditSession = (s: any) => {
+    setEditingSession(s);
+    setForm({
+      organ_id: s.organ_id,
+      title: s.title,
+      session_type: s.session_type,
+      session_date: s.session_date ? new Date(s.session_date).toISOString().slice(0, 16) : "",
+      location: s.location || "",
+      is_virtual: s.is_virtual,
+      meeting_link: s.meeting_link || "",
+    });
+    setEditOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editingSession) return;
+    const { error } = await supabase.from("sessions").update({
+      title: form.title,
+      session_date: form.session_date,
+      location: form.location,
+      is_virtual: form.is_virtual,
+      meeting_link: form.meeting_link || null,
+    }).eq("id", editingSession.id);
+    if (error) { showError(error, "Impossible de modifier la réunion"); return; }
+    showSuccess("session_updated");
+    setEditOpen(false);
+    setEditingSession(null);
+    setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
+    fetchSessions();
+  };
+
+  const handleDeleteSession = async () => {
+    if (!deleteSessionId) return;
+    await supabase.from("session_attendees").delete().eq("session_id", deleteSessionId);
+    await supabase.from("documents").delete().eq("session_id", deleteSessionId);
+    await supabase.from("agenda_items").delete().eq("session_id", deleteSessionId);
+    const { error } = await supabase.from("sessions").delete().eq("id", deleteSessionId);
+    if (error) { showError(error, "Impossible de supprimer la réunion"); }
+    else { showSuccess("session_deleted"); fetchSessions(); }
+    setDeleteSessionId(null);
   };
 
   const generateBoardPacket = async (session: any) => {
@@ -475,16 +522,30 @@ export default function AuditMeetings() {
                           {!isReadOnly && s.status === "cloturee" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
                           )}
-                          <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le dossier">
-                            <Package className="w-4 h-4" />
-                          </Button>
-                          <SessionCalendarActions session={s} variant="icon" />
-                          {!isReadOnly && <PermissionGate permission="gerer_utilisateurs">
-                            <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
-                              <Shield className="w-4 h-4" />
+                        {!isReadOnly && s.status === "brouillon" && (
+                          <PermissionGate permission="modifier_session">
+                            <Button size="sm" variant="ghost" onClick={() => openEditSession(s)} title="Modifier">
+                              <Pencil className="w-4 h-4" />
                             </Button>
-                          </PermissionGate>}
-                        </div>
+                          </PermissionGate>
+                        )}
+                        {!isReadOnly && s.status === "brouillon" && (
+                          <PermissionGate permission="modifier_session">
+                            <Button size="sm" variant="ghost" onClick={() => setDeleteSessionId(s.id)} title="Supprimer">
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </PermissionGate>
+                        )}
+                        <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le dossier">
+                          <Package className="w-4 h-4" />
+                        </Button>
+                        <SessionCalendarActions session={s} variant="icon" />
+                        {!isReadOnly && <PermissionGate permission="gerer_utilisateurs">
+                          <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
+                            <Shield className="w-4 h-4" />
+                          </Button>
+                        </PermissionGate>}
+                      </div>
                       </TableCell>
                     </TableRow>
                     {expandedSession === s.id && sessionDetails[s.id] && (
@@ -555,6 +616,51 @@ export default function AuditMeetings() {
           entityName={permEntityName}
         />
       )}
+
+      {/* Edit Session Dialog */}
+      <Dialog open={editOpen} onOpenChange={(o) => { if (!o) { setEditOpen(false); setEditingSession(null); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Modifier la réunion</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Titre</Label>
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Date & Heure</Label>
+              <Input type="datetime-local" value={form.session_date} onChange={(e) => setForm({ ...form, session_date: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Lieu</Label>
+              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Lien de réunion en ligne</Label>
+              <Input value={form.meeting_link} onChange={(e) => setForm({ ...form, meeting_link: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditOpen(false); setEditingSession(null); }}>Annuler</Button>
+            <Button onClick={handleEditSave} disabled={!form.title || !form.session_date}>Enregistrer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteSessionId} onOpenChange={(o) => { if (!o) setDeleteSessionId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette réunion ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Tous les points d'ordre du jour, documents et participants associés seront supprimés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSession} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
