@@ -522,16 +522,30 @@ export default function AuditMeetings() {
                           {!isReadOnly && s.status === "cloturee" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
                           )}
-                          <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le dossier">
-                            <Package className="w-4 h-4" />
-                          </Button>
-                          <SessionCalendarActions session={s} variant="icon" />
-                          {!isReadOnly && <PermissionGate permission="gerer_utilisateurs">
-                            <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
-                              <Shield className="w-4 h-4" />
+                        {!isReadOnly && s.status === "brouillon" && (
+                          <PermissionGate permission="modifier_session">
+                            <Button size="sm" variant="ghost" onClick={() => openEditSession(s)} title="Modifier">
+                              <Pencil className="w-4 h-4" />
                             </Button>
-                          </PermissionGate>}
-                        </div>
+                          </PermissionGate>
+                        )}
+                        {!isReadOnly && s.status === "brouillon" && (
+                          <PermissionGate permission="modifier_session">
+                            <Button size="sm" variant="ghost" onClick={() => setDeleteSessionId(s.id)} title="Supprimer">
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </PermissionGate>
+                        )}
+                        <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le dossier">
+                          <Package className="w-4 h-4" />
+                        </Button>
+                        <SessionCalendarActions session={s} variant="icon" />
+                        {!isReadOnly && <PermissionGate permission="gerer_utilisateurs">
+                          <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
+                            <Shield className="w-4 h-4" />
+                          </Button>
+                        </PermissionGate>}
+                      </div>
                       </TableCell>
                     </TableRow>
                     {expandedSession === s.id && sessionDetails[s.id] && (
