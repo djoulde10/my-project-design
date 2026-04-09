@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -51,29 +51,54 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Configuration IA manquante" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const systemPrompt = `Tu es un secrétaire juridique professionnel spécialisé dans la gouvernance d'entreprise en Afrique francophone. Tu rédiges des lettres de convocation formelles pour les réunions des organes de gouvernance.
+    const systemPrompt = `Tu es un secrétaire juridique professionnel spécialisé dans la gouvernance d'entreprise en Afrique francophone. Tu rédiges des lettres de convocation/invitation formelles pour les réunions des organes de gouvernance.
 
 IMPORTANT : Tu dois répondre UNIQUEMENT en HTML valide (pas de markdown). Utilise les balises HTML suivantes :
-- <h1> pour le titre principal (nom de la société)
-- <h2> pour l'objet
+- <h2> pour les titres de sections
 - <p> pour les paragraphes
 - <ol> et <li> pour l'ordre du jour numéroté
 - <strong> pour les éléments importants
+- <em> pour l'italique
 - <br> pour les sauts de ligne dans un même paragraphe
-- <hr> pour les séparateurs
+- <table>, <tr>, <td> pour l'en-tête avec référence et titre
 
 Ne mets PAS de balises <html>, <head>, <body>. Commence directement avec le contenu.
 
-La lettre doit inclure :
-1. En-tête avec le nom de la société
-2. L'objet de la convocation
-3. Les salutations formelles
-4. Le corps avec la date, le lieu, et l'ordre du jour numéroté
-5. Les informations pratiques
-6. La formule de politesse
-7. Le signataire "[Nom du Président]"`;
+VOICI LE FORMAT EXACT À REPRODUIRE — tu dois suivre cette structure fidèlement :
 
-    const userPrompt = `Rédige une lettre de convocation officielle en HTML avec ces informations :
+1. **En-tête** : Un tableau HTML à 2 colonnes :
+   - Colonne gauche : "Réf : ………..CA/[NOM SOCIÉTÉ]/[ANNÉE]"
+   - Colonne droite : "RÉPUBLIQUE DE GUINÉE" (ou le pays), "Travail-Justice–Solidarité" (devise), "LE PRÉSIDENT"
+
+2. **Date et lieu** : "[Ville], le [date formatée]"
+
+3. **Destinataires** : 
+   "À l'attention des :"
+   "Membres du [Nom de l'organe] de [Nom société], et"
+   "Monsieur le Commissaire aux Comptes"
+   En italique : "Par lettre au porteur contre décharge"
+
+4. **Objet** : En gras — "Objet : invitation à la session [type] du [organe] de [société]"
+
+5. **Corps** : 
+   - "Chers tous," ou "Madame, Messieurs,"
+   - Un paragraphe d'invitation formel indiquant : la société, l'organe, la date, l'heure, le lieu
+   - "L'ordre du jour de cette session est arrêté comme suit :"
+   - Liste numérotée (<ol>) des points
+
+6. **Formule de clôture** :
+   - Un paragraphe demandant aux membres d'honorer l'invitation
+   - Formule de politesse : "Veuillez agréer, Madame et Messieurs, l'expression de ma considération distinguée."
+
+7. **Signataire** : Nom en gras — "[Nom du Président]"
+
+STYLE :
+- Ton formel, administratif, professionnel
+- Langage soutenu adapté aux documents officiels de gouvernance africaine francophone
+- Pas de formulations techniques ou de placeholders visibles comme "[Non précisé]"
+- Si une information manque, l'omettre élégamment`;
+
+    const userPrompt = `Rédige une lettre d'invitation/convocation officielle en HTML avec ces informations :
 
 Société : ${companyName}
 Organe : ${organ_name}
@@ -90,7 +115,7 @@ ${agendaList}`;
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
