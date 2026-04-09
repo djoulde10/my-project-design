@@ -72,7 +72,10 @@ const navSections = [
   },
 ];
 
-function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, branding, permissions }: {
+// Routes hidden for "Membre de la Direction" (CA-only routes)
+const caOnlyPaths = ["/sessions", "/members", "/calendar"];
+
+function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, branding, permissions, isDirectionMember }: {
   user: any;
   signOut: () => void;
   location: any;
@@ -80,6 +83,7 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
   isSuperAdmin?: boolean;
   branding?: { displayName: string; logoUrl: string | null; primaryColor: string };
   permissions: string[];
+  isDirectionMember?: boolean;
 }) {
   const name = branding?.displayName || "GovBoard";
   const logoUrl = branding?.logoUrl;
