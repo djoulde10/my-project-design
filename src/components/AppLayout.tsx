@@ -23,7 +23,7 @@ import {
   Gavel,
   Menu,
   Calendar,
-  ShieldAlert,
+  
   Key,
   Settings,
   HelpCircle,
@@ -51,18 +51,18 @@ const navSections = [
       { label: "Réunions & PV", icon: Mic, path: "/meetings" },
       { label: "Résolutions", icon: Gavel, path: "/decisions" },
       { label: "Suivi des actions", icon: ListTodo, path: "/actions" },
-      { label: "Approbations", icon: Shield, path: "/approvals" },
+      
     ],
   },
   {
     label: "Gestion",
     items: [
       { label: "Documents", icon: FolderOpen, path: "/documents" },
-      { label: "Conflits d'intérêts", icon: ShieldAlert, path: "/conflicts" },
+      
       { label: "Archives", icon: Archive, path: "/archives" },
       { label: "Journal d'audit", icon: Shield, path: "/audit" },
       { label: "Utilisateurs", icon: Users, path: "/users" },
-      { label: "Permissions", icon: Shield, path: "/permissions" },
+      
       { label: "API", icon: Key, path: "/api-keys" },
       { label: "Personnalisation", icon: Settings, path: "/settings" },
       { label: "Centre d'aide", icon: HelpCircle, path: "/help" },

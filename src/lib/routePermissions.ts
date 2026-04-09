@@ -13,12 +13,12 @@ export const routePermissionMap: Record<string, PermissionName[]> = {
   "/decisions": ["creer_decisions", "consulter_documents"],
   "/actions": ["suivre_actions"],
   "/documents": ["consulter_documents", "gerer_documents"],
-  "/conflicts": ["gerer_conflits"],
+  
   "/archives": ["consulter_documents"],
   "/audit": ["consulter_audit"],
   "/users": ["gerer_utilisateurs"],
-  "/permissions": ["gerer_utilisateurs"],
-  "/approvals": ["gerer_approbations", "valider_pv"],
+  
+  
   "/api-keys": ["gerer_api"],
   "/api-docs": ["gerer_api"],
   "/settings": ["gerer_utilisateurs"],
