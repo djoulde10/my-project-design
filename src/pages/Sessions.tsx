@@ -58,6 +58,10 @@ export default function Sessions() {
   const [editingSession, setEditingSession] = useState<any | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
+  const [editAgendaItems, setEditAgendaItems] = useState<any[]>([]);
+  const [editAgendaDrafts, setEditAgendaDrafts] = useState<AgendaItemDraft[]>([]);
+  const [deletedAgendaIds, setDeletedAgendaIds] = useState<string[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
 
   const [form, setForm] = useState({
     organ_id: "", title: "", session_type: "ordinaire" as "ordinaire" | "extraordinaire",
