@@ -61,6 +61,42 @@ export default function Sessions() {
   const [generatingConvocation, setGeneratingConvocation] = useState(false);
   const [convocationText, setConvocationText] = useState<string | null>(null);
 
+  const generateConvocation = async () => {
+    if (agendaDrafts.filter(d => d.title).length === 0) {
+      showError(null, "Ajoutez au moins un point à l'ordre du jour");
+      return;
+    }
+    setGeneratingConvocation(true);
+    setConvocationText(null);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) { showError(null, "Vous devez être connecté"); return; }
+
+      const selectedOrganName = organs.find(o => o.id === form.organ_id)?.name || "l'organe";
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-convocation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify({
+          organ_name: selectedOrganName,
+          session_title: form.title,
+          session_date: form.session_date,
+          location: form.location,
+          meeting_link: form.meeting_link,
+          agenda_items: agendaDrafts.filter(d => d.title).map((d, i) => ({ order: i + 1, title: d.title, description: d.description })),
+        }),
+      });
+      if (!resp.ok) { showError(null, "Erreur lors de la génération"); return; }
+      const result = await resp.json();
+      setConvocationText(result.letter);
+    } catch (e) {
+      console.error(e);
+      showError(e, "Erreur lors de la génération de la convocation");
+    } finally {
+      setGeneratingConvocation(false);
+    }
+  };
+
   const fetchSessions = async () => {
     const { data } = await supabase
       .from("sessions")
