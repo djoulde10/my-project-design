@@ -15,6 +15,7 @@ import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, Chevron
 import SessionCalendarActions from "@/components/SessionCalendarActions";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import PermissionGate from "@/components/PermissionGate";
+import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import SessionAttendeeManager from "@/components/SessionAttendeeManager";
 import jsPDF from "jspdf";
