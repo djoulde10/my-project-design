@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ const voteLabels: Record<string, string> = {
 export default function Decisions() {
   
   const { user } = useAuth();
+  const isDirectionMember = useIsDirectionMember();
   const [decisions, setDecisions] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
@@ -65,12 +67,18 @@ export default function Decisions() {
 
   const fetchAll = async () => {
     const [decRes, sessRes, memRes] = await Promise.all([
-      supabase.from("decisions").select("*, sessions(title, numero_session), members(full_name)").order("created_at", { ascending: false }),
-      supabase.from("sessions").select("id, title, numero_session").order("session_date", { ascending: false }),
+      supabase.from("decisions").select("*, sessions(title, numero_session, organs(type)), members(full_name)").order("created_at", { ascending: false }),
+      supabase.from("sessions").select("id, title, numero_session, organs(type)").order("session_date", { ascending: false }),
       supabase.from("members").select("id, full_name").eq("is_active", true),
     ]);
-    setDecisions(decRes.data ?? []);
-    setSessions(sessRes.data ?? []);
+    
+    if (isDirectionMember) {
+      setDecisions((decRes.data ?? []).filter((d: any) => d.sessions?.organs?.type === "comite_audit"));
+      setSessions((sessRes.data ?? []).filter((s: any) => s.organs?.type === "comite_audit"));
+    } else {
+      setDecisions(decRes.data ?? []);
+      setSessions(sessRes.data ?? []);
+    }
     setMembers(memRes.data ?? []);
 
     // Fetch all decision signatures

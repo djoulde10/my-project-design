@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 };
 
 export default function Actions() {
-  
+  const isDirectionMember = useIsDirectionMember();
   const [actions, setActions] = useState<any[]>([]);
   const [decisions, setDecisions] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
@@ -37,12 +38,18 @@ export default function Actions() {
 
   const fetchAll = async () => {
     const [actRes, decRes, memRes] = await Promise.all([
-      supabase.from("actions").select("*, decisions(numero_decision, texte), members(full_name)").order("due_date"),
-      supabase.from("decisions").select("id, numero_decision, texte"),
+      supabase.from("actions").select("*, decisions(numero_decision, texte, sessions(organs(type))), members(full_name)").order("due_date"),
+      supabase.from("decisions").select("id, numero_decision, texte, sessions(organs(type))"),
       supabase.from("members").select("id, full_name").eq("is_active", true),
     ]);
-    setActions(actRes.data ?? []);
-    setDecisions(decRes.data ?? []);
+    
+    if (isDirectionMember) {
+      setActions((actRes.data ?? []).filter((a: any) => a.decisions?.sessions?.organs?.type === "comite_audit"));
+      setDecisions((decRes.data ?? []).filter((d: any) => d.sessions?.organs?.type === "comite_audit"));
+    } else {
+      setActions(actRes.data ?? []);
+      setDecisions(decRes.data ?? []);
+    }
     setMembers(memRes.data ?? []);
   };
 
