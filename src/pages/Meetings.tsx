@@ -885,9 +885,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           <TabsTrigger value="pv" className="gap-2">
             <ClipboardCheck className="w-4 h-4" />Procès-verbaux
           </TabsTrigger>
-          <TabsTrigger value="templates" className="gap-2">
-            <BookOpen className="w-4 h-4" />Modèles de PV
-          </TabsTrigger>
+          {!isReadOnly && (
+            <TabsTrigger value="templates" className="gap-2">
+              <BookOpen className="w-4 h-4" />Modèles de PV
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* ===== UNIFIED PV TAB ===== */}
