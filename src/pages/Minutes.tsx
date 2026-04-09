@@ -129,7 +129,7 @@ export default function Minutes() {
           <h1 className="text-2xl font-bold">Procès-verbaux</h1>
           <p className="text-muted-foreground">Gestion des procès-verbaux des sessions</p>
         </div>
-        {!isReadOnly && (
+        {!isReadOnly && !isPresident && (
         <Dialog open={pvOpen} onOpenChange={setPvOpen}>
           <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV</Button></DialogTrigger>
           <DialogContent className="max-w-2xl">
@@ -216,7 +216,7 @@ export default function Minutes() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {!isReadOnly && editingId === m.id && !isSigned(m) ? (
+                      {!isReadOnly && !isPresident && editingId === m.id && !isSigned(m) ? (
                         <Select value={editStatus} onValueChange={(v) => { const s = v as PvStatus; setEditStatus(s); updateStatus(m.id, s); }}>
                           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -233,12 +233,12 @@ export default function Minutes() {
                     <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        {!isReadOnly && !isSigned(m) && (
+                        {!isReadOnly && !isPresident && !isSigned(m) && (
                           <Button variant="ghost" size="sm" onClick={() => openRealtimeEdit(m)}>
                             <Edit3 className="w-4 h-4 mr-1" /> Éditer
                           </Button>
                         )}
-                        {!isReadOnly && !isSigned(m) && (
+                        {!isReadOnly && !isPresident && !isSigned(m) && (
                           <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
                             Statut
                           </Button>
