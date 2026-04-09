@@ -58,11 +58,11 @@ const navSections = [
     label: "Gestion",
     items: [
       { label: "Documents", icon: FolderOpen, path: "/documents" },
-      { label: "Conflits d'intérêts", icon: ShieldAlert, path: "/conflicts" },
+      
       { label: "Archives", icon: Archive, path: "/archives" },
       { label: "Journal d'audit", icon: Shield, path: "/audit" },
       { label: "Utilisateurs", icon: Users, path: "/users" },
-      { label: "Permissions", icon: Shield, path: "/permissions" },
+      
       { label: "API", icon: Key, path: "/api-keys" },
       { label: "Personnalisation", icon: Settings, path: "/settings" },
       { label: "Centre d'aide", icon: HelpCircle, path: "/help" },
