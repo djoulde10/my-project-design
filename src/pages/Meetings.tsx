@@ -1025,16 +1025,16 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {minutes.length === 0 ? (
+                  {(isReadOnly ? minutes.filter((m) => m.pv_status === "valide" || m.pv_status === "signe") : minutes).length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                         <FileText className="w-10 h-10 mx-auto mb-2 opacity-40" />
                         <p className="font-medium">Aucun procès-verbal</p>
-                        <p className="text-sm">Créez un PV manuellement ou utilisez l'enregistrement IA.</p>
+                        {!isReadOnly && <p className="text-sm">Créez un PV manuellement ou utilisez l'enregistrement IA.</p>}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    minutes.map((m) => (
+                    (isReadOnly ? minutes.filter((m) => m.pv_status === "valide" || m.pv_status === "signe") : minutes).map((m) => (
                       <TableRow key={m.id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
