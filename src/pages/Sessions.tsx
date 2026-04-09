@@ -465,13 +465,6 @@ export default function Sessions() {
                     <Input placeholder="Titre du point" value={draft.title} onChange={(e) => updateAgendaDraft(idx, "title", e.target.value)} />
                     <Textarea placeholder="Description (optionnel)" className="min-h-[60px]" value={draft.description} onChange={(e) => updateAgendaDraft(idx, "description", e.target.value)} />
                     <div className="flex items-center gap-4">
-                      <Select value={draft.nature} onValueChange={(v) => updateAgendaDraft(idx, "nature", v)}>
-                        <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="information">Information</SelectItem>
-                          <SelectItem value="decision">Décision</SelectItem>
-                        </SelectContent>
-                      </Select>
                       <div className="flex-1">
                         <Label className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1.5">
                           <FileUp className="w-3.5 h-3.5" />
