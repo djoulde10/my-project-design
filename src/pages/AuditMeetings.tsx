@@ -662,7 +662,7 @@ export default function AuditMeetings() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sessions.length === 0 ? (
+              {displaySessions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     Aucune réunion du comité d'audit.
@@ -671,7 +671,7 @@ export default function AuditMeetings() {
               ) : (
                 (() => {
                   const now = new Date();
-                  const sorted = [...sessions].sort((a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime());
+                  const sorted = [...displaySessions].sort((a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime());
                   const upcomingIdx = sorted.findIndex(s => new Date(s.session_date) >= now && s.status !== "tenue" && s.status !== "cloturee" && s.status !== "archivee");
                   const pastIdx = sorted.findIndex(s => new Date(s.session_date) < now || s.status === "tenue" || s.status === "cloturee" || s.status === "archivee");
                   const hasBoth = upcomingIdx !== -1 && pastIdx !== -1;
