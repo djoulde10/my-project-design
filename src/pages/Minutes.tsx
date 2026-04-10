@@ -67,7 +67,7 @@ export default function Minutes() {
   };
 
   const handlePublish = async (id: string) => {
-    const { error } = await supabase.from("minutes").update({ is_published: true }).eq("id", id);
+    const { error } = await supabase.rpc("publish_minute", { _minute_id: id });
     if (error) showError(error, "Impossible de publier le PV");
     else { showSuccess("pv_status_updated"); fetchAll(); }
   };
