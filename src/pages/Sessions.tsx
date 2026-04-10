@@ -497,7 +497,11 @@ export default function Sessions() {
     showSuccess("board_packet_generated");
   };
 
-  const caSessions = sessions.filter((s) => (s as any).organs?.type === "ca");
+  const allCaSessions = sessions.filter((s) => (s as any).organs?.type === "ca");
+  // Non-president, non-secretariat users only see published sessions
+  const caSessions = (isPresident || isSecretariat)
+    ? allCaSessions
+    : allCaSessions.filter((s: any) => s.is_published === true);
   const caOrgans = organs.filter((o) => o.type === "ca");
 
   // Determine who can edit a session based on status
