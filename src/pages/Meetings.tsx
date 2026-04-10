@@ -87,7 +87,7 @@ export default function Meetings() {
 
   // PV creation dialog (manual)
   const [pvOpen, setPvOpen] = useState(false);
-  const [pvForm, setPvForm] = useState<{ session_id: string; content: string; pv_status: PvStatus }>({ session_id: "", content: "", pv_status: "brouillon" });
+  const [pvForm, setPvForm] = useState<{ session_id: string; content: string }>({ session_id: "", content: "" });
 
   // PV detail/edit view
   const [viewMinute, setViewMinute] = useState<any | null>(null);
@@ -326,7 +326,7 @@ export default function Meetings() {
     }
     showSuccess("pv_created");
     setPvOpen(false);
-    setPvForm({ session_id: "", content: "", pv_status: "brouillon" });
+    setPvForm({ session_id: "", content: "" });
     fetchAll();
   };
 
