@@ -11,7 +11,7 @@ import RichTextEditor from "@/components/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit3, X, MessageSquare } from "lucide-react";
+import { Plus, Edit3, X, MessageSquare, Send } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
@@ -30,7 +30,8 @@ type PvStatus = "brouillon" | "valide";
 
 export default function Minutes() {
   const { hasPermission } = usePermissions();
-  const { isPresident } = usePresidentOrganRestriction();
+  const { isPresident, roleName } = usePresidentOrganRestriction();
+  const isSecretariat = roleName === "Secrétariat juridique";
   const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [minutes, setMinutes] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -63,6 +64,12 @@ export default function Minutes() {
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut du PV");
     else { showSuccess("pv_status_updated"); setEditingId(null); fetchAll(); }
+  };
+
+  const handlePublish = async (id: string) => {
+    const { error } = await supabase.from("minutes").update({ is_published: true }).eq("id", id);
+    if (error) showError(error, "Impossible de publier le PV");
+    else { showSuccess("pv_status_updated"); fetchAll(); }
   };
 
   const openRealtimeEdit = (m: any) => {
@@ -151,10 +158,14 @@ export default function Minutes() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(isReadOnly ? minutes.filter(m => m.pv_status === "valide") : minutes).length === 0 ? (
+              {(() => {
+                const displayMinutes = (isPresident || isSecretariat)
+                  ? minutes
+                  : minutes.filter(m => m.is_published === true);
+                return displayMinutes.length === 0 ? (
                 <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun PV</TableCell></TableRow>
               ) : (
-                (isReadOnly ? minutes.filter(m => m.pv_status === "valide") : minutes).map((m) => (
+                displayMinutes.map((m) => (
                   <React.Fragment key={m.id}>
                   <TableRow>
                     <TableCell className="font-medium">
@@ -170,9 +181,12 @@ export default function Minutes() {
                           </SelectContent>
                         </Select>
                       ) : (
-                        <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
-                          {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
+                            {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
+                          </Badge>
+                          {m.is_published && <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">Publié</Badge>}
+                        </div>
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
@@ -186,6 +200,11 @@ export default function Minutes() {
                         {!isReadOnly && !isPresident && (
                           <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
                             Statut
+                          </Button>
+                        )}
+                        {isSecretariat && m.pv_status === "valide" && !m.is_published && (
+                          <Button size="sm" variant="outline" onClick={() => handlePublish(m.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
+                            <Send className="w-3.5 h-3.5" />Publier
                           </Button>
                         )}
                         <Button variant="ghost" size="sm" onClick={() => setCommentingId(commentingId === m.id ? null : m.id)}>
@@ -204,7 +223,7 @@ export default function Minutes() {
                   )}
                   </React.Fragment>
                 ))
-              )}
+              )})()}
             </TableBody>
           </Table>
         </CardContent>
