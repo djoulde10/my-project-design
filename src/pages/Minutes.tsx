@@ -42,7 +42,7 @@ export default function Minutes() {
   const fetchAll = async () => {
     const [minRes, sessRes] = await Promise.all([
       supabase.from("minutes").select("*, sessions(title)").order("created_at", { ascending: false }),
-      supabase.from("sessions").select("id, title").order("session_date", { ascending: false }),
+      supabase.from("sessions").select("id, title, organs(type)").order("session_date", { ascending: false }),
     ]);
     setMinutes(minRes.data ?? []);
     setSessions(sessRes.data ?? []);
@@ -85,7 +85,7 @@ export default function Minutes() {
                 <Label>Session</Label>
                 <Select value={pvForm.session_id} onValueChange={(v) => setPvForm({ ...pvForm, session_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
-                  <SelectContent>{sessions.map((s) => (<SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>))}</SelectContent>
+                  <SelectContent>{sessions.map((s) => (<SelectItem key={s.id} value={s.id}>{s.title} {(s as any).organs?.type === "comite_audit" ? "(Comité d'Audit)" : "(CA)"}</SelectItem>))}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">

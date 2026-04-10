@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Link, Users, Sparkles, Loader2, Pencil, CheckCircle, Eye, Send } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Link, Users, Sparkles, Loader2, Pencil, CheckCircle, Eye, Send, FileText } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -50,7 +50,7 @@ export default function AuditMeetings() {
   const [organs, setOrgans] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
-  const [sessionDetails, setSessionDetails] = useState<Record<string, { agendaItems: any[]; attendees: any[] }>>({});
+  const [sessionDetails, setSessionDetails] = useState<Record<string, { agendaItems: any[]; attendees: any[]; minute?: any }>>({});
   const [manageAttendeesSession, setManageAttendeesSession] = useState<{ id: string; organId: string } | null>(null);
 
   const [editingSession, setEditingSession] = useState<any | null>(null);
@@ -230,13 +230,14 @@ export default function AuditMeetings() {
   };
 
   const loadSessionDetails = async (sessionId: string) => {
-    const [agRes, attRes] = await Promise.all([
+    const [agRes, attRes, pvRes] = await Promise.all([
       supabase.from("agenda_items").select("*, documents(*)").eq("session_id", sessionId).order("order_index"),
       supabase.from("session_attendees").select("*, members!session_attendees_member_id_fkey(full_name, quality)").eq("session_id", sessionId),
+      supabase.from("minutes").select("id, pv_status, is_published, content, created_at").eq("session_id", sessionId).maybeSingle(),
     ]);
     setSessionDetails((prev) => ({
       ...prev,
-      [sessionId]: { agendaItems: agRes.data ?? [], attendees: attRes.data ?? [] },
+      [sessionId]: { agendaItems: agRes.data ?? [], attendees: attRes.data ?? [], minute: pvRes.data ?? null },
     }));
   };
 
@@ -661,13 +662,7 @@ export default function AuditMeetings() {
                               <Send className="w-3.5 h-3.5" />Publier
                             </Button>
                           )}
-                          {!isReadOnly && s.status === "validee" && s.is_published && (
-                            <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
-                          )}
-                          {!isReadOnly && s.status === "tenue" && (
-                            <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "cloturee")}>Clôturer</Button>
-                          )}
-                          {!isReadOnly && s.status === "cloturee" && (
+                          {!isReadOnly && (s.status === "tenue" || s.status === "cloturee") && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
                           )}
                           {(s as any).convocation_letter && (
@@ -717,18 +712,46 @@ export default function AuditMeetings() {
                                   </Badge>
                                 </div>
                               ))}
-                            </div>
                           </div>
-                          {s.meeting_link && (
-                            <div className="mt-3 pt-3 border-t">
-                              <a href={s.meeting_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
-                                <Video className="w-4 h-4" />
-                                Rejoindre la réunion en ligne
-                              </a>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
+                        </div>
+                        {/* Procès-verbal section */}
+                        {sessionDetails[s.id].minute && (
+                          <div className="mt-3 pt-3 border-t">
+                            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                              <FileText className="w-4 h-4" />
+                              Procès-verbal
+                              <Badge className={sessionDetails[s.id].minute.is_published ? "bg-emerald-100 text-emerald-800 text-[10px]" : "bg-muted text-muted-foreground text-[10px]"}>
+                                {sessionDetails[s.id].minute.is_published ? "Publié" : sessionDetails[s.id].minute.pv_status === "valide" ? "Validé" : "Brouillon"}
+                              </Badge>
+                            </h4>
+                            {sessionDetails[s.id].minute.is_published && sessionDetails[s.id].minute.content && (
+                              <div className="bg-background rounded border p-3 max-h-[300px] overflow-y-auto">
+                                <div className="prose prose-sm max-w-none text-sm" dangerouslySetInnerHTML={{ __html: sessionDetails[s.id].minute.content }} />
+                              </div>
+                            )}
+                            {!sessionDetails[s.id].minute.is_published && (
+                              <p className="text-sm text-muted-foreground">Le PV n'est pas encore publié.</p>
+                            )}
+                          </div>
+                        )}
+                        {!sessionDetails[s.id].minute && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-sm text-muted-foreground flex items-center gap-2">
+                              <FileText className="w-4 h-4" />
+                              Aucun procès-verbal associé à cette réunion.
+                            </p>
+                          </div>
+                        )}
+                        {s.meeting_link && (
+                          <div className="mt-3 pt-3 border-t">
+                            <a href={s.meeting_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+                              <Video className="w-4 h-4" />
+                              Rejoindre la réunion en ligne
+                            </a>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
                     )}
                       </>
                     );

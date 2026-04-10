@@ -539,7 +539,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
               <Select value={pendingPV.sessionId} onValueChange={(v) => setPendingPV({ ...pendingPV, sessionId: v })}>
                 <SelectTrigger className="w-full max-w-sm"><SelectValue placeholder="Sélectionnez une session" /></SelectTrigger>
                 <SelectContent>
-                  {sessions.map((s) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
+                  {sessions.map((s) => <SelectItem key={s.id} value={s.id}>{s.title} {s.organs?.type === "comite_audit" ? "(Comité d'Audit)" : "(CA)"}</SelectItem>)}
                 </SelectContent>
               </Select>
             </CardContent>
@@ -861,7 +861,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                     <Select value={newSessionId} onValueChange={setNewSessionId}>
                       <SelectTrigger><SelectValue placeholder="Aucune" /></SelectTrigger>
                       <SelectContent>
-                        {sessions.map((s) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
+                        {sessions.map((s) => <SelectItem key={s.id} value={s.id}>{s.title} {s.organs?.type === "comite_audit" ? "(Comité d'Audit)" : "(CA)"}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -927,7 +927,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                     <Label>Session *</Label>
                     <Select value={pvForm.session_id} onValueChange={(v) => setPvForm({ ...pvForm, session_id: v })}>
                       <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
-                      <SelectContent>{sessions.map((s) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}</SelectContent>
+                      <SelectContent>{sessions.map((s) => <SelectItem key={s.id} value={s.id}>{s.title} {s.organs?.type === "comite_audit" ? "(Comité d'Audit)" : "(CA)"}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
@@ -961,9 +961,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                     let displayMinutes = minutes;
                     if (isReadOnly && !isPresident && !isSecretariat) {
                       // Regular members only see published & validated PVs
-                      displayMinutes = minutes.filter((m: any) => m.is_published === true && (m.pv_status === "valide" || m.pv_status === "signe"));
+                      displayMinutes = minutes.filter((m: any) => m.is_published === true && m.pv_status === "valide");
                     } else if (isReadOnly) {
-                      displayMinutes = minutes.filter((m: any) => m.pv_status === "valide" || m.pv_status === "signe");
+                      displayMinutes = minutes.filter((m: any) => m.pv_status === "valide");
                     }
 
                     if (displayMinutes.length === 0) return (
