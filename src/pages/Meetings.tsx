@@ -840,6 +840,8 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
         {/* ===== UNIFIED PV TAB ===== */}
         <TabsContent value="pv" className="space-y-4">
           <div className="flex justify-end gap-2">
+            {isSecretariat && (<>
+
             {/* Import audio dialog */}
             <Dialog open={createOpen} onOpenChange={(open) => {
               setCreateOpen(open);
