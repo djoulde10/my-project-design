@@ -8,7 +8,7 @@ import type { PermissionName } from "@/hooks/usePermissions";
 export const routePermissionMap: Record<string, PermissionName[]> = {
   "/sessions": ["creer_session", "modifier_session", "consulter_documents"],
   "/members": ["gerer_membres", "consulter_documents"],
-  "/agenda": ["modifier_session", "consulter_documents"],
+  
   "/meetings": ["valider_pv", "consulter_documents"],
   "/decisions": ["creer_decisions", "consulter_documents"],
   "/actions": ["suivre_actions", "consulter_documents"],
