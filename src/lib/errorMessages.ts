@@ -167,6 +167,7 @@ export const SUCCESS_MESSAGES = {
 
   // AI
   ai_analysis_complete: "L'analyse IA est terminée. Les suggestions sont prêtes à être examinées.",
+  convocation_regenerated: "La lettre de convocation a été régénérée avec succès.",
   transcription_started: "La transcription est en cours…",
   board_packet_generated: "Le Board Packet a été généré avec succès.",
 
