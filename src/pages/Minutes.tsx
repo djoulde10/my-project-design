@@ -175,9 +175,12 @@ export default function Minutes() {
                           </SelectContent>
                         </Select>
                       ) : (
-                        <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
-                          {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
+                            {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
+                          </Badge>
+                          {m.is_published && <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">Publié</Badge>}
+                        </div>
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
