@@ -47,9 +47,10 @@ export default function Meetings() {
   
   const { user } = useAuth();
   const companyId = useCompanyId();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, roleName } = usePermissions();
   const isDirectionMember = useIsDirectionMember();
   const { isPresident } = usePresidentOrganRestriction();
+  const isSecretariat = roleName === "Secrétariat juridique";
   const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
