@@ -50,7 +50,7 @@ export default function Sessions() {
   const [organs, setOrgans] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
-  const [sessionDetails, setSessionDetails] = useState<Record<string, { agendaItems: any[]; attendees: any[] }>>({});
+  const [sessionDetails, setSessionDetails] = useState<Record<string, { agendaItems: any[]; attendees: any[]; minute?: any }>>({});
   const [manageAttendeesSession, setManageAttendeesSession] = useState<{ id: string; organId: string } | null>(null);
 
   const [editingSession, setEditingSession] = useState<any | null>(null);
@@ -230,13 +230,14 @@ export default function Sessions() {
   };
 
   const loadSessionDetails = async (sessionId: string) => {
-    const [agRes, attRes] = await Promise.all([
+    const [agRes, attRes, pvRes] = await Promise.all([
       supabase.from("agenda_items").select("*, documents(*)").eq("session_id", sessionId).order("order_index"),
       supabase.from("session_attendees").select("*, members!session_attendees_member_id_fkey(full_name, quality)").eq("session_id", sessionId),
+      supabase.from("minutes").select("id, pv_status, is_published, content, created_at").eq("session_id", sessionId).maybeSingle(),
     ]);
     setSessionDetails((prev) => ({
       ...prev,
-      [sessionId]: { agendaItems: agRes.data ?? [], attendees: attRes.data ?? [] },
+      [sessionId]: { agendaItems: agRes.data ?? [], attendees: attRes.data ?? [], minute: pvRes.data ?? null },
     }));
   };
 
