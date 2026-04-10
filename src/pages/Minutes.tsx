@@ -152,10 +152,14 @@ export default function Minutes() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(isReadOnly ? minutes.filter(m => m.pv_status === "valide") : minutes).length === 0 ? (
+              {(() => {
+                const displayMinutes = (isPresident || isSecretariat)
+                  ? minutes
+                  : minutes.filter(m => m.is_published === true);
+                return displayMinutes.length === 0 ? (
                 <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun PV</TableCell></TableRow>
               ) : (
-                (isReadOnly ? minutes.filter(m => m.pv_status === "valide") : minutes).map((m) => (
+                displayMinutes.map((m) => (
                   <React.Fragment key={m.id}>
                   <TableRow>
                     <TableCell className="font-medium">
