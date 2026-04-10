@@ -230,14 +230,13 @@ export default function AuditMeetings() {
   };
 
   const loadSessionDetails = async (sessionId: string) => {
-    const [agRes, attRes, pvRes] = await Promise.all([
+    const [agRes, pvRes] = await Promise.all([
       supabase.from("agenda_items").select("*, documents(*)").eq("session_id", sessionId).order("order_index"),
-      supabase.from("session_attendees").select("*, members!session_attendees_member_id_fkey(full_name, quality)").eq("session_id", sessionId),
       supabase.from("minutes").select("id, pv_status, is_published, content, created_at").eq("session_id", sessionId).maybeSingle(),
     ]);
     setSessionDetails((prev) => ({
       ...prev,
-      [sessionId]: { agendaItems: agRes.data ?? [], attendees: attRes.data ?? [], minute: pvRes.data ?? null },
+      [sessionId]: { agendaItems: agRes.data ?? [], attendees: [], minute: pvRes.data ?? null },
     }));
   };
 
