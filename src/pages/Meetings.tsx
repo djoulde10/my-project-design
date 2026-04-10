@@ -335,6 +335,7 @@ export default function Meetings() {
   // ========== UPDATE MINUTE CONTENT ==========
   const saveMinuteEdit = async () => {
     if (!viewMinute) return;
+    if (viewMinute.pv_status !== "brouillon") { showError(null, "Ce PV est validé et ne peut plus être modifié"); return; }
     // Get next version number
     const { data: versions } = await supabase
       .from("minute_versions")
