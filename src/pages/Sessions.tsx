@@ -284,6 +284,12 @@ export default function Sessions() {
     }
   };
 
+  const handlePublish = async (id: string) => {
+    const { error } = await supabase.from("sessions").update({ is_published: true } as any).eq("id", id);
+    if (error) showError(error, "Impossible de publier la session");
+    else { showSuccess("session_status_updated"); fetchSessions(); }
+  };
+
   const openEditSession = async (s: any) => {
     setEditingSession(s);
     setForm({
