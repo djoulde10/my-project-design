@@ -765,7 +765,7 @@ export default function Sessions() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-              <Button onClick={handleCreate} disabled={!form.organ_id || !form.title || !form.session_date}>Créer</Button>
+              <Button onClick={handleCreate} disabled={!form.organ_id || !form.title || !form.session_date || !form.location || agendaDrafts.filter(d => d.title).length === 0 || !convocationText}>Créer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
