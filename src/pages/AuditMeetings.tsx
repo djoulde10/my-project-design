@@ -942,7 +942,39 @@ export default function AuditMeetings() {
 
             {/* Convocation letter in edit mode */}
             <div className="border-t pt-4 space-y-3">
-              <Label className="text-base font-semibold">Lettre de convocation</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Lettre de convocation</Label>
+                <Button type="button" variant="outline" size="sm" className="gap-2" onClick={async () => {
+                  const allItems = [...editAgendaItems, ...editAgendaDrafts.filter(d => d.title)];
+                  if (allItems.length === 0) { showError(null, "Ajoutez au moins un point à l'ordre du jour"); return; }
+                  setGeneratingConvocation(true);
+                  try {
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    const token = sessionData?.session?.access_token;
+                    if (!token) { showError(null, "Vous devez être connecté"); return; }
+                    const selectedOrganName = organs.find(o => o.id === form.organ_id)?.name || "le Comité d'Audit";
+                    const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-convocation`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+                      body: JSON.stringify({
+                        organ_name: selectedOrganName,
+                        session_title: form.title,
+                        session_date: form.session_date,
+                        location: form.location,
+                        meeting_link: form.meeting_link,
+                        agenda_items: allItems.map((d, i) => ({ order: i + 1, title: d.title, description: d.description })),
+                      }),
+                    });
+                    if (!resp.ok) { const errData = await resp.json().catch(() => null); showError(null, errData?.error || "Erreur"); return; }
+                    const result = await resp.json();
+                    setConvocationText(result.letter);
+                    showSuccess("convocation_regenerated");
+                  } catch (e) { showError(e, "Erreur lors de la régénération"); } finally { setGeneratingConvocation(false); }
+                }} disabled={generatingConvocation}>
+                  {generatingConvocation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  {generatingConvocation ? "Génération…" : "Régénérer (IA)"}
+                </Button>
+              </div>
               {convocationText ? (
                 <Suspense fallback={<div className="h-40 flex items-center justify-center text-muted-foreground text-sm">Chargement…</div>}>
                   <RichTextEditor
