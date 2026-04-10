@@ -628,13 +628,35 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            {!isEditing && !isPresident && viewMinute.pv_status === "brouillon" && (
+            {/* Secretariat: edit brouillon */}
+            {!isEditing && isSecretariat && viewMinute.pv_status === "brouillon" && (
               <Button variant="outline" onClick={() => { setIsEditing(true); setEditingContent(viewMinute.content || ""); }}>
                 <Edit className="w-4 h-4 mr-2" />Éditer
               </Button>
             )}
             {isEditing && (
-              <Button variant="outline" onClick={closeRealtimeEditing}>Fermer l'édition</Button>
+              <>
+                <Button onClick={saveMinuteEdit}><Save className="w-4 h-4 mr-2" />Sauvegarder</Button>
+                <Button variant="outline" onClick={closeRealtimeEditing}>Fermer l'édition</Button>
+              </>
+            )}
+            {/* Secretariat: send for validation */}
+            {isSecretariat && viewMinute.pv_status === "brouillon" && (
+              <Button variant="outline" onClick={() => handleSendForValidation(viewMinute.id)} className="gap-1 text-amber-700 border-amber-300 hover:bg-amber-50">
+                <Send className="w-3.5 h-3.5 mr-1" />Envoyer pour validation
+              </Button>
+            )}
+            {/* President: validate */}
+            {isPresident && viewMinute.pv_status === "en_attente_validation" && (
+              <Button variant="outline" onClick={() => handleValidateMinute(viewMinute.id)} className="gap-1 text-primary border-primary/30 hover:bg-primary/10">
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Valider
+              </Button>
+            )}
+            {/* Secretariat: publish */}
+            {isSecretariat && viewMinute.pv_status === "valide" && !viewMinute.is_published && (
+              <Button variant="outline" onClick={() => handlePublishMinute(viewMinute.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
+                <Send className="w-3.5 h-3.5 mr-1" />Publier
+              </Button>
             )}
             <Button variant="outline" onClick={() => exportPDF(viewMinute)}><Download className="w-4 h-4 mr-2" />PDF</Button>
             <Button variant="outline" onClick={() => exportDOCX(viewMinute)}><FileDown className="w-4 h-4 mr-2" />Word</Button>
