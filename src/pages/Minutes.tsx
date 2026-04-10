@@ -187,12 +187,12 @@ export default function Minutes() {
                     <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        {!isReadOnly && !isPresident && (
+                        {!isReadOnly && !isPresident && m.pv_status === "brouillon" && (
                           <Button variant="ghost" size="sm" onClick={() => openRealtimeEdit(m)}>
                             <Edit3 className="w-4 h-4 mr-1" /> Éditer
                           </Button>
                         )}
-                        {!isReadOnly && !isPresident && (
+                        {!isReadOnly && !isPresident && m.pv_status === "brouillon" && (
                           <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
                             Statut
                           </Button>
