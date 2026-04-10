@@ -498,6 +498,11 @@ export default function AuditMeetings() {
     return false;
   };
 
+  // Non-president, non-secretariat users only see published sessions
+  const displaySessions = (isPresident || isSecretariat)
+    ? sessions
+    : sessions.filter((s: any) => s.is_published === true);
+
   const canDeleteSession = (s: any): boolean => {
     return !isReadOnly && s.status === "brouillon" && hasPermission("modifier_session");
   };
