@@ -30,7 +30,8 @@ type PvStatus = "brouillon" | "valide";
 
 export default function Minutes() {
   const { hasPermission } = usePermissions();
-  const { isPresident } = usePresidentOrganRestriction();
+  const { isPresident, roleName } = usePresidentOrganRestriction();
+  const isSecretariat = roleName === "Secrétariat juridique";
   const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [minutes, setMinutes] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
