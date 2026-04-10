@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import CommentThread from "@/components/CommentThread";
-import PermissionGate from "@/components/PermissionGate";
-import CollaborativeEditor from "@/components/CollaborativeEditor";
+import RichTextEditor from "@/components/RichTextEditor";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import RichTextEditor from "@/components/RichTextEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -133,10 +131,7 @@ export default function Minutes() {
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            <CollaborativeEditor
-              documentId={editingContentId}
-              documentType="minute"
-              tableName="minutes"
+            <RichTextEditor
               content={editingContent}
               onChange={setEditingContent}
               minHeight="300px"

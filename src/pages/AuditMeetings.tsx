@@ -10,11 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Link, Users, Shield, Sparkles, Loader2, Pencil, CheckCircle, Eye, Send } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Link, Users, Sparkles, Loader2, Pencil, CheckCircle, Eye, Send } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import SessionCalendarActions from "@/components/SessionCalendarActions";
-import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
-import PermissionGate from "@/components/PermissionGate";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 import { usePermissions } from "@/hooks/usePermissions";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
@@ -515,11 +512,9 @@ export default function AuditMeetings() {
           <p className="text-sm text-muted-foreground">Gérez les réunions du Comité d'Audit</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          {!isReadOnly && <PermissionGate permission="creer_session">
-            <DialogTrigger asChild>
+          {!isReadOnly && <DialogTrigger asChild>
               <Button><Plus className="w-4 h-4 mr-2" />Nouvelle réunion</Button>
-            </DialogTrigger>
-          </PermissionGate>}
+            </DialogTrigger>}
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Créer une réunion du Comité d'Audit</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -753,15 +748,6 @@ export default function AuditMeetings() {
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" onClick={() => generateBoardPacket(s)} title="Générer le dossier">
-                            <Package className="w-4 h-4" />
-                          </Button>
-                          <SessionCalendarActions session={s} variant="icon" />
-                          {!isReadOnly && <PermissionGate permission="gerer_utilisateurs">
-                            <Button size="sm" variant="ghost" onClick={() => { setPermEntityId(s.id); setPermEntityName(s.title); }} title="Permissions">
-                              <Shield className="w-4 h-4" />
-                            </Button>
-                          </PermissionGate>}
                         </div>
                       </TableCell>
                     </TableRow>
