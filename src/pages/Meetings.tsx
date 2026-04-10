@@ -943,6 +943,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            </>)}
           </div>
 
           {/* Unified PV table */}
