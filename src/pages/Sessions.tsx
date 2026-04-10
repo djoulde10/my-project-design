@@ -596,7 +596,12 @@ export default function Sessions() {
                             <CheckCircle className="w-3.5 h-3.5" />Valider
                           </Button>
                         )}
-                        {!isReadOnly && s.status === "validee" && (
+                        {isSecretariat && s.status === "validee" && !s.is_published && (
+                          <Button size="sm" variant="outline" onClick={() => handlePublish(s.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
+                            <Send className="w-3.5 h-3.5" />Publier
+                          </Button>
+                        )}
+                        {!isReadOnly && s.status === "validee" && s.is_published && (
                           <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
                         )}
                         {!isReadOnly && s.status === "tenue" && (
