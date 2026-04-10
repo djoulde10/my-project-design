@@ -658,8 +658,31 @@ export default function AuditMeetings() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sessions.map((s) => (
-                  <>
+                (() => {
+                  const now = new Date();
+                  const sorted = [...sessions].sort((a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime());
+                  const upcomingIdx = sorted.findIndex(s => new Date(s.session_date) >= now && s.status !== "tenue" && s.status !== "cloturee" && s.status !== "archivee");
+                  const pastIdx = sorted.findIndex(s => new Date(s.session_date) < now || s.status === "tenue" || s.status === "cloturee" || s.status === "archivee");
+                  const hasBoth = upcomingIdx !== -1 && pastIdx !== -1;
+                  let separatorInserted = false;
+                  return sorted.map((s, i) => {
+                    const isPast = new Date(s.session_date) < now || s.status === "tenue" || s.status === "cloturee" || s.status === "archivee";
+                    const showSeparator = hasBoth && !separatorInserted && isPast;
+                    if (showSeparator) separatorInserted = true;
+                    return (
+                      <>
+                        {showSeparator && (
+                          <TableRow key="separator">
+                            <TableCell colSpan={7} className="py-1 px-0">
+                              <div className="flex items-center gap-3">
+                                <div className="flex-1 h-px bg-destructive/30" />
+                                <span className="text-xs font-medium text-destructive/70 whitespace-nowrap">Réunions passées</span>
+                                <div className="flex-1 h-px bg-destructive/30" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                        <
                     <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSessionDetails(s.id)}>
                       <TableCell>
                         {expandedSession === s.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
