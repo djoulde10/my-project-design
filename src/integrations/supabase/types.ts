@@ -1281,6 +1281,7 @@ export type Database = {
           content: string | null
           created_at: string
           id: string
+          is_published: boolean
           pv_status: Database["public"]["Enums"]["pv_status"]
           session_id: string
           signed_at: string | null
@@ -1292,6 +1293,7 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
+          is_published?: boolean
           pv_status?: Database["public"]["Enums"]["pv_status"]
           session_id: string
           signed_at?: string | null
@@ -1303,6 +1305,7 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
+          is_published?: boolean
           pv_status?: Database["public"]["Enums"]["pv_status"]
           session_id?: string
           signed_at?: string | null
@@ -1626,6 +1629,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          is_published: boolean
           is_virtual: boolean
           location: string | null
           meeting_link: string | null
@@ -1643,6 +1647,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          is_published?: boolean
           is_virtual?: boolean
           location?: string | null
           meeting_link?: string | null
@@ -1660,6 +1665,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          is_published?: boolean
           is_virtual?: boolean
           location?: string | null
           meeting_link?: string | null
