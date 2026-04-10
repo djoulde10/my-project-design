@@ -52,8 +52,6 @@ export default function Sessions() {
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [sessionDetails, setSessionDetails] = useState<Record<string, { agendaItems: any[]; attendees: any[] }>>({});
   const [manageAttendeesSession, setManageAttendeesSession] = useState<{ id: string; organId: string } | null>(null);
-  const [permEntityId, setPermEntityId] = useState<string | null>(null);
-  const [permEntityName, setPermEntityName] = useState("");
 
   const [editingSession, setEditingSession] = useState<any | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -430,69 +428,6 @@ export default function Sessions() {
     setDeleteSessionId(null);
   };
 
-  const generateBoardPacket = async (session: any) => {
-    showInfo("Génération du Board Packet en cours…");
-    const [agRes, attRes, docsRes] = await Promise.all([
-      supabase.from("agenda_items").select("*, members(full_name)").eq("session_id", session.id).order("order_index"),
-      supabase.from("session_attendees").select("*, members(full_name, quality, email)").eq("session_id", session.id),
-      supabase.from("documents").select("*").eq("session_id", session.id).order("created_at"),
-    ]);
-    const agendaItems = agRes.data ?? [];
-    const attendees = attRes.data ?? [];
-    const docs = docsRes.data ?? [];
-
-    const pdf = new jsPDF();
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    let y = 20;
-    const addLine = (text: string, size = 11, bold = false) => {
-      if (y > 270) { pdf.addPage(); y = 20; }
-      pdf.setFontSize(size);
-      pdf.setFont("helvetica", bold ? "bold" : "normal");
-      const lines = pdf.splitTextToSize(text, pageWidth - 40);
-      pdf.text(lines, 20, y);
-      y += lines.length * (size * 0.5) + 2;
-    };
-    const addSpacer = (h = 6) => { y += h; };
-
-    pdf.setFontSize(22);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("BOARD PACKET", pageWidth / 2, 50, { align: "center" });
-    pdf.setFontSize(16);
-    pdf.text(session.title, pageWidth / 2, 65, { align: "center" });
-    pdf.setFontSize(12);
-    pdf.setFont("helvetica", "normal");
-    pdf.text(new Date(session.session_date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }), pageWidth / 2, 78, { align: "center" });
-    if (session.location) pdf.text(`Lieu : ${session.location}`, pageWidth / 2, 90, { align: "center" });
-    if (session.meeting_link) pdf.text(`Lien : ${session.meeting_link}`, pageWidth / 2, 100, { align: "center" });
-    pdf.text(`Organe : ${session.organs?.name ?? "—"}`, pageWidth / 2, 112, { align: "center" });
-    pdf.text(`N° ${session.numero_session ?? "—"}`, pageWidth / 2, 122, { align: "center" });
-
-    pdf.addPage(); y = 20;
-    addLine("PARTICIPANTS", 16, true); addSpacer();
-    attendees.forEach((att: any, i: number) => {
-      addLine(`${i + 1}. ${att.members?.full_name ?? "—"} — ${att.members?.quality ?? ""} ${att.members?.email ? `(${att.members.email})` : ""}`, 10);
-    });
-
-    addSpacer(10);
-    addLine("ORDRE DU JOUR", 16, true); addSpacer();
-    agendaItems.forEach((item: any, i: number) => {
-      addLine(`${i + 1}. ${item.title}`, 12, true);
-      if (item.description) addLine(item.description, 10);
-      addLine(`Nature : ${item.nature === "decision" ? "Décision" : "Information"} | Présentateur : ${item.members?.full_name ?? "—"}`, 9);
-      addSpacer(4);
-    });
-
-    if (docs.length > 0) {
-      addSpacer(10);
-      addLine("DOCUMENTS ASSOCIÉS", 16, true); addSpacer();
-      docs.forEach((doc: any, i: number) => {
-        addLine(`${i + 1}. ${doc.name} (${doc.mime_type ?? "fichier"})`, 10);
-      });
-    }
-
-    pdf.save(`Board_Packet_${session.numero_session ?? session.id}.pdf`);
-    showSuccess("board_packet_generated");
-  };
 
   const allCaSessions = sessions.filter((s) => (s as any).organs?.type === "ca");
   // Non-president, non-secretariat users only see published sessions
@@ -839,15 +774,6 @@ export default function Sessions() {
           sessionId={manageAttendeesSession.id}
           organId={manageAttendeesSession.organId}
           onUpdated={() => loadSessionDetails(manageAttendeesSession.id)}
-        />
-      )}
-      {permEntityId && (
-        <EntityPermissionsDialog
-          open={!!permEntityId}
-          onOpenChange={(open) => { if (!open) setPermEntityId(null); }}
-          entityType="session"
-          entityId={permEntityId}
-          entityName={permEntityName}
         />
       )}
 
