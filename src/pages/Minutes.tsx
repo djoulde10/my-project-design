@@ -66,6 +66,12 @@ export default function Minutes() {
     else { showSuccess("pv_status_updated"); setEditingId(null); fetchAll(); }
   };
 
+  const handlePublish = async (id: string) => {
+    const { error } = await supabase.from("minutes").update({ is_published: true }).eq("id", id);
+    if (error) showError(error, "Impossible de publier le PV");
+    else { showSuccess("pv_status_updated"); fetchAll(); }
+  };
+
   const openRealtimeEdit = (m: any) => {
     setEditingContentId(m.id);
     setEditingContent(m.content || "");
