@@ -369,6 +369,12 @@ export default function Meetings() {
     else { showSuccess("pv_status_updated"); setEditingStatusId(null); fetchAll(); }
   };
 
+  const handlePublishMinute = async (id: string) => {
+    const { error } = await supabase.from("minutes").update({ is_published: true } as any).eq("id", id);
+    if (error) showError(error, "Impossible de publier le PV");
+    else { showSuccess("pv_status_updated"); fetchAll(); }
+  };
+
   const openMinute = (minute: any, startEditing = false) => {
     setViewMinute(minute);
     setEditingContent(minute.content || "");
