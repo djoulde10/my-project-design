@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2,
-  ClipboardCheck, History, Edit, Save, FileDown, CheckCircle2, Brain, MessageSquare, Shield
+  ClipboardCheck, History, Edit, Save, FileDown, CheckCircle2, Brain, MessageSquare, Shield, Send
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
