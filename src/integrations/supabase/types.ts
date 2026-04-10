@@ -2002,7 +2002,7 @@ export type Database = {
         | "membre"
         | "membre_direction"
       organ_type: "ca" | "comite_audit"
-      pv_status: "brouillon" | "valide"
+      pv_status: "brouillon" | "en_attente_validation" | "valide"
       session_status:
         | "brouillon"
         | "validee"
@@ -2152,7 +2152,7 @@ export const Constants = {
         "membre_direction",
       ],
       organ_type: ["ca", "comite_audit"],
-      pv_status: ["brouillon", "valide"],
+      pv_status: ["brouillon", "en_attente_validation", "valide"],
       session_status: ["brouillon", "validee", "tenue", "cloturee", "archivee"],
       session_type: ["ordinaire", "extraordinaire", "speciale"],
       solution_status: ["adoptee", "rejetee", "ajournee"],

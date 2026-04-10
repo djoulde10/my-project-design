@@ -34,13 +34,15 @@ import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestricti
 // PV status helpers
 const pvStatusLabels: Record<string, string> = {
   brouillon: "Brouillon",
+  en_attente_validation: "En attente de validation",
   valide: "Validé",
 };
 const pvStatusColors: Record<string, string> = {
   brouillon: "bg-muted text-muted-foreground",
+  en_attente_validation: "bg-amber-100 text-amber-800",
   valide: "bg-primary/10 text-primary",
 };
-type PvStatus = "brouillon" | "valide";
+type PvStatus = "brouillon" | "en_attente_validation" | "valide";
 
 export default function Meetings() {
   
@@ -362,6 +364,26 @@ export default function Meetings() {
   };
 
 
+  const handleSendForValidation = async (id: string) => {
+    const { error } = await supabase.from("minutes").update({ pv_status: "en_attente_validation" }).eq("id", id);
+    if (error) showError(error, "Impossible d'envoyer le PV pour validation");
+    else {
+      showSuccess("pv_status_updated");
+      fetchAll();
+      setViewMinute((current: any) => current?.id === id ? { ...current, pv_status: "en_attente_validation" } : current);
+    }
+  };
+
+  const handleValidateMinute = async (id: string) => {
+    const { error } = await supabase.from("minutes").update({ pv_status: "valide", validated_at: new Date().toISOString() }).eq("id", id);
+    if (error) showError(error, "Impossible de valider le PV");
+    else {
+      showSuccess("pv_status_updated");
+      fetchAll();
+      setViewMinute((current: any) => current?.id === id ? { ...current, pv_status: "valide", validated_at: new Date().toISOString() } : current);
+    }
+  };
+
   const handlePublishMinute = async (id: string) => {
     const { error } = await supabase.rpc("publish_minute", { _minute_id: id });
     if (error) showError(error, "Impossible de publier le PV");
@@ -606,13 +628,35 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            {!isEditing && !isPresident && viewMinute.pv_status === "brouillon" && (
+            {/* Secretariat: edit brouillon */}
+            {!isEditing && isSecretariat && viewMinute.pv_status === "brouillon" && (
               <Button variant="outline" onClick={() => { setIsEditing(true); setEditingContent(viewMinute.content || ""); }}>
                 <Edit className="w-4 h-4 mr-2" />Éditer
               </Button>
             )}
             {isEditing && (
-              <Button variant="outline" onClick={closeRealtimeEditing}>Fermer l'édition</Button>
+              <>
+                <Button onClick={saveMinuteEdit}><Save className="w-4 h-4 mr-2" />Sauvegarder</Button>
+                <Button variant="outline" onClick={closeRealtimeEditing}>Fermer l'édition</Button>
+              </>
+            )}
+            {/* Secretariat: send for validation */}
+            {isSecretariat && viewMinute.pv_status === "brouillon" && (
+              <Button variant="outline" onClick={() => handleSendForValidation(viewMinute.id)} className="gap-1 text-amber-700 border-amber-300 hover:bg-amber-50">
+                <Send className="w-3.5 h-3.5 mr-1" />Envoyer pour validation
+              </Button>
+            )}
+            {/* President: validate */}
+            {isPresident && viewMinute.pv_status === "en_attente_validation" && (
+              <Button variant="outline" onClick={() => handleValidateMinute(viewMinute.id)} className="gap-1 text-primary border-primary/30 hover:bg-primary/10">
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Valider
+              </Button>
+            )}
+            {/* Secretariat: publish */}
+            {isSecretariat && viewMinute.pv_status === "valide" && !viewMinute.is_published && (
+              <Button variant="outline" onClick={() => handlePublishMinute(viewMinute.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
+                <Send className="w-3.5 h-3.5 mr-1" />Publier
+              </Button>
             )}
             <Button variant="outline" onClick={() => exportPDF(viewMinute)}><Download className="w-4 h-4 mr-2" />PDF</Button>
             <Button variant="outline" onClick={() => exportDOCX(viewMinute)}><FileDown className="w-4 h-4 mr-2" />Word</Button>
@@ -960,13 +1004,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                 </TableHeader>
                 <TableBody>
                   {(() => {
-                    // Filter minutes based on role
+                    // RLS already hides brouillon from non-secretariat
+                    // Client-side: regular members only see published PVs
                     let displayMinutes = minutes;
                     if (isReadOnly && !isPresident && !isSecretariat) {
-                      // Regular members only see published & validated PVs
-                      displayMinutes = minutes.filter((m: any) => m.is_published === true && m.pv_status === "valide");
-                    } else if (isReadOnly) {
-                      displayMinutes = minutes.filter((m: any) => m.pv_status === "valide");
+                      displayMinutes = minutes.filter((m: any) => m.is_published === true);
                     }
 
                     if (displayMinutes.length === 0) return (
@@ -997,6 +1039,19 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
+                            {/* Secretariat: send brouillon for validation */}
+                            {isSecretariat && m.pv_status === "brouillon" && (
+                              <Button variant="outline" size="sm" onClick={() => handleSendForValidation(m.id)} className="gap-1 text-amber-700 border-amber-300 hover:bg-amber-50">
+                                <Send className="w-3.5 h-3.5" />Envoyer
+                              </Button>
+                            )}
+                            {/* President: validate */}
+                            {isPresident && m.pv_status === "en_attente_validation" && (
+                              <Button variant="outline" size="sm" onClick={() => handleValidateMinute(m.id)} className="gap-1 text-primary border-primary/30 hover:bg-primary/10">
+                                <CheckCircle2 className="w-3.5 h-3.5" />Valider
+                              </Button>
+                            )}
+                            {/* Secretariat: publish after validation */}
                             {isSecretariat && m.pv_status === "valide" && !m.is_published && (
                               <Button variant="outline" size="sm" onClick={() => handlePublishMinute(m.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
                                 <Send className="w-3.5 h-3.5" />Publier
@@ -1005,7 +1060,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {!isReadOnly && !isPresident && m.pv_status === "brouillon" && (
+                            {isSecretariat && m.pv_status === "brouillon" && (
                               <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
                                 <Edit className="w-4 h-4 mr-1" />Éditer
                               </Button>
