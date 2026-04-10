@@ -561,24 +561,8 @@ export default function Sessions() {
                   {expandedSession === s.id && sessionDetails[s.id] && (
                     <TableRow key={`${s.id}-details`}>
                       <TableCell colSpan={7} className="bg-muted/30 p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="font-semibold text-sm mb-2">Ordre du jour ({sessionDetails[s.id].agendaItems.length})</h4>
-                            {sessionDetails[s.id].agendaItems.map((ai, i) => (
-                              <div key={ai.id} className="text-sm mb-1 flex items-start gap-2">
-                                <Badge variant="outline" className="text-xs shrink-0">{i + 1}</Badge>
-                                <span>{ai.title}</span>
-                                <Badge variant="secondary" className="text-xs ml-auto">{ai.nature}</Badge>
-                              </div>
-                            ))}
-                          </div>
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-semibold text-sm">Participants ({sessionDetails[s.id].attendees.length})</h4>
-                              {!isReadOnly && <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setManageAttendeesSession({ id: s.id, organId: s.organ_id }); }}>
-                                <Users className="w-3.5 h-3.5 mr-1" />Gérer
-                              </Button>}
-                            </div>
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2">Participants ({sessionDetails[s.id].attendees.length})</h4>
                             {sessionDetails[s.id].attendees.map((att) => (
                               <div key={att.id} className="text-sm mb-1 flex items-center gap-2">
                                 <span>{(att as any).members?.full_name}</span>
@@ -587,7 +571,6 @@ export default function Sessions() {
                                 </Badge>
                               </div>
                             ))}
-                          </div>
                         </div>
                         {/* Procès-verbal section */}
                         {sessionDetails[s.id].minute && (
