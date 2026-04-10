@@ -682,8 +682,7 @@ export default function AuditMeetings() {
                             </TableCell>
                           </TableRow>
                         )}
-                        <
-                    <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSessionDetails(s.id)}>
+                        <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSessionDetails(s.id)}>
                       <TableCell>
                         {expandedSession === s.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </TableCell>
@@ -706,7 +705,6 @@ export default function AuditMeetings() {
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
-                          {/* Validate: only president can validate brouillon */}
                           {isPresident && s.status === "brouillon" && (
                             <Button size="sm" variant="outline" onClick={() => openValidationDialog(s)} className="gap-1">
                               <CheckCircle className="w-3.5 h-3.5" />Valider
@@ -721,13 +719,11 @@ export default function AuditMeetings() {
                           {!isReadOnly && s.status === "cloturee" && (
                             <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
                           )}
-                          {/* View convocation letter */}
                           {(s as any).convocation_letter && (
                             <Button size="sm" variant="ghost" onClick={() => setViewConvocationSession(s)} title="Voir la convocation">
                               <Eye className="w-4 h-4" />
                             </Button>
                           )}
-                          {/* Edit: brouillon = secretariat+president, validee = president only */}
                           {canEditSession(s) && (
                             <Button size="sm" variant="ghost" onClick={() => openEditSession(s)} title="Modifier">
                               <Pencil className="w-4 h-4" />
@@ -792,8 +788,10 @@ export default function AuditMeetings() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
-                ))
+                      </>
+                    );
+                  });
+                })()
               )}
             </TableBody>
           </Table>
