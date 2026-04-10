@@ -34,13 +34,15 @@ import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestricti
 // PV status helpers
 const pvStatusLabels: Record<string, string> = {
   brouillon: "Brouillon",
+  en_attente_validation: "En attente de validation",
   valide: "Validé",
 };
 const pvStatusColors: Record<string, string> = {
   brouillon: "bg-muted text-muted-foreground",
+  en_attente_validation: "bg-amber-100 text-amber-800",
   valide: "bg-primary/10 text-primary",
 };
-type PvStatus = "brouillon" | "valide";
+type PvStatus = "brouillon" | "en_attente_validation" | "valide";
 
 export default function Meetings() {
   
