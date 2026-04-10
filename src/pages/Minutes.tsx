@@ -9,22 +9,22 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit3, X, MessageSquare, Send } from "lucide-react";
+import { Plus, Edit3, X, MessageSquare, Send, CheckCircle2 } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 
 const pvStatusLabels: Record<string, string> = {
   brouillon: "Brouillon",
+  en_attente_validation: "En attente de validation",
   valide: "Validé",
 };
 
 const pvStatusColors: Record<string, string> = {
   brouillon: "bg-muted text-muted-foreground",
+  en_attente_validation: "bg-amber-100 text-amber-800",
   valide: "bg-primary/10 text-primary",
 };
-
-type PvStatus = "brouillon" | "valide";
 
 export default function Minutes() {
   const { hasPermission } = usePermissions();
@@ -56,6 +56,17 @@ export default function Minutes() {
     else { showSuccess("pv_created"); setPvOpen(false); setPvForm({ session_id: "", content: "" }); fetchAll(); }
   };
 
+  const handleSendForValidation = async (id: string) => {
+    const { error } = await supabase.from("minutes").update({ pv_status: "en_attente_validation" }).eq("id", id);
+    if (error) showError(error, "Impossible d'envoyer le PV pour validation");
+    else { showSuccess("pv_status_updated"); fetchAll(); }
+  };
+
+  const handleValidate = async (id: string) => {
+    const { error } = await supabase.from("minutes").update({ pv_status: "valide", validated_at: new Date().toISOString() }).eq("id", id);
+    if (error) showError(error, "Impossible de valider le PV");
+    else { showSuccess("pv_status_updated"); fetchAll(); }
+  };
 
   const handlePublish = async (id: string) => {
     const { error } = await supabase.rpc("publish_minute", { _minute_id: id });
@@ -137,9 +148,13 @@ export default function Minutes() {
             </TableHeader>
             <TableBody>
               {(() => {
-                const displayMinutes = (isPresident || isSecretariat)
-                  ? minutes
-                  : minutes.filter(m => m.is_published === true);
+                // RLS already filters: brouillon only visible to secretariat
+                // Client-side: regular members only see published PVs
+                let displayMinutes = minutes;
+                if (!isPresident && !isSecretariat && isReadOnly) {
+                  displayMinutes = minutes.filter(m => m.is_published === true);
+                }
+                
                 return displayMinutes.length === 0 ? (
                 <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun PV</TableCell></TableRow>
               ) : (
@@ -160,11 +175,25 @@ export default function Minutes() {
                     <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        {!isReadOnly && !isPresident && m.pv_status === "brouillon" && (
+                        {/* Secretariat: edit brouillon */}
+                        {isSecretariat && m.pv_status === "brouillon" && (
                           <Button variant="ghost" size="sm" onClick={() => openRealtimeEdit(m)}>
                             <Edit3 className="w-4 h-4 mr-1" /> Éditer
                           </Button>
                         )}
+                        {/* Secretariat: send for validation */}
+                        {isSecretariat && m.pv_status === "brouillon" && (
+                          <Button size="sm" variant="outline" onClick={() => handleSendForValidation(m.id)} className="gap-1 text-amber-700 border-amber-300 hover:bg-amber-50">
+                            <Send className="w-3.5 h-3.5" />Envoyer
+                          </Button>
+                        )}
+                        {/* President: validate */}
+                        {isPresident && m.pv_status === "en_attente_validation" && (
+                          <Button size="sm" variant="outline" onClick={() => handleValidate(m.id)} className="gap-1 text-primary border-primary/30 hover:bg-primary/10">
+                            <CheckCircle2 className="w-3.5 h-3.5" />Valider
+                          </Button>
+                        )}
+                        {/* Secretariat: publish after validation */}
                         {isSecretariat && m.pv_status === "valide" && !m.is_published && (
                           <Button size="sm" variant="outline" onClick={() => handlePublish(m.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
                             <Send className="w-3.5 h-3.5" />Publier
