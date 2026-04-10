@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users, Shield, Sparkles, Loader2, Pencil, CheckCircle, Eye } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Package, Download, Link, Users, Shield, Sparkles, Loader2, Pencil, CheckCircle, Eye, Send } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import SessionCalendarActions from "@/components/SessionCalendarActions";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
@@ -284,6 +284,12 @@ export default function Sessions() {
     }
   };
 
+  const handlePublish = async (id: string) => {
+    const { error } = await supabase.from("sessions").update({ is_published: true } as any).eq("id", id);
+    if (error) showError(error, "Impossible de publier la session");
+    else { showSuccess("session_status_updated"); fetchSessions(); }
+  };
+
   const openEditSession = async (s: any) => {
     setEditingSession(s);
     setForm({
@@ -491,7 +497,11 @@ export default function Sessions() {
     showSuccess("board_packet_generated");
   };
 
-  const caSessions = sessions.filter((s) => (s as any).organs?.type === "ca");
+  const allCaSessions = sessions.filter((s) => (s as any).organs?.type === "ca");
+  // Non-president, non-secretariat users only see published sessions
+  const caSessions = (isPresident || isSecretariat)
+    ? allCaSessions
+    : allCaSessions.filter((s: any) => s.is_published === true);
   const caOrgans = organs.filter((o) => o.type === "ca");
 
   // Determine who can edit a session based on status
@@ -577,7 +587,10 @@ export default function Sessions() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={statusColors[s.status] ?? ""}>{statusLabels[s.status] ?? s.status}</Badge>
+                      <div className="flex items-center gap-1">
+                        <Badge className={statusColors[s.status] ?? ""}>{statusLabels[s.status] ?? s.status}</Badge>
+                        {s.is_published && <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">Publiée</Badge>}
+                      </div>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1">
@@ -586,7 +599,12 @@ export default function Sessions() {
                             <CheckCircle className="w-3.5 h-3.5" />Valider
                           </Button>
                         )}
-                        {!isReadOnly && s.status === "validee" && (
+                        {isSecretariat && s.status === "validee" && !s.is_published && (
+                          <Button size="sm" variant="outline" onClick={() => handlePublish(s.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
+                            <Send className="w-3.5 h-3.5" />Publier
+                          </Button>
+                        )}
+                        {!isReadOnly && s.status === "validee" && s.is_published && (
                           <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
                         )}
                         {!isReadOnly && s.status === "tenue" && (

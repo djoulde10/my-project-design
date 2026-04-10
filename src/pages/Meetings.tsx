@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2,
-  ClipboardCheck, History, Edit, Save, FileDown, CheckCircle2, Brain, MessageSquare, Shield
+  ClipboardCheck, History, Edit, Save, FileDown, CheckCircle2, Brain, MessageSquare, Shield, Send
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
@@ -47,9 +47,10 @@ export default function Meetings() {
   
   const { user } = useAuth();
   const companyId = useCompanyId();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, roleName } = usePermissions();
   const isDirectionMember = useIsDirectionMember();
   const { isPresident } = usePresidentOrganRestriction();
+  const isSecretariat = roleName === "Secrétariat juridique";
   const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [templates, setTemplates] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -366,6 +367,12 @@ export default function Meetings() {
     const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut du PV");
     else { showSuccess("pv_status_updated"); setEditingStatusId(null); fetchAll(); }
+  };
+
+  const handlePublishMinute = async (id: string) => {
+    const { error } = await supabase.from("minutes").update({ is_published: true } as any).eq("id", id);
+    if (error) showError(error, "Impossible de publier le PV");
+    else { showSuccess("pv_status_updated"); fetchAll(); }
   };
 
   const openMinute = (minute: any, startEditing = false) => {
@@ -969,43 +976,62 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(isReadOnly ? minutes.filter((m) => m.pv_status === "valide" || m.pv_status === "signe") : minutes).length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        <FileText className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                        <p className="font-medium">Aucun procès-verbal</p>
-                        {!isReadOnly && <p className="text-sm">Créez un PV manuellement ou utilisez l'enregistrement IA.</p>}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    (isReadOnly ? minutes.filter((m) => m.pv_status === "valide") : minutes).map((m) => (
+                  {(() => {
+                    // Filter minutes based on role
+                    let displayMinutes = minutes;
+                    if (isReadOnly && !isPresident && !isSecretariat) {
+                      // Regular members only see published & validated PVs
+                      displayMinutes = minutes.filter((m: any) => m.is_published === true && (m.pv_status === "valide" || m.pv_status === "signe"));
+                    } else if (isReadOnly) {
+                      displayMinutes = minutes.filter((m: any) => m.pv_status === "valide" || m.pv_status === "signe");
+                    }
+
+                    if (displayMinutes.length === 0) return (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                          <FileText className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                          <p className="font-medium">Aucun procès-verbal</p>
+                          {!isReadOnly && <p className="text-sm">Créez un PV manuellement ou utilisez l'enregistrement IA.</p>}
+                        </TableCell>
+                      </TableRow>
+                    );
+
+                    return displayMinutes.map((m: any) => (
                       <TableRow key={m.id}>
                         <TableCell className="font-medium">
                             {(m as any).sessions?.title || "—"}
                         </TableCell>
                         <TableCell>
-                          {!isReadOnly && !isPresident && editingStatusId === m.id ? (
-                            <Select value={editStatus} onValueChange={(v) => { setEditStatus(v as PvStatus); updateMinuteStatus(m.id, v as PvStatus); }}>
-                              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="brouillon">Brouillon</SelectItem>
-                                <SelectItem value="valide">Validé</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Badge
-                              className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isPresident ? 'cursor-pointer' : ''}`}
-                              onClick={() => { if (!isReadOnly && !isPresident) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
-                            >
-                              {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
-                            </Badge>
-                          )}
+                          <div className="flex items-center gap-1">
+                            {!isReadOnly && !isPresident && editingStatusId === m.id ? (
+                              <Select value={editStatus} onValueChange={(v) => { setEditStatus(v as PvStatus); updateMinuteStatus(m.id, v as PvStatus); }}>
+                                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="brouillon">Brouillon</SelectItem>
+                                  <SelectItem value="valide">Validé</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge
+                                className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isPresident ? 'cursor-pointer' : ''}`}
+                                onClick={() => { if (!isReadOnly && !isPresident) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
+                              >
+                                {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
+                              </Badge>
+                            )}
+                            {m.is_published && <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">Publié</Badge>}
+                          </div>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(m.created_at).toLocaleDateString("fr-FR")}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
+                            {isSecretariat && m.pv_status === "valide" && !m.is_published && (
+                              <Button variant="outline" size="sm" onClick={() => handlePublishMinute(m.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
+                                <Send className="w-3.5 h-3.5" />Publier
+                              </Button>
+                            )}
                             <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -1039,8 +1065,8 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
+                    ));
+                  })()}
                 </TableBody>
               </Table>
             </CardContent>
