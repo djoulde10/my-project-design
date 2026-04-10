@@ -364,6 +364,26 @@ export default function Meetings() {
   };
 
 
+  const handleSendForValidation = async (id: string) => {
+    const { error } = await supabase.from("minutes").update({ pv_status: "en_attente_validation" }).eq("id", id);
+    if (error) showError(error, "Impossible d'envoyer le PV pour validation");
+    else {
+      showSuccess("pv_status_updated");
+      fetchAll();
+      setViewMinute((current: any) => current?.id === id ? { ...current, pv_status: "en_attente_validation" } : current);
+    }
+  };
+
+  const handleValidateMinute = async (id: string) => {
+    const { error } = await supabase.from("minutes").update({ pv_status: "valide", validated_at: new Date().toISOString() }).eq("id", id);
+    if (error) showError(error, "Impossible de valider le PV");
+    else {
+      showSuccess("pv_status_updated");
+      fetchAll();
+      setViewMinute((current: any) => current?.id === id ? { ...current, pv_status: "valide", validated_at: new Date().toISOString() } : current);
+    }
+  };
+
   const handlePublishMinute = async (id: string) => {
     const { error } = await supabase.rpc("publish_minute", { _minute_id: id });
     if (error) showError(error, "Impossible de publier le PV");
