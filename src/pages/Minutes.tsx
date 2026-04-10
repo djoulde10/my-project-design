@@ -209,7 +209,7 @@ export default function Minutes() {
                   )}
                   </React.Fragment>
                 ))
-              )}
+              )})()}
             </TableBody>
           </Table>
         </CardContent>
