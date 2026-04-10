@@ -16,7 +16,7 @@ import CommentThread from "@/components/CommentThread";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
-import PermissionGate from "@/components/PermissionGate";
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const statutLabels: Record<string, string> = {
@@ -143,11 +143,9 @@ export default function Decisions() {
             </DropdownMenuContent>
           </DropdownMenu>
           <Dialog open={open} onOpenChange={setOpen}>
-            <PermissionGate permission="creer_decisions">
               <DialogTrigger asChild>
                 <Button><Plus className="w-4 h-4 mr-2" />Nouvelle résolution</Button>
               </DialogTrigger>
-            </PermissionGate>
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>Enregistrer une résolution</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -302,11 +300,6 @@ export default function Decisions() {
                         <Button variant="ghost" size="sm" onClick={() => setCommentingId(commentingId === d.id ? null : d.id)}>
                           <MessageSquare className="w-3.5 h-3.5" />
                         </Button>
-                        <PermissionGate permission="gerer_utilisateurs">
-                          <Button variant="ghost" size="sm" onClick={() => { setPermEntityId(d.id); setPermEntityName(d.numero_decision || d.texte?.slice(0, 30) || "Décision"); }}>
-                            <Shield className="w-3.5 h-3.5" />
-                          </Button>
-                        </PermissionGate>
                         </div>
                       </TableCell>
                     </TableRow>

@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import RichTextEditor from "@/components/RichTextEditor";
-import CollaborativeEditor from "@/components/CollaborativeEditor";
 import CommentThread from "@/components/CommentThread";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -26,7 +25,7 @@ import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import MeetingAIAnalysis from "@/components/MeetingAIAnalysis";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import { useAuth } from "@/lib/auth";
-import PermissionGate from "@/components/PermissionGate";
+
 import { usePermissions } from "@/hooks/usePermissions";
 import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { useCompanyId } from "@/hooks/useCompanyId";
@@ -664,14 +663,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
         <Card>
           <CardContent className="p-6">
             {isEditing ? (
-              <CollaborativeEditor
-                documentId={viewMinute.id}
-                documentType="minute"
-                tableName="minutes"
+              <RichTextEditor
                 content={editingContent}
                 onChange={setEditingContent}
                 minHeight="500px"
-                placeholder="Modifiez le procès-verbal en collaboration..."
+                placeholder="Modifiez le procès-verbal..."
               />
             ) : (
               <ScrollArea className="h-[500px]">
@@ -856,11 +852,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
               if (!open && scribe.isConnected) stopLiveTranscription();
               if (!open) resetForm();
             }}>
-              <PermissionGate permission="valider_pv">
                 <DialogTrigger asChild>
                   <Button variant="outline"><Upload className="w-4 h-4 mr-2" />Importer un audio</Button>
                 </DialogTrigger>
-              </PermissionGate>
               <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle>Importer un fichier audio</DialogTitle></DialogHeader>
                 <div className="space-y-4">
@@ -931,9 +925,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
 
             {/* Manual PV dialog */}
             <Dialog open={pvOpen} onOpenChange={setPvOpen}>
-              <PermissionGate permission="valider_pv">
                 <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouveau PV manuel</Button></DialogTrigger>
-              </PermissionGate>
               <DialogContent className="max-w-2xl">
                 <DialogHeader><DialogTitle>Rédiger un procès-verbal</DialogTitle></DialogHeader>
                 <div className="space-y-4">
@@ -1061,11 +1053,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             >
                               <History className="w-4 h-4" />
                             </Button>
-                            <PermissionGate permission="gerer_utilisateurs">
-                              <Button variant="ghost" size="sm" onClick={() => { setPermEntityId(m.id); setPermEntityName(m.sessions?.title || m.title || "Réunion"); }}>
-                                <Shield className="w-4 h-4" />
-                              </Button>
-                            </PermissionGate>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1084,11 +1071,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
               Importez des exemples de procès-verbaux pour que l'IA s'inspire de leur structure et style.
             </p>
             <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
-              <PermissionGate permission="gerer_documents">
                 <DialogTrigger asChild>
                   <Button><Plus className="w-4 h-4 mr-2" />Importer un modèle</Button>
                 </DialogTrigger>
-              </PermissionGate>
               <DialogContent>
                 <DialogHeader><DialogTitle>Importer un modèle de PV</DialogTitle></DialogHeader>
                 <div className="space-y-4">
