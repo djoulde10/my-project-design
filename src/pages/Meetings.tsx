@@ -1019,6 +1019,19 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
+                            {/* Secretariat: send brouillon for validation */}
+                            {isSecretariat && m.pv_status === "brouillon" && (
+                              <Button variant="outline" size="sm" onClick={() => handleSendForValidation(m.id)} className="gap-1 text-amber-700 border-amber-300 hover:bg-amber-50">
+                                <Send className="w-3.5 h-3.5" />Envoyer
+                              </Button>
+                            )}
+                            {/* President: validate */}
+                            {isPresident && m.pv_status === "en_attente_validation" && (
+                              <Button variant="outline" size="sm" onClick={() => handleValidateMinute(m.id)} className="gap-1 text-primary border-primary/30 hover:bg-primary/10">
+                                <CheckCircle2 className="w-3.5 h-3.5" />Valider
+                              </Button>
+                            )}
+                            {/* Secretariat: publish after validation */}
                             {isSecretariat && m.pv_status === "valide" && !m.is_published && (
                               <Button variant="outline" size="sm" onClick={() => handlePublishMinute(m.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
                                 <Send className="w-3.5 h-3.5" />Publier
@@ -1027,7 +1040,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {!isReadOnly && !isPresident && m.pv_status === "brouillon" && (
+                            {isSecretariat && m.pv_status === "brouillon" && (
                               <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
                                 <Edit className="w-4 h-4 mr-1" />Éditer
                               </Button>
