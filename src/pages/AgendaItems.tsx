@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import PermissionGate from "@/components/PermissionGate";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { useAuth } from "@/lib/auth";
@@ -204,9 +204,7 @@ export default function AgendaItems() {
           <h1 className="text-2xl font-bold">Générateur d'ordre du jour</h1>
           <p className="text-muted-foreground">Créez et organisez les points d'ordre du jour par session</p>
         </div>
-        <PermissionGate permission="modifier_session">
-          <Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" />Nouveau point</Button>
-        </PermissionGate>
+        <Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" />Nouveau point</Button>
       </div>
 
       {/* Filters */}
@@ -365,14 +363,12 @@ export default function AgendaItems() {
                             ))}
                           </div>
                         </TableCell>
-                        <PermissionGate permission="modifier_session">
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Button variant="ghost" size="icon" onClick={() => openEdit(item)} title="Modifier"><Pencil className="w-4 h-4" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => openDocDialog(item)} title="Attacher un document"><Paperclip className="w-4 h-4" /></Button>
                             </div>
                           </TableCell>
-                        </PermissionGate>
                       </TableRow>
                     );
                   })}

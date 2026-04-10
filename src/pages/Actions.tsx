@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, AlertTriangle, CheckCircle2, Clock, XCircle, Download, FileSpreadsheet, Eye, Pencil } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
-import PermissionGate from "@/components/PermissionGate";
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -337,9 +337,7 @@ export default function Actions() {
             </DropdownMenuContent>
           </DropdownMenu>
           <Dialog open={open} onOpenChange={setOpen}>
-            <PermissionGate permission="suivre_actions">
               <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
-            </PermissionGate>
             <DialogContent className="max-w-2xl max-h-[90vh]">
               <DialogHeader><DialogTitle>Créer une action</DialogTitle></DialogHeader>
               {renderFormFields(form, setForm)}
@@ -423,11 +421,9 @@ export default function Actions() {
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedAction(a); setViewOpen(true); }}>
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <PermissionGate permission="suivre_actions">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(a)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(a)}>
                             <Pencil className="w-4 h-4" />
                           </Button>
-                        </PermissionGate>
                       </div>
                     </TableCell>
                   </TableRow>
