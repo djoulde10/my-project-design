@@ -310,7 +310,7 @@ export default function Meetings() {
 
   // ========== MANUAL PV CREATION ==========
   const createPV = async () => {
-    const { data, error } = await supabase.from("minutes").insert([pvForm]).select().single();
+    const { data, error } = await supabase.from("minutes").insert([{ ...pvForm, pv_status: "brouillon" }]).select().single();
     if (error) {
       showError(error, "Impossible de créer le procès-verbal");
       return;
