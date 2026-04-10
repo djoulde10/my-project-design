@@ -587,7 +587,10 @@ export default function Sessions() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={statusColors[s.status] ?? ""}>{statusLabels[s.status] ?? s.status}</Badge>
+                      <div className="flex items-center gap-1">
+                        <Badge className={statusColors[s.status] ?? ""}>{statusLabels[s.status] ?? s.status}</Badge>
+                        {s.is_published && <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">Publiée</Badge>}
+                      </div>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1">
