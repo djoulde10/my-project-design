@@ -335,6 +335,7 @@ export default function Meetings() {
   // ========== UPDATE MINUTE CONTENT ==========
   const saveMinuteEdit = async () => {
     if (!viewMinute) return;
+    if (viewMinute.pv_status !== "brouillon") { showError(null, "Ce PV est validé et ne peut plus être modifié"); return; }
     // Get next version number
     const { data: versions } = await supabase
       .from("minute_versions")
@@ -612,9 +613,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            {!isEditing && !isPresident && (
+            {!isEditing && !isPresident && viewMinute.pv_status === "brouillon" && (
               <Button variant="outline" onClick={() => { setIsEditing(true); setEditingContent(viewMinute.content || ""); }}>
-                <Edit className="w-4 h-4 mr-2" />Éditer en temps réel
+                <Edit className="w-4 h-4 mr-2" />Éditer
               </Button>
             )}
             {isEditing && (
@@ -1031,7 +1032,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                             <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {!isReadOnly && !isPresident && (
+                            {!isReadOnly && !isPresident && m.pv_status === "brouillon" && (
                               <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
                                 <Edit className="w-4 h-4 mr-1" />Éditer
                               </Button>
