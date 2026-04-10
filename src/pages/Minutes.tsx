@@ -202,6 +202,11 @@ export default function Minutes() {
                             Statut
                           </Button>
                         )}
+                        {isSecretariat && m.pv_status === "valide" && !m.is_published && (
+                          <Button size="sm" variant="outline" onClick={() => handlePublish(m.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
+                            <Send className="w-3.5 h-3.5" />Publier
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm" onClick={() => setCommentingId(commentingId === m.id ? null : m.id)}>
                           <MessageSquare className="w-4 h-4 mr-1" /> Commentaires
                         </Button>
