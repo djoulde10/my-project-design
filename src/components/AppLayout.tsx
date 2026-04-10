@@ -49,7 +49,6 @@ const navSections = [
   {
     label: "Gouvernance",
     items: [
-      { label: "Ordre du jour", icon: FileText, path: "/agenda" },
       { label: "Réunions & PV", icon: Mic, path: "/meetings" },
       { label: "Résolutions", icon: Gavel, path: "/decisions" },
       { label: "Suivi des actions", icon: ListTodo, path: "/actions" },

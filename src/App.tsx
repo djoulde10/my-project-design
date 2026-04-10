@@ -14,7 +14,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import Sessions from "@/pages/Sessions";
 import Members from "@/pages/Members";
-import AgendaItems from "@/pages/AgendaItems";
+
 import Documents from "@/pages/Documents";
 import Decisions from "@/pages/Decisions";
 import Meetings from "@/pages/Meetings";
@@ -101,7 +101,7 @@ function ProtectedApp() {
         <Route path="/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
         <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
         <Route path="/members/:id" element={<ProtectedRoute><MemberProfile /></ProtectedRoute>} />
-        <Route path="/agenda" element={<ProtectedRoute><AgendaItems /></ProtectedRoute>} />
+        
         <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
         <Route path="/minutes" element={<Navigate to="/meetings" replace />} />
         <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />

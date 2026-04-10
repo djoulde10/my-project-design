@@ -230,14 +230,13 @@ export default function Sessions() {
   };
 
   const loadSessionDetails = async (sessionId: string) => {
-    const [agRes, attRes, pvRes] = await Promise.all([
+    const [agRes, pvRes] = await Promise.all([
       supabase.from("agenda_items").select("*, documents(*)").eq("session_id", sessionId).order("order_index"),
-      supabase.from("session_attendees").select("*, members!session_attendees_member_id_fkey(full_name, quality)").eq("session_id", sessionId),
       supabase.from("minutes").select("id, pv_status, is_published, content, created_at").eq("session_id", sessionId).maybeSingle(),
     ]);
     setSessionDetails((prev) => ({
       ...prev,
-      [sessionId]: { agendaItems: agRes.data ?? [], attendees: attRes.data ?? [], minute: pvRes.data ?? null },
+      [sessionId]: { agendaItems: agRes.data ?? [], attendees: [], minute: pvRes.data ?? null },
     }));
   };
 
@@ -561,17 +560,6 @@ export default function Sessions() {
                   {expandedSession === s.id && sessionDetails[s.id] && (
                     <TableRow key={`${s.id}-details`}>
                       <TableCell colSpan={7} className="bg-muted/30 p-4">
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2">Participants ({sessionDetails[s.id].attendees.length})</h4>
-                            {sessionDetails[s.id].attendees.map((att) => (
-                              <div key={att.id} className="text-sm mb-1 flex items-center gap-2">
-                                <span>{(att as any).members?.full_name}</span>
-                                <Badge variant={att.is_present ? "default" : "secondary"} className="text-xs">
-                                  {att.is_present ? "Présent" : "Absent"}
-                                </Badge>
-                              </div>
-                            ))}
-                        </div>
                         {/* Procès-verbal section */}
                         {sessionDetails[s.id].minute && (
                           <div className="mt-3 pt-3 border-t">
