@@ -982,13 +982,11 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                 </TableHeader>
                 <TableBody>
                   {(() => {
-                    // Filter minutes based on role
+                    // RLS already hides brouillon from non-secretariat
+                    // Client-side: regular members only see published PVs
                     let displayMinutes = minutes;
                     if (isReadOnly && !isPresident && !isSecretariat) {
-                      // Regular members only see published & validated PVs
-                      displayMinutes = minutes.filter((m: any) => m.is_published === true && m.pv_status === "valide");
-                    } else if (isReadOnly) {
-                      displayMinutes = minutes.filter((m: any) => m.pv_status === "valide");
+                      displayMinutes = minutes.filter((m: any) => m.is_published === true);
                     }
 
                     if (displayMinutes.length === 0) return (
