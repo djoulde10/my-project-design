@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 import { usePermissions } from "@/hooks/usePermissions";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
-import SessionAttendeeManager from "@/components/SessionAttendeeManager";
+
 const RichTextEditor = lazy(() => import("@/components/RichTextEditor"));
 
 
