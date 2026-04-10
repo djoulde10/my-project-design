@@ -93,8 +93,6 @@ export default function Meetings() {
   const [viewMinute, setViewMinute] = useState<any | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
-  const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
 
   // TTS
   const [ttsAudioUrl, setTtsAudioUrl] = useState<string | null>(null);
@@ -363,11 +361,6 @@ export default function Meetings() {
     fetchAll();
   };
 
-  const updateMinuteStatus = async (id: string, status: PvStatus) => {
-    const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
-    if (error) showError(error, "Impossible de mettre à jour le statut du PV");
-    else { showSuccess("pv_status_updated"); setEditingStatusId(null); fetchAll(); }
-  };
 
   const handlePublishMinute = async (id: string) => {
     const { error } = await supabase.rpc("publish_minute", { _minute_id: id });
@@ -941,16 +934,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                     <Label>Contenu du PV</Label>
                     <RichTextEditor content={pvForm.content} onChange={(html) => setPvForm({ ...pvForm, content: html })} minHeight="200px" />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Statut</Label>
-                    <Select value={pvForm.pv_status} onValueChange={(v) => setPvForm({ ...pvForm, pv_status: v as PvStatus })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="brouillon">Brouillon</SelectItem>
-                        <SelectItem value="valide">Validé</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setPvOpen(false)}>Annuler</Button>
@@ -1000,22 +983,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            {!isReadOnly && !isPresident && editingStatusId === m.id ? (
-                              <Select value={editStatus} onValueChange={(v) => { setEditStatus(v as PvStatus); updateMinuteStatus(m.id, v as PvStatus); }}>
-                                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="brouillon">Brouillon</SelectItem>
-                                  <SelectItem value="valide">Validé</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <Badge
-                                className={`${pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"} ${!isReadOnly && !isPresident ? 'cursor-pointer' : ''}`}
-                                onClick={() => { if (!isReadOnly && !isPresident) { setEditingStatusId(m.id); setEditStatus(m.pv_status ?? "brouillon"); } }}
-                              >
-                                {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
-                              </Badge>
-                            )}
+                            <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
+                              {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
+                            </Badge>
                             {m.is_published && <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">Publié</Badge>}
                           </div>
                         </TableCell>

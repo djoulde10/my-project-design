@@ -34,9 +34,7 @@ export default function Minutes() {
   const [minutes, setMinutes] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [pvOpen, setPvOpen] = useState(false);
-  const [pvForm, setPvForm] = useState<{ session_id: string; content: string; pv_status: PvStatus }>({ session_id: "", content: "", pv_status: "brouillon" });
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editStatus, setEditStatus] = useState<PvStatus>("brouillon");
+  const [pvForm, setPvForm] = useState<{ session_id: string; content: string }>({ session_id: "", content: "" });
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [commentingId, setCommentingId] = useState<string | null>(null);
@@ -53,16 +51,11 @@ export default function Minutes() {
   useEffect(() => { fetchAll(); }, []);
 
   const createPV = async () => {
-    const { error } = await supabase.from("minutes").insert([pvForm]);
+    const { error } = await supabase.from("minutes").insert([{ ...pvForm, pv_status: "brouillon" }]);
     if (error) showError(error, "Impossible de créer le procès-verbal");
-    else { showSuccess("pv_created"); setPvOpen(false); setPvForm({ session_id: "", content: "", pv_status: "brouillon" }); fetchAll(); }
+    else { showSuccess("pv_created"); setPvOpen(false); setPvForm({ session_id: "", content: "" }); fetchAll(); }
   };
 
-  const updateStatus = async (id: string, status: PvStatus) => {
-    const { error } = await supabase.from("minutes").update({ pv_status: status }).eq("id", id);
-    if (error) showError(error, "Impossible de mettre à jour le statut du PV");
-    else { showSuccess("pv_status_updated"); setEditingId(null); fetchAll(); }
-  };
 
   const handlePublish = async (id: string) => {
     const { error } = await supabase.rpc("publish_minute", { _minute_id: id });
@@ -98,16 +91,6 @@ export default function Minutes() {
               <div className="space-y-2">
                 <Label>Contenu du PV</Label>
                 <RichTextEditor content={pvForm.content} onChange={(html) => setPvForm({ ...pvForm, content: html })} minHeight="200px" />
-              </div>
-              <div className="space-y-2">
-                <Label>Statut</Label>
-                <Select value={pvForm.pv_status} onValueChange={(v) => setPvForm({ ...pvForm, pv_status: v as PvStatus })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="brouillon">Brouillon</SelectItem>
-                    <SelectItem value="valide">Validé</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
             <DialogFooter>
@@ -167,22 +150,12 @@ export default function Minutes() {
                       {(m as any).sessions?.title}
                     </TableCell>
                     <TableCell>
-                      {!isReadOnly && !isPresident && editingId === m.id ? (
-                        <Select value={editStatus} onValueChange={(v) => { const s = v as PvStatus; setEditStatus(s); updateStatus(m.id, s); }}>
-                          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="brouillon">Brouillon</SelectItem>
-                            <SelectItem value="valide">Validé</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="flex items-center gap-1">
-                          <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
-                            {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
-                          </Badge>
-                          {m.is_published && <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">Publié</Badge>}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1">
+                        <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
+                          {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
+                        </Badge>
+                        {m.is_published && <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">Publié</Badge>}
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</TableCell>
                     <TableCell>
@@ -190,11 +163,6 @@ export default function Minutes() {
                         {!isReadOnly && !isPresident && m.pv_status === "brouillon" && (
                           <Button variant="ghost" size="sm" onClick={() => openRealtimeEdit(m)}>
                             <Edit3 className="w-4 h-4 mr-1" /> Éditer
-                          </Button>
-                        )}
-                        {!isReadOnly && !isPresident && m.pv_status === "brouillon" && (
-                          <Button variant="ghost" size="sm" onClick={() => { setEditingId(m.id); setEditStatus(m.pv_status ?? "brouillon"); }}>
-                            Statut
                           </Button>
                         )}
                         {isSecretariat && m.pv_status === "valide" && !m.is_published && (
