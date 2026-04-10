@@ -10,12 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Link, Users, Sparkles, Loader2, Pencil, CheckCircle, Eye, Send, FileText } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Link, Sparkles, Loader2, Pencil, CheckCircle, Eye, Send, FileText } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 import { usePermissions } from "@/hooks/usePermissions";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
-import SessionAttendeeManager from "@/components/SessionAttendeeManager";
+
 const RichTextEditor = lazy(() => import("@/components/RichTextEditor"));
 
 
@@ -51,7 +51,7 @@ export default function AuditMeetings() {
   const [open, setOpen] = useState(false);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [sessionDetails, setSessionDetails] = useState<Record<string, { agendaItems: any[]; attendees: any[]; minute?: any }>>({});
-  const [manageAttendeesSession, setManageAttendeesSession] = useState<{ id: string; organId: string } | null>(null);
+  
 
   const [editingSession, setEditingSession] = useState<any | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -574,7 +574,7 @@ export default function AuditMeetings() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-              <Button onClick={handleCreate} disabled={!form.organ_id || !form.title || !form.session_date}>Créer</Button>
+              <Button onClick={handleCreate} disabled={!form.organ_id || !form.title || !form.session_date || !form.location || agendaDrafts.filter(d => d.title).length === 0 || !convocationText}>Créer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -686,33 +686,16 @@ export default function AuditMeetings() {
                     {expandedSession === s.id && sessionDetails[s.id] && (
                       <TableRow key={`${s.id}-details`}>
                         <TableCell colSpan={7} className="bg-muted/30 p-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <h4 className="font-semibold text-sm mb-2">Ordre du jour ({sessionDetails[s.id].agendaItems.length})</h4>
-                              {sessionDetails[s.id].agendaItems.map((ai, i) => (
-                                <div key={ai.id} className="text-sm mb-1 flex items-start gap-2">
-                                  <Badge variant="outline" className="text-xs shrink-0">{i + 1}</Badge>
-                                  <span>{ai.title}</span>
-                                  <Badge variant="secondary" className="text-xs ml-auto">{ai.nature}</Badge>
-                                </div>
-                              ))}
-                            </div>
-                            <div>
-                              <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-semibold text-sm">Participants ({sessionDetails[s.id].attendees.length})</h4>
-                                {!isReadOnly && <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e) => { e.stopPropagation(); setManageAttendeesSession({ id: s.id, organId: s.organ_id }); }}>
-                                  <Users className="w-3.5 h-3.5 mr-1" />Gérer
-                                </Button>}
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2">Participants ({sessionDetails[s.id].attendees.length})</h4>
+                            {sessionDetails[s.id].attendees.map((att) => (
+                              <div key={att.id} className="text-sm mb-1 flex items-center gap-2">
+                                <span>{(att as any).members?.full_name}</span>
+                                <Badge variant={att.is_present ? "default" : "secondary"} className="text-xs">
+                                  {att.is_present ? "Présent" : "Absent"}
+                                </Badge>
                               </div>
-                              {sessionDetails[s.id].attendees.map((att) => (
-                                <div key={att.id} className="text-sm mb-1 flex items-center gap-2">
-                                  <span>{(att as any).members?.full_name}</span>
-                                  <Badge variant={att.is_present ? "default" : "secondary"} className="text-xs">
-                                    {att.is_present ? "Présent" : "Absent"}
-                                  </Badge>
-                                </div>
-                              ))}
-                          </div>
+                            ))}
                         </div>
                         {/* Procès-verbal section */}
                         {sessionDetails[s.id].minute && (
@@ -763,15 +746,8 @@ export default function AuditMeetings() {
         </CardContent>
       </Card>
 
-      {manageAttendeesSession && (
-        <SessionAttendeeManager
-          open={!!manageAttendeesSession}
-          onOpenChange={(open) => { if (!open) setManageAttendeesSession(null); }}
-          sessionId={manageAttendeesSession.id}
-          organId={manageAttendeesSession.organId}
-          onUpdated={() => loadSessionDetails(manageAttendeesSession.id)}
-        />
-      )}
+
+
 
       {/* Validation Dialog */}
       <Dialog open={validationOpen} onOpenChange={(o) => { if (!o) { setValidationOpen(false); setValidationSession(null); } }}>
@@ -966,7 +942,39 @@ export default function AuditMeetings() {
 
             {/* Convocation letter in edit mode */}
             <div className="border-t pt-4 space-y-3">
-              <Label className="text-base font-semibold">Lettre de convocation</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Lettre de convocation</Label>
+                <Button type="button" variant="outline" size="sm" className="gap-2" onClick={async () => {
+                  const allItems = [...editAgendaItems, ...editAgendaDrafts.filter(d => d.title)];
+                  if (allItems.length === 0) { showError(null, "Ajoutez au moins un point à l'ordre du jour"); return; }
+                  setGeneratingConvocation(true);
+                  try {
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    const token = sessionData?.session?.access_token;
+                    if (!token) { showError(null, "Vous devez être connecté"); return; }
+                    const selectedOrganName = organs.find(o => o.id === form.organ_id)?.name || "le Comité d'Audit";
+                    const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-convocation`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+                      body: JSON.stringify({
+                        organ_name: selectedOrganName,
+                        session_title: form.title,
+                        session_date: form.session_date,
+                        location: form.location,
+                        meeting_link: form.meeting_link,
+                        agenda_items: allItems.map((d, i) => ({ order: i + 1, title: d.title, description: d.description })),
+                      }),
+                    });
+                    if (!resp.ok) { const errData = await resp.json().catch(() => null); showError(null, errData?.error || "Erreur"); return; }
+                    const result = await resp.json();
+                    setConvocationText(result.letter);
+                    showSuccess("convocation_regenerated");
+                  } catch (e) { showError(e, "Erreur lors de la régénération"); } finally { setGeneratingConvocation(false); }
+                }} disabled={generatingConvocation}>
+                  {generatingConvocation ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  {generatingConvocation ? "Génération…" : "Régénérer (IA)"}
+                </Button>
+              </div>
               {convocationText ? (
                 <Suspense fallback={<div className="h-40 flex items-center justify-center text-muted-foreground text-sm">Chargement…</div>}>
                   <RichTextEditor
