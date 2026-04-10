@@ -589,6 +589,34 @@ export default function Sessions() {
                             ))}
                           </div>
                         </div>
+                        {/* Procès-verbal section */}
+                        {sessionDetails[s.id].minute && (
+                          <div className="mt-3 pt-3 border-t">
+                            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                              <FileText className="w-4 h-4" />
+                              Procès-verbal
+                              <Badge className={sessionDetails[s.id].minute.is_published ? "bg-emerald-100 text-emerald-800 text-[10px]" : "bg-muted text-muted-foreground text-[10px]"}>
+                                {sessionDetails[s.id].minute.is_published ? "Publié" : sessionDetails[s.id].minute.pv_status === "valide" ? "Validé" : "Brouillon"}
+                              </Badge>
+                            </h4>
+                            {sessionDetails[s.id].minute.is_published && sessionDetails[s.id].minute.content && (
+                              <div className="bg-background rounded border p-3 max-h-[300px] overflow-y-auto">
+                                <div className="prose prose-sm max-w-none text-sm" dangerouslySetInnerHTML={{ __html: sessionDetails[s.id].minute.content }} />
+                              </div>
+                            )}
+                            {!sessionDetails[s.id].minute.is_published && (
+                              <p className="text-sm text-muted-foreground">Le PV n'est pas encore publié.</p>
+                            )}
+                          </div>
+                        )}
+                        {!sessionDetails[s.id].minute && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-sm text-muted-foreground flex items-center gap-2">
+                              <FileText className="w-4 h-4" />
+                              Aucun procès-verbal associé à cette session.
+                            </p>
+                          </div>
+                        )}
                         {s.meeting_link && (
                           <div className="mt-3 pt-3 border-t">
                             <a href={s.meeting_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
