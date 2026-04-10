@@ -1974,6 +1974,7 @@ export type Database = {
       }
       is_super_admin: { Args: never; Returns: boolean }
       my_company_id: { Args: never; Returns: string }
+      publish_minute: { Args: { _minute_id: string }; Returns: boolean }
       user_has_permission: {
         Args: { _permission_nom: string; _user_id: string }
         Returns: boolean
