@@ -536,13 +536,7 @@ export default function Sessions() {
                             <Send className="w-3.5 h-3.5" />Publier
                           </Button>
                         )}
-                        {!isReadOnly && s.status === "validee" && s.is_published && (
-                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "tenue")}>Marquer tenue</Button>
-                        )}
-                        {!isReadOnly && s.status === "tenue" && (
-                          <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "cloturee")}>Clôturer</Button>
-                        )}
-                        {!isReadOnly && s.status === "cloturee" && (
+                        {!isReadOnly && (s.status === "tenue" || s.status === "cloturee") && (
                           <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
                         )}
                         {(s as any).convocation_letter && (
