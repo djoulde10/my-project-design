@@ -746,15 +746,8 @@ export default function AuditMeetings() {
         </CardContent>
       </Card>
 
-      {manageAttendeesSession && (
-        <SessionAttendeeManager
-          open={!!manageAttendeesSession}
-          onOpenChange={(open) => { if (!open) setManageAttendeesSession(null); }}
-          sessionId={manageAttendeesSession.id}
-          organId={manageAttendeesSession.organId}
-          onUpdated={() => loadSessionDetails(manageAttendeesSession.id)}
-        />
-      )}
+
+
 
       {/* Validation Dialog */}
       <Dialog open={validationOpen} onOpenChange={(o) => { if (!o) { setValidationOpen(false); setValidationSession(null); } }}>

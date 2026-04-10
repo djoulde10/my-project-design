@@ -773,15 +773,8 @@ export default function Sessions() {
 
       {renderSessionsTable(caSessions)}
 
-      {manageAttendeesSession && (
-        <SessionAttendeeManager
-          open={!!manageAttendeesSession}
-          onOpenChange={(open) => { if (!open) setManageAttendeesSession(null); }}
-          sessionId={manageAttendeesSession.id}
-          organId={manageAttendeesSession.organId}
-          onUpdated={() => loadSessionDetails(manageAttendeesSession.id)}
-        />
-      )}
+
+
 
       {/* Validation Dialog - President reviews convocation before validating */}
       <Dialog open={validationOpen} onOpenChange={(o) => { if (!o) { setValidationOpen(false); setValidationSession(null); } }}>
