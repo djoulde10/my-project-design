@@ -534,9 +534,31 @@ export default function Sessions() {
                 </TableCell>
               </TableRow>
             ) : (
-              list.map((s) => (
-                <>
-                  <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSessionDetails(s.id)}>
+              (() => {
+                const now = new Date();
+                const sorted = [...list].sort((a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime());
+                const upcomingIdx = sorted.findIndex(s => new Date(s.session_date) >= now && s.status !== "tenue" && s.status !== "cloturee" && s.status !== "archivee");
+                const pastIdx = sorted.findIndex(s => new Date(s.session_date) < now || s.status === "tenue" || s.status === "cloturee" || s.status === "archivee");
+                const hasBoth = upcomingIdx !== -1 && pastIdx !== -1;
+                let separatorInserted = false;
+                return sorted.map((s, i) => {
+                  const isPast = new Date(s.session_date) < now || s.status === "tenue" || s.status === "cloturee" || s.status === "archivee";
+                  const showSeparator = hasBoth && !separatorInserted && isPast;
+                  if (showSeparator) separatorInserted = true;
+                  return (
+                    <>
+                      {showSeparator && (
+                        <TableRow key="separator">
+                          <TableCell colSpan={7} className="py-1 px-0">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 h-px bg-destructive/30" />
+                              <span className="text-xs font-medium text-destructive/70 whitespace-nowrap">Sessions passées</span>
+                              <div className="flex-1 h-px bg-destructive/30" />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleSessionDetails(s.id)}>
                     <TableCell>
                       {expandedSession === s.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </TableCell>
@@ -559,7 +581,6 @@ export default function Sessions() {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1">
-                        {/* Validate: only president can validate brouillon sessions */}
                         {isPresident && s.status === "brouillon" && (
                           <Button size="sm" variant="outline" onClick={() => openValidationDialog(s)} className="gap-1">
                             <CheckCircle className="w-3.5 h-3.5" />Valider
@@ -574,19 +595,16 @@ export default function Sessions() {
                         {!isReadOnly && s.status === "cloturee" && (
                           <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
                         )}
-                        {/* View convocation letter */}
                         {(s as any).convocation_letter && (
                           <Button size="sm" variant="ghost" onClick={() => setViewConvocationSession(s)} title="Voir la convocation">
                             <Eye className="w-4 h-4" />
                           </Button>
                         )}
-                        {/* Edit: brouillon = secretariat+president, validee = president only */}
                         {canEditSession(s) && (
                           <Button size="sm" variant="ghost" onClick={() => openEditSession(s)} title="Modifier">
                             <Pencil className="w-4 h-4" />
                           </Button>
                         )}
-                        {/* Delete: only brouillon, secretariat */}
                         {canDeleteSession(s) && (
                           <Button size="sm" variant="ghost" onClick={() => setDeleteSessionId(s.id)} title="Supprimer">
                             <Trash2 className="w-4 h-4 text-destructive" />
@@ -646,8 +664,10 @@ export default function Sessions() {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
-              ))
+                    </>
+                  );
+                });
+              })()
             )}
           </TableBody>
         </Table>
