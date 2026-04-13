@@ -149,7 +149,6 @@ export default function Meetings() {
   }, [isDirectionMember]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
-  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   // ========== REALTIME RECORDING ==========
   const startLiveTranscription = async () => {
