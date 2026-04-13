@@ -50,7 +50,7 @@ export default function Meetings() {
   const companyId = useCompanyId();
   const { hasPermission, roleName } = usePermissions();
   const isDirectionMember = useIsDirectionMember();
-  const { isPresident } = usePresidentOrganRestriction();
+  const { isPresident, isReadOnlyForOrgan } = usePresidentOrganRestriction();
   const isSecretariat = roleName === "Secrétariat juridique";
   const isReadOnly = !hasPermission("valider_pv") && !hasPermission("modifier_session") && !hasPermission("creer_session");
   const [templates, setTemplates] = useState<any[]>([]);
@@ -148,7 +148,6 @@ export default function Meetings() {
     setMembers(memRes.data ?? []);
   }, [isDirectionMember]);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   // ========== REALTIME RECORDING ==========
@@ -990,107 +989,132 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </>)}
           </div>
 
-          {/* Unified PV table */}
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Session</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(() => {
-                    // RLS already hides brouillon from non-secretariat
-                    // Client-side: regular members only see published PVs
-                    let displayMinutes = minutes;
-                    if (isReadOnly && !isPresident && !isSecretariat) {
-                      displayMinutes = minutes.filter((m: any) => m.is_published === true);
-                    }
+          {/* PV split by organ type */}
+          {(() => {
+            const getOrganType = (m: any): string => m?.sessions?.organs?.type ?? "ca";
+            const canPresidentValidate = (organType: string): boolean => {
+              if (!isPresident) return false;
+              return !isReadOnlyForOrgan(organType);
+            };
 
-                    if (displayMinutes.length === 0) return (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                          <FileText className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                          <p className="font-medium">Aucun procès-verbal</p>
-                          {!isReadOnly && <p className="text-sm">Créez un PV manuellement ou utilisez l'enregistrement IA.</p>}
-                        </TableCell>
-                      </TableRow>
-                    );
+            const caMinutes = minutes.filter((m: any) => getOrganType(m) === "ca");
+            const auditMinutes = minutes.filter((m: any) => getOrganType(m) === "comite_audit");
 
-                    return displayMinutes.map((m: any) => (
-                      <TableRow key={m.id}>
-                        <TableCell className="font-medium">
-                            {(m as any).sessions?.title || "—"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
-                              {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
-                            </Badge>
-                            {m.is_published && <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">Publié</Badge>}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(m.created_at).toLocaleDateString("fr-FR")}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {/* Secretariat: send brouillon for validation */}
-                            {isSecretariat && m.pv_status === "brouillon" && (
-                              <Button variant="outline" size="sm" onClick={() => handleSendForValidation(m.id)} className="gap-1 text-amber-700 border-amber-300 hover:bg-amber-50">
-                                <Send className="w-3.5 h-3.5" />Envoyer
-                              </Button>
-                            )}
-                            {/* President: validate */}
-                            {isPresident && m.pv_status === "en_attente_validation" && (
-                              <Button variant="outline" size="sm" onClick={() => handleValidateMinute(m.id)} className="gap-1 text-primary border-primary/30 hover:bg-primary/10">
-                                <CheckCircle2 className="w-3.5 h-3.5" />Valider
-                              </Button>
-                            )}
-                            {/* Secretariat: publish after validation */}
-                            {isSecretariat && m.pv_status === "valide" && !m.is_published && (
-                              <Button variant="outline" size="sm" onClick={() => handlePublishMinute(m.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
-                                <Send className="w-3.5 h-3.5" />Publier
-                              </Button>
-                            )}
-                            <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            {isSecretariat && m.pv_status === "brouillon" && (
-                              <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
-                                <Edit className="w-4 h-4 mr-1" />Éditer
-                              </Button>
-                            )}
-                            <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
-                              <MessageSquare className="w-4 h-4 mr-1" />Commentaires
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => exportPDF(m)}>
-                              <Download className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setVersionHistoryMinuteId(m.id);
-                                setVersionHistoryContent(m.content);
-                                setVersionHistoryOpen(true);
-                              }}
-                            >
-                              <History className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ));
-                  })()}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+            const renderPVTable = (list: any[], organType: string) => {
+              let displayMinutes = list;
+              if (isReadOnly && !isPresident && !isSecretariat) {
+                displayMinutes = list.filter((m: any) => m.is_published === true);
+              }
+              if (isPresident && isReadOnlyForOrgan(organType)) {
+                displayMinutes = list.filter((m: any) => m.is_published === true);
+              }
+
+              return (
+                <Card>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Session</TableHead>
+                          <TableHead>Statut</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {displayMinutes.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                              <FileText className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                              <p className="font-medium">Aucun procès-verbal</p>
+                              {!isReadOnly && <p className="text-sm">Créez un PV manuellement ou utilisez l'enregistrement IA.</p>}
+                            </TableCell>
+                          </TableRow>
+                        ) : displayMinutes.map((m: any) => (
+                          <TableRow key={m.id}>
+                            <TableCell className="font-medium">
+                              {m.sessions?.title || "—"}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Badge className={pvStatusColors[m.pv_status] ?? "bg-muted text-muted-foreground"}>
+                                  {pvStatusLabels[m.pv_status] ?? m.pv_status ?? "Brouillon"}
+                                </Badge>
+                                {m.is_published && <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">Publié</Badge>}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(m.created_at).toLocaleDateString("fr-FR")}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {isSecretariat && m.pv_status === "brouillon" && (
+                                  <Button variant="outline" size="sm" onClick={() => handleSendForValidation(m.id)} className="gap-1 text-amber-700 border-amber-300 hover:bg-amber-50">
+                                    <Send className="w-3.5 h-3.5" />Envoyer
+                                  </Button>
+                                )}
+                                {canPresidentValidate(getOrganType(m)) && m.pv_status === "en_attente_validation" && (
+                                  <Button variant="outline" size="sm" onClick={() => handleValidateMinute(m.id)} className="gap-1 text-primary border-primary/30 hover:bg-primary/10">
+                                    <CheckCircle2 className="w-3.5 h-3.5" />Valider
+                                  </Button>
+                                )}
+                                {isSecretariat && m.pv_status === "valide" && !m.is_published && (
+                                  <Button variant="outline" size="sm" onClick={() => handlePublishMinute(m.id)} className="gap-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50">
+                                    <Send className="w-3.5 h-3.5" />Publier
+                                  </Button>
+                                )}
+                                <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                {isSecretariat && m.pv_status === "brouillon" && (
+                                  <Button variant="ghost" size="sm" onClick={() => openMinute(m, true)}>
+                                    <Edit className="w-4 h-4 mr-1" />Éditer
+                                  </Button>
+                                )}
+                                <Button variant="ghost" size="sm" onClick={() => openMinute(m, false)}>
+                                  <MessageSquare className="w-4 h-4 mr-1" />Commentaires
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => exportPDF(m)}>
+                                  <Download className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => {
+                                  setVersionHistoryMinuteId(m.id);
+                                  setVersionHistoryContent(m.content);
+                                  setVersionHistoryOpen(true);
+                                }}>
+                                  <History className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              );
+            };
+
+            // If direction member, only show audit
+            if (isDirectionMember) {
+              return renderPVTable(auditMinutes, "comite_audit");
+            }
+
+            return (
+              <Tabs defaultValue="pv_ca" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="pv_ca">Conseil d'Administration ({caMinutes.length})</TabsTrigger>
+                  <TabsTrigger value="pv_audit">Comité d'Audit ({auditMinutes.length})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="pv_ca" className="mt-4">
+                  {renderPVTable(caMinutes, "ca")}
+                </TabsContent>
+                <TabsContent value="pv_audit" className="mt-4">
+                  {renderPVTable(auditMinutes, "comite_audit")}
+                </TabsContent>
+              </Tabs>
+            );
+          })()}
         </TabsContent>
 
         {/* ===== TEMPLATES TAB ===== */}
