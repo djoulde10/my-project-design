@@ -997,17 +997,24 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
               return !isReadOnlyForOrgan(organType);
             };
 
-            const caMinutes = minutes.filter((m: any) => getOrganType(m) === "ca");
-            const auditMinutes = minutes.filter((m: any) => getOrganType(m) === "comite_audit");
+            const caMinutesAll = minutes.filter((m: any) => getOrganType(m) === "ca");
+            const auditMinutesAll = minutes.filter((m: any) => getOrganType(m) === "comite_audit");
 
-            const renderPVTable = (list: any[], organType: string) => {
-              let displayMinutes = list;
+            const filterVisible = (list: any[], organType: string) => {
               if (isReadOnly && !isPresident && !isSecretariat) {
-                displayMinutes = list.filter((m: any) => m.is_published === true);
+                return list.filter((m: any) => m.is_published === true);
               }
               if (isPresident && isReadOnlyForOrgan(organType)) {
-                displayMinutes = list.filter((m: any) => m.is_published === true);
+                return list.filter((m: any) => m.is_published === true);
               }
+              return list;
+            };
+
+            const caMinutes = filterVisible(caMinutesAll, "ca");
+            const auditMinutes = filterVisible(auditMinutesAll, "comite_audit");
+
+            const renderPVTable = (list: any[], organType: string) => {
+              const displayMinutes = list;
 
               return (
                 <Card>
