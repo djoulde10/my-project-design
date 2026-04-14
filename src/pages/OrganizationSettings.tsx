@@ -284,19 +284,37 @@ export default function OrganizationSettings() {
   async function handleSave() {
     if (!companyId) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("companies")
-      .update({
-        platform_name: platformName.trim() || null,
-        couleur_principale: primaryColor,
-        couleur_secondaire: secondaryColor,
-        couleur_accent: accentColor,
-        couleur_fond: bgColor,
-        couleur_sidebar: sidebarColor,
-        couleur_carte: cardColor,
-        logo_url: logoUrl,
-      } as any)
-      .eq("id", companyId);
+
+    let error: any = null;
+
+    if (isAdmin) {
+      // Admins can update everything including logo and platform name
+      const res = await supabase
+        .from("companies")
+        .update({
+          platform_name: platformName.trim() || null,
+          couleur_principale: primaryColor,
+          couleur_secondaire: secondaryColor,
+          couleur_accent: accentColor,
+          couleur_fond: bgColor,
+          couleur_sidebar: sidebarColor,
+          couleur_carte: cardColor,
+          logo_url: logoUrl,
+        } as any)
+        .eq("id", companyId);
+      error = res.error;
+    } else {
+      // Non-admins can only update colors via secure RPC
+      const res = await supabase.rpc("update_company_colors", {
+        _couleur_principale: primaryColor,
+        _couleur_secondaire: secondaryColor,
+        _couleur_accent: accentColor,
+        _couleur_fond: bgColor,
+        _couleur_sidebar: sidebarColor,
+        _couleur_carte: cardColor,
+      });
+      error = res.error;
+    }
 
     if (error) {
       toast.error("Erreur lors de la sauvegarde");
