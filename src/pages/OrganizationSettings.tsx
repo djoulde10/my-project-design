@@ -188,6 +188,7 @@ export default function OrganizationSettings() {
   const companyId = useCompanyId();
   const { invalidateCache } = useCompanyBranding();
   const { hasPermission } = usePermissions();
+  const { prefs: userPrefs, savePrefs, invalidate: invalidateUserPrefs } = useUserPreferences();
   const isAdmin = hasPermission("gerer_utilisateurs");
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -210,6 +211,23 @@ export default function OrganizationSettings() {
     if (!companyId) return;
     loadSettings();
   }, [companyId]);
+
+  // Once user prefs load, override color state with user's personal choices
+  const [userPrefsApplied, setUserPrefsApplied] = useState(false);
+  useEffect(() => {
+    if (userPrefsApplied) return;
+    if (!userPrefs) return;
+    const hasAny = userPrefs.couleur_principale || userPrefs.couleur_secondaire || userPrefs.couleur_accent || userPrefs.couleur_fond || userPrefs.couleur_sidebar || userPrefs.couleur_carte;
+    if (hasAny) {
+      if (userPrefs.couleur_principale) setPrimaryColor(userPrefs.couleur_principale);
+      if (userPrefs.couleur_secondaire) setSecondaryColor(userPrefs.couleur_secondaire);
+      if (userPrefs.couleur_accent) setAccentColor(userPrefs.couleur_accent);
+      if (userPrefs.couleur_fond) setBgColor(userPrefs.couleur_fond);
+      if (userPrefs.couleur_sidebar) setSidebarColor(userPrefs.couleur_sidebar);
+      if (userPrefs.couleur_carte) setCardColor(userPrefs.couleur_carte);
+      setUserPrefsApplied(true);
+    }
+  }, [userPrefs]);
 
   async function loadSettings() {
     setLoading(true);
