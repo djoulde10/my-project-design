@@ -1,0 +1,3 @@
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS couleur_fond TEXT DEFAULT NULL;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS couleur_sidebar TEXT DEFAULT NULL;
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS couleur_carte TEXT DEFAULT NULL;
