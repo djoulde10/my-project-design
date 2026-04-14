@@ -2027,6 +2027,17 @@ export type Database = {
       }
       my_company_id: { Args: never; Returns: string }
       publish_minute: { Args: { _minute_id: string }; Returns: boolean }
+      update_company_colors: {
+        Args: {
+          _couleur_accent?: string
+          _couleur_carte?: string
+          _couleur_fond?: string
+          _couleur_principale?: string
+          _couleur_secondaire?: string
+          _couleur_sidebar?: string
+        }
+        Returns: boolean
+      }
       user_has_permission: {
         Args: { _permission_nom: string; _user_id: string }
         Returns: boolean

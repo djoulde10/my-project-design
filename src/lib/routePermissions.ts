@@ -20,7 +20,7 @@ export const routePermissionMap: Record<string, PermissionName[]> = {
   "/calendar": ["consulter_documents"],
   "/api-keys": ["gerer_api"],
   "/api-docs": ["gerer_api"],
-  "/settings": ["gerer_utilisateurs"],
+  
 };
 
 export function getRequiredPermissions(path: string): PermissionName[] | null {

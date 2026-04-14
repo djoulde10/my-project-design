@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { useCompanyBranding } from "@/hooks/useCompanyBranding";
 import { supabase } from "@/integrations/supabase/client";
@@ -185,6 +186,8 @@ export default function OrganizationSettings() {
   const { user } = useAuth();
   const companyId = useCompanyId();
   const { invalidateCache } = useCompanyBranding();
+  const { hasPermission } = usePermissions();
+  const isAdmin = hasPermission("gerer_utilisateurs");
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -281,19 +284,37 @@ export default function OrganizationSettings() {
   async function handleSave() {
     if (!companyId) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("companies")
-      .update({
-        platform_name: platformName.trim() || null,
-        couleur_principale: primaryColor,
-        couleur_secondaire: secondaryColor,
-        couleur_accent: accentColor,
-        couleur_fond: bgColor,
-        couleur_sidebar: sidebarColor,
-        couleur_carte: cardColor,
-        logo_url: logoUrl,
-      } as any)
-      .eq("id", companyId);
+
+    let error: any = null;
+
+    if (isAdmin) {
+      // Admins can update everything including logo and platform name
+      const res = await supabase
+        .from("companies")
+        .update({
+          platform_name: platformName.trim() || null,
+          couleur_principale: primaryColor,
+          couleur_secondaire: secondaryColor,
+          couleur_accent: accentColor,
+          couleur_fond: bgColor,
+          couleur_sidebar: sidebarColor,
+          couleur_carte: cardColor,
+          logo_url: logoUrl,
+        } as any)
+        .eq("id", companyId);
+      error = res.error;
+    } else {
+      // Non-admins can only update colors via secure RPC
+      const res = await supabase.rpc("update_company_colors", {
+        _couleur_principale: primaryColor,
+        _couleur_secondaire: secondaryColor,
+        _couleur_accent: accentColor,
+        _couleur_fond: bgColor,
+        _couleur_sidebar: sidebarColor,
+        _couleur_carte: cardColor,
+      });
+      error = res.error;
+    }
 
     if (error) {
       toast.error("Erreur lors de la sauvegarde");
@@ -343,7 +364,8 @@ export default function OrganizationSettings() {
         </div>
       </div>
 
-      {/* Logo + Platform name row */}
+      {/* Logo + Platform name row (admin only) */}
+      {isAdmin && (
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -399,6 +421,7 @@ export default function OrganizationSettings() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Theme presets */}
       <Card>

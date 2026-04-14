@@ -90,7 +90,7 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
 
   return (
     <>
-      <div className="px-5 py-5 flex items-center gap-3">
+      <Link to="/settings" onClick={onNavigate} className="px-5 py-5 flex items-center gap-3 hover:bg-sidebar-accent/30 transition-colors rounded-lg cursor-pointer">
         {logoUrl ? (
           <img src={logoUrl} alt={name} className="w-9 h-9 rounded-lg object-contain" />
         ) : (
@@ -105,7 +105,7 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
           <h1 className="font-bold text-base text-sidebar-accent-foreground font-['Space_Grotesk'] tracking-tight truncate max-w-[160px]">{name}</h1>
           <p className="text-[11px] text-sidebar-foreground/50 leading-none mt-0.5">Gouvernance d'entreprise</p>
         </div>
-      </div>
+      </Link>
 
       <Separator className="bg-sidebar-border/60" />
 
