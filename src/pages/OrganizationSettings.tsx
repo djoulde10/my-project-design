@@ -364,7 +364,8 @@ export default function OrganizationSettings() {
         </div>
       </div>
 
-      {/* Logo + Platform name row */}
+      {/* Logo + Platform name row (admin only) */}
+      {isAdmin && (
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
