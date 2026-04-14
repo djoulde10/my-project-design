@@ -380,7 +380,9 @@ export default function OrganizationSettings() {
             Personnalisation & Branding
           </h1>
           <p className="text-muted-foreground mt-1">
-            Personnalisez l'apparence complète de votre plateforme
+            {isAdmin 
+              ? "Personnalisez l'apparence de la plateforme pour toute l'organisation"
+              : "Personnalisez l'apparence de votre interface (visible uniquement par vous)"}
           </p>
         </div>
         <div className="flex gap-2">
