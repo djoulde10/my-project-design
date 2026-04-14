@@ -421,6 +421,7 @@ export default function OrganizationSettings() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Theme presets */}
       <Card>
