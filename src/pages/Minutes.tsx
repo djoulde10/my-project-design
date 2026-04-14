@@ -89,18 +89,21 @@ export default function Minutes() {
     return !isReadOnlyForOrgan(organType);
   };
 
-  const caMinutes = minutes.filter(m => getOrganType(m) === "ca");
-  const auditMinutes = minutes.filter(m => getOrganType(m) === "comite_audit");
+  const filterVisible = (list: any[], organType: string) => {
+    if (!isPresident && !isSecretariat && isReadOnly) {
+      return list.filter(m => m.is_published === true);
+    }
+    if (isPresident && isReadOnlyForOrgan(organType)) {
+      return list.filter(m => m.is_published === true);
+    }
+    return list;
+  };
+
+  const caMinutes = filterVisible(minutes.filter(m => getOrganType(m) === "ca"), "ca");
+  const auditMinutes = filterVisible(minutes.filter(m => getOrganType(m) === "comite_audit"), "comite_audit");
 
   const renderMinutesTable = (list: any[], organType: string) => {
-    let displayMinutes = list;
-    if (!isPresident && !isSecretariat && isReadOnly) {
-      displayMinutes = list.filter(m => m.is_published === true);
-    }
-    // Presidents who are read-only for this organ only see published
-    if (isPresident && isReadOnlyForOrgan(organType)) {
-      displayMinutes = list.filter(m => m.is_published === true);
-    }
+    const displayMinutes = list;
 
     return (
       <Card>
