@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { useCompanyBranding } from "@/hooks/useCompanyBranding";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
