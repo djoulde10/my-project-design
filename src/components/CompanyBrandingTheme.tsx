@@ -8,6 +8,10 @@ const TOKEN_NAMES = [
   "--sidebar-ring",
   "--secondary",
   "--accent",
+  "--background",
+  "--sidebar-background",
+  "--card",
+  "--popover",
 ] as const;
 
 function clearBrandingTokens(root: HTMLElement) {
@@ -19,7 +23,6 @@ export default function CompanyBrandingTheme() {
 
   useEffect(() => {
     const root = document.documentElement;
-
     clearBrandingTokens(root);
 
     if (branding.couleur_principale) {
@@ -38,10 +41,24 @@ export default function CompanyBrandingTheme() {
       root.style.setProperty("--accent", hexToHSL(branding.couleur_accent));
     }
 
+    if (branding.couleur_fond) {
+      root.style.setProperty("--background", hexToHSL(branding.couleur_fond));
+    }
+
+    if (branding.couleur_sidebar) {
+      root.style.setProperty("--sidebar-background", hexToHSL(branding.couleur_sidebar));
+    }
+
+    if (branding.couleur_carte) {
+      const cardHsl = hexToHSL(branding.couleur_carte);
+      root.style.setProperty("--card", cardHsl);
+      root.style.setProperty("--popover", cardHsl);
+    }
+
     return () => {
       clearBrandingTokens(root);
     };
-  }, [branding.couleur_principale, branding.couleur_secondaire, branding.couleur_accent]);
+  }, [branding]);
 
   return null;
 }

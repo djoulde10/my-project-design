@@ -9,6 +9,9 @@ export interface CompanyBranding {
   couleur_principale: string;
   couleur_secondaire: string | null;
   couleur_accent: string | null;
+  couleur_fond: string | null;
+  couleur_sidebar: string | null;
+  couleur_carte: string | null;
 }
 
 const DEFAULT_BRANDING: CompanyBranding = {
@@ -18,11 +21,13 @@ const DEFAULT_BRANDING: CompanyBranding = {
   couleur_principale: "#1e40af",
   couleur_secondaire: null,
   couleur_accent: null,
+  couleur_fond: null,
+  couleur_sidebar: null,
+  couleur_carte: null,
 };
 
-// Simple in-memory cache
 let brandingCache: Record<string, { data: CompanyBranding; ts: number }> = {};
-const CACHE_TTL = 5 * 60 * 1000; // 5 min
+const CACHE_TTL = 5 * 60 * 1000;
 
 export function hexToHSL(hex: string): string {
   hex = hex.replace("#", "");
@@ -53,12 +58,8 @@ export function useCompanyBranding() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!companyId) {
-      setLoading(false);
-      return;
-    }
+    if (!companyId) { setLoading(false); return; }
 
-    // Check cache
     const cached = brandingCache[companyId];
     if (cached && Date.now() - cached.ts < CACHE_TTL) {
       setBranding(cached.data);
@@ -68,18 +69,22 @@ export function useCompanyBranding() {
 
     supabase
       .from("companies")
-      .select("nom, platform_name, logo_url, couleur_principale, couleur_secondaire, couleur_accent")
+      .select("nom, platform_name, logo_url, couleur_principale, couleur_secondaire, couleur_accent, couleur_fond, couleur_sidebar, couleur_carte")
       .eq("id", companyId)
       .single()
       .then(({ data, error }) => {
         if (!error && data) {
+          const d = data as any;
           const b: CompanyBranding = {
-            nom: data.nom,
-            platform_name: data.platform_name,
-            logo_url: data.logo_url,
-            couleur_principale: data.couleur_principale ?? "#1e40af",
-            couleur_secondaire: (data as any).couleur_secondaire ?? null,
-            couleur_accent: (data as any).couleur_accent ?? null,
+            nom: d.nom,
+            platform_name: d.platform_name,
+            logo_url: d.logo_url,
+            couleur_principale: d.couleur_principale ?? "#1e40af",
+            couleur_secondaire: d.couleur_secondaire ?? null,
+            couleur_accent: d.couleur_accent ?? null,
+            couleur_fond: d.couleur_fond ?? null,
+            couleur_sidebar: d.couleur_sidebar ?? null,
+            couleur_carte: d.couleur_carte ?? null,
           };
           brandingCache[companyId] = { data: b, ts: Date.now() };
           setBranding(b);
