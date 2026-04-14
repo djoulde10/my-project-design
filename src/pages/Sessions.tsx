@@ -460,7 +460,7 @@ export default function Sessions() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-8"></TableHead>
-              <TableHead>N° Session</TableHead>
+              <TableHead>Nature</TableHead>
               <TableHead>Session</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Lieu</TableHead>
@@ -504,7 +504,11 @@ export default function Sessions() {
                     <TableCell>
                       {expandedSession === s.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{s.numero_session ?? "—"}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {s.session_type === "extraordinaire" ? "Extraordinaire" : "Ordinaire"}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="font-medium">{s.title}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-sm">
