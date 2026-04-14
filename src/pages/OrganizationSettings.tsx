@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { useCompanyBranding } from "@/hooks/useCompanyBranding";
 import { supabase } from "@/integrations/supabase/client";
@@ -185,6 +186,8 @@ export default function OrganizationSettings() {
   const { user } = useAuth();
   const companyId = useCompanyId();
   const { invalidateCache } = useCompanyBranding();
+  const { hasPermission } = usePermissions();
+  const isAdmin = hasPermission("gerer_utilisateurs");
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
