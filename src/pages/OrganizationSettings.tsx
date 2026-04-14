@@ -307,7 +307,7 @@ export default function OrganizationSettings() {
     let error: any = null;
 
     if (isAdmin) {
-      // Admins can update everything including logo and platform name
+      // Admins update company-wide settings AND their own user prefs
       const res = await supabase
         .from("companies")
         .update({
@@ -322,17 +322,29 @@ export default function OrganizationSettings() {
         } as any)
         .eq("id", companyId);
       error = res.error;
+
+      // Also save to user prefs for the admin's own view
+      if (!error) {
+        await savePrefs({
+          couleur_principale: primaryColor,
+          couleur_secondaire: secondaryColor,
+          couleur_accent: accentColor,
+          couleur_fond: bgColor,
+          couleur_sidebar: sidebarColor,
+          couleur_carte: cardColor,
+        });
+      }
     } else {
-      // Non-admins can only update colors via secure RPC
-      const res = await supabase.rpc("update_company_colors", {
-        _couleur_principale: primaryColor,
-        _couleur_secondaire: secondaryColor,
-        _couleur_accent: accentColor,
-        _couleur_fond: bgColor,
-        _couleur_sidebar: sidebarColor,
-        _couleur_carte: cardColor,
+      // Non-admins save only to their personal user_preferences
+      const ok = await savePrefs({
+        couleur_principale: primaryColor,
+        couleur_secondaire: secondaryColor,
+        couleur_accent: accentColor,
+        couleur_fond: bgColor,
+        couleur_sidebar: sidebarColor,
+        couleur_carte: cardColor,
       });
-      error = res.error;
+      if (!ok) error = true;
     }
 
     if (error) {
@@ -340,7 +352,7 @@ export default function OrganizationSettings() {
     } else {
       toast.success("Paramètres enregistrés avec succès !");
       invalidateCache();
-      loadSettings();
+      invalidateUserPrefs();
     }
     setSaving(false);
   }
