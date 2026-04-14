@@ -105,7 +105,7 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
           <h1 className="font-bold text-base text-sidebar-accent-foreground font-['Space_Grotesk'] tracking-tight truncate max-w-[160px]">{name}</h1>
           <p className="text-[11px] text-sidebar-foreground/50 leading-none mt-0.5">Gouvernance d'entreprise</p>
         </div>
-      </div>
+      </Link>
 
       <Separator className="bg-sidebar-border/60" />
 
