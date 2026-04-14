@@ -111,7 +111,17 @@ export default function Documents() {
 
   const handleDownload = async (doc: any) => {
     const { data } = await supabase.storage.from("session-documents").createSignedUrl(doc.file_path, 3600);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    if (data?.signedUrl) {
+      // Log download in audit trail
+      if (user && companyId) {
+        await supabase.from("document_downloads" as any).insert({
+          document_id: doc.id,
+          user_id: user.id,
+          company_id: companyId,
+        });
+      }
+      window.open(data.signedUrl, "_blank");
+    }
   };
 
   const formatSize = (bytes: number) => {

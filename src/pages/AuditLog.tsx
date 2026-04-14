@@ -19,6 +19,7 @@ const actionLabels: Record<string, string> = {
   suspension_utilisateur: "Suspension",
   activation_utilisateur: "Activation",
   liaison_membre_utilisateur: "Liaison membre",
+  telechargement: "Téléchargement",
 };
 
 const actionColors: Record<string, string> = {
@@ -30,6 +31,7 @@ const actionColors: Record<string, string> = {
   suspension_utilisateur: "bg-destructive/10 text-destructive",
   activation_utilisateur: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
   liaison_membre_utilisateur: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  telechargement: "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400",
 };
 
 const entityLabels: Record<string, string> = {
@@ -66,6 +68,8 @@ const entityLabels: Record<string, string> = {
   user_roles: "Rôles utilisateurs",
   login_logs: "Connexions",
   system_logs: "Logs système",
+  document_downloads: "Téléchargements",
+  signatures: "Signatures",
 };
 
 const PAGE_SIZE = 50;
