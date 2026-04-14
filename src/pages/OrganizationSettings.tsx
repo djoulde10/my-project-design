@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { useCompanyBranding } from "@/hooks/useCompanyBranding";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -187,6 +188,7 @@ export default function OrganizationSettings() {
   const companyId = useCompanyId();
   const { invalidateCache } = useCompanyBranding();
   const { hasPermission } = usePermissions();
+  const { prefs: userPrefs, savePrefs, invalidate: invalidateUserPrefs } = useUserPreferences();
   const isAdmin = hasPermission("gerer_utilisateurs");
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -209,6 +211,23 @@ export default function OrganizationSettings() {
     if (!companyId) return;
     loadSettings();
   }, [companyId]);
+
+  // Once user prefs load, override color state with user's personal choices
+  const [userPrefsApplied, setUserPrefsApplied] = useState(false);
+  useEffect(() => {
+    if (userPrefsApplied) return;
+    if (!userPrefs) return;
+    const hasAny = userPrefs.couleur_principale || userPrefs.couleur_secondaire || userPrefs.couleur_accent || userPrefs.couleur_fond || userPrefs.couleur_sidebar || userPrefs.couleur_carte;
+    if (hasAny) {
+      if (userPrefs.couleur_principale) setPrimaryColor(userPrefs.couleur_principale);
+      if (userPrefs.couleur_secondaire) setSecondaryColor(userPrefs.couleur_secondaire);
+      if (userPrefs.couleur_accent) setAccentColor(userPrefs.couleur_accent);
+      if (userPrefs.couleur_fond) setBgColor(userPrefs.couleur_fond);
+      if (userPrefs.couleur_sidebar) setSidebarColor(userPrefs.couleur_sidebar);
+      if (userPrefs.couleur_carte) setCardColor(userPrefs.couleur_carte);
+      setUserPrefsApplied(true);
+    }
+  }, [userPrefs]);
 
   async function loadSettings() {
     setLoading(true);
@@ -288,7 +307,7 @@ export default function OrganizationSettings() {
     let error: any = null;
 
     if (isAdmin) {
-      // Admins can update everything including logo and platform name
+      // Admins update company-wide settings AND their own user prefs
       const res = await supabase
         .from("companies")
         .update({
@@ -303,17 +322,29 @@ export default function OrganizationSettings() {
         } as any)
         .eq("id", companyId);
       error = res.error;
+
+      // Also save to user prefs for the admin's own view
+      if (!error) {
+        await savePrefs({
+          couleur_principale: primaryColor,
+          couleur_secondaire: secondaryColor,
+          couleur_accent: accentColor,
+          couleur_fond: bgColor,
+          couleur_sidebar: sidebarColor,
+          couleur_carte: cardColor,
+        });
+      }
     } else {
-      // Non-admins can only update colors via secure RPC
-      const res = await supabase.rpc("update_company_colors", {
-        _couleur_principale: primaryColor,
-        _couleur_secondaire: secondaryColor,
-        _couleur_accent: accentColor,
-        _couleur_fond: bgColor,
-        _couleur_sidebar: sidebarColor,
-        _couleur_carte: cardColor,
+      // Non-admins save only to their personal user_preferences
+      const ok = await savePrefs({
+        couleur_principale: primaryColor,
+        couleur_secondaire: secondaryColor,
+        couleur_accent: accentColor,
+        couleur_fond: bgColor,
+        couleur_sidebar: sidebarColor,
+        couleur_carte: cardColor,
       });
-      error = res.error;
+      if (!ok) error = true;
     }
 
     if (error) {
@@ -321,7 +352,7 @@ export default function OrganizationSettings() {
     } else {
       toast.success("Paramètres enregistrés avec succès !");
       invalidateCache();
-      loadSettings();
+      invalidateUserPrefs();
     }
     setSaving(false);
   }
@@ -349,7 +380,9 @@ export default function OrganizationSettings() {
             Personnalisation & Branding
           </h1>
           <p className="text-muted-foreground mt-1">
-            Personnalisez l'apparence complète de votre plateforme
+            {isAdmin 
+              ? "Personnalisez l'apparence de la plateforme pour toute l'organisation"
+              : "Personnalisez l'apparence de votre interface (visible uniquement par vous)"}
           </p>
         </div>
         <div className="flex gap-2">

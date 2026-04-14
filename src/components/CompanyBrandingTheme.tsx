@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { hexToHSL, useCompanyBranding } from "@/hooks/useCompanyBranding";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 const TOKEN_NAMES = [
   "--primary",
@@ -20,37 +21,46 @@ function clearBrandingTokens(root: HTMLElement) {
 
 export default function CompanyBrandingTheme() {
   const { branding } = useCompanyBranding();
+  const { prefs } = useUserPreferences();
 
   useEffect(() => {
     const root = document.documentElement;
     clearBrandingTokens(root);
 
-    if (branding.couleur_principale) {
-      const hsl = hexToHSL(branding.couleur_principale);
+    // User prefs override company branding
+    const primary = prefs.couleur_principale || branding.couleur_principale;
+    const secondary = prefs.couleur_secondaire || branding.couleur_secondaire;
+    const accent = prefs.couleur_accent || branding.couleur_accent;
+    const fond = prefs.couleur_fond || branding.couleur_fond;
+    const sidebar = prefs.couleur_sidebar || branding.couleur_sidebar;
+    const carte = prefs.couleur_carte || branding.couleur_carte;
+
+    if (primary) {
+      const hsl = hexToHSL(primary);
       root.style.setProperty("--primary", hsl);
       root.style.setProperty("--ring", hsl);
       root.style.setProperty("--sidebar-primary", hsl);
       root.style.setProperty("--sidebar-ring", hsl);
     }
 
-    if (branding.couleur_secondaire) {
-      root.style.setProperty("--secondary", hexToHSL(branding.couleur_secondaire));
+    if (secondary) {
+      root.style.setProperty("--secondary", hexToHSL(secondary));
     }
 
-    if (branding.couleur_accent) {
-      root.style.setProperty("--accent", hexToHSL(branding.couleur_accent));
+    if (accent) {
+      root.style.setProperty("--accent", hexToHSL(accent));
     }
 
-    if (branding.couleur_fond) {
-      root.style.setProperty("--background", hexToHSL(branding.couleur_fond));
+    if (fond) {
+      root.style.setProperty("--background", hexToHSL(fond));
     }
 
-    if (branding.couleur_sidebar) {
-      root.style.setProperty("--sidebar-background", hexToHSL(branding.couleur_sidebar));
+    if (sidebar) {
+      root.style.setProperty("--sidebar-background", hexToHSL(sidebar));
     }
 
-    if (branding.couleur_carte) {
-      const cardHsl = hexToHSL(branding.couleur_carte);
+    if (carte) {
+      const cardHsl = hexToHSL(carte);
       root.style.setProperty("--card", cardHsl);
       root.style.setProperty("--popover", cardHsl);
     }
@@ -58,7 +68,7 @@ export default function CompanyBrandingTheme() {
     return () => {
       clearBrandingTokens(root);
     };
-  }, [branding]);
+  }, [branding, prefs]);
 
   return null;
 }
