@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+import { useCompanyId } from "@/hooks/useCompanyId";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +23,8 @@ const qualityLabels: Record<string, string> = {
 export default function MemberProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const companyId = useCompanyId();
   const [member, setMember] = useState<any>(null);
   const [sessions, setSessions] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
@@ -53,7 +57,14 @@ export default function MemberProfile() {
 
   const handleDownload = async (doc: any) => {
     const { data } = await supabase.storage.from("session-documents").createSignedUrl(doc.file_path, 3600);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    if (data?.signedUrl) {
+      if (user && companyId) {
+        await supabase.from("document_downloads" as any).insert({
+          document_id: doc.id, user_id: user.id, company_id: companyId,
+        });
+      }
+      window.open(data.signedUrl, "_blank");
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Chargement...</div>;

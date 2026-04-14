@@ -166,7 +166,14 @@ export default function AgendaItems() {
 
   const handleDocDownload = async (doc: any) => {
     const { data } = await supabase.storage.from("session-documents").createSignedUrl(doc.file_path, 3600);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    if (data?.signedUrl) {
+      if (user && companyId) {
+        await supabase.from("document_downloads" as any).insert({
+          document_id: doc.id, user_id: user.id, company_id: companyId,
+        });
+      }
+      window.open(data.signedUrl, "_blank");
+    }
   };
 
   const handleDocDelete = async (doc: any) => {
