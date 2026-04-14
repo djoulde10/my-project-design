@@ -502,8 +502,11 @@ export type Database = {
           auto_renew: boolean | null
           billing_cycle: string | null
           couleur_accent: string | null
+          couleur_carte: string | null
+          couleur_fond: string | null
           couleur_principale: string | null
           couleur_secondaire: string | null
+          couleur_sidebar: string | null
           created_at: string
           date_expiration: string | null
           id: string
@@ -524,8 +527,11 @@ export type Database = {
           auto_renew?: boolean | null
           billing_cycle?: string | null
           couleur_accent?: string | null
+          couleur_carte?: string | null
+          couleur_fond?: string | null
           couleur_principale?: string | null
           couleur_secondaire?: string | null
+          couleur_sidebar?: string | null
           created_at?: string
           date_expiration?: string | null
           id?: string
@@ -546,8 +552,11 @@ export type Database = {
           auto_renew?: boolean | null
           billing_cycle?: string | null
           couleur_accent?: string | null
+          couleur_carte?: string | null
+          couleur_fond?: string | null
           couleur_principale?: string | null
           couleur_secondaire?: string | null
+          couleur_sidebar?: string | null
           created_at?: string
           date_expiration?: string | null
           id?: string
