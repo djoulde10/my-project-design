@@ -1975,6 +1975,45 @@ export type Database = {
           },
         ]
       }
+      user_preferences: {
+        Row: {
+          couleur_accent: string | null
+          couleur_carte: string | null
+          couleur_fond: string | null
+          couleur_principale: string | null
+          couleur_secondaire: string | null
+          couleur_sidebar: string | null
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          couleur_accent?: string | null
+          couleur_carte?: string | null
+          couleur_fond?: string | null
+          couleur_principale?: string | null
+          couleur_secondaire?: string | null
+          couleur_sidebar?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          couleur_accent?: string | null
+          couleur_carte?: string | null
+          couleur_fond?: string | null
+          couleur_principale?: string | null
+          couleur_secondaire?: string | null
+          couleur_sidebar?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
