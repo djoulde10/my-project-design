@@ -17,6 +17,7 @@ import { Upload, FileIcon, Download, Search, FolderOpen, FileText, Gavel, BookOp
 import { getGoogleDriveLink, getOneDriveLink } from "@/lib/calendarIntegrations";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import CommentThread from "@/components/CommentThread";
+import { usePermissions } from "@/hooks/usePermissions";
 
 
 const categories = [
@@ -49,7 +50,8 @@ const categoryColors: Record<string, string> = {
 
 export default function Documents() {
   const { user } = useAuth();
-  
+  const { hasPermission } = usePermissions();
+  const canManageDocs = hasPermission("gerer_documents");
   const companyId = useCompanyId();
   const [documents, setDocuments] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -163,7 +165,7 @@ export default function Documents() {
               <ExternalLink className="w-3 h-3 ml-1" />
             </Button>
           </a>
-          <Dialog open={open} onOpenChange={setOpen}>
+          {canManageDocs && <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <Button><Upload className="w-4 h-4 mr-2" />Uploader un document</Button>
               </DialogTrigger>
@@ -206,7 +208,7 @@ export default function Documents() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+        </Dialog>}
         </div>
       </div>
 

@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, AlertTriangle, CheckCircle2, Clock, XCircle, Download, FileSpreadsheet, Eye, Pencil } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -34,6 +35,8 @@ const defaultForm = {
 };
 
 export default function Actions() {
+  const { hasPermission } = usePermissions();
+  const canManageActions = hasPermission("suivre_actions");
   const isDirectionMember = useIsDirectionMember();
   const [actions, setActions] = useState<any[]>([]);
   const [decisions, setDecisions] = useState<any[]>([]);
@@ -336,7 +339,7 @@ export default function Actions() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Dialog open={open} onOpenChange={setOpen}>
+          {canManageActions && <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvelle action</Button></DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh]">
               <DialogHeader><DialogTitle>Créer une action</DialogTitle></DialogHeader>
@@ -346,7 +349,7 @@ export default function Actions() {
                 <Button onClick={handleCreate} disabled={!form.title}>Créer</Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+          </Dialog>}
         </div>
       </div>
 
@@ -421,9 +424,11 @@ export default function Actions() {
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedAction(a); setViewOpen(true); }}>
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(a)}>
+                        {canManageActions && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(a)}>
                             <Pencil className="w-4 h-4" />
                           </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -468,7 +473,7 @@ export default function Actions() {
                     <span>{value}</span>
                   </div>
                 ) : null)}
-                {selectedAction.status !== "terminee" && selectedAction.status !== "annulee" && (
+                {canManageActions && selectedAction.status !== "terminee" && selectedAction.status !== "annulee" && (
                   <div className="pt-3 flex gap-2">
                     <Button size="sm" onClick={() => { updateStatus(selectedAction.id, "terminee"); setViewOpen(false); }}>
                       <CheckCircle2 className="w-4 h-4 mr-1" />Terminer
