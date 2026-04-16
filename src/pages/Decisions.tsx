@@ -16,6 +16,7 @@ import CommentThread from "@/components/CommentThread";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -38,8 +39,8 @@ const voteLabels: Record<string, string> = {
 };
 
 export default function Decisions() {
-  
-  
+  const { hasPermission } = usePermissions();
+  const canCreateDecisions = hasPermission("creer_decisions");
   const isDirectionMember = useIsDirectionMember();
   const [decisions, setDecisions] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -142,7 +143,7 @@ export default function Decisions() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Dialog open={open} onOpenChange={setOpen}>
+          {canCreateDecisions && <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <Button><Plus className="w-4 h-4 mr-2" />Nouvelle résolution</Button>
               </DialogTrigger>
@@ -225,7 +226,7 @@ export default function Decisions() {
               <Button onClick={handleCreate} disabled={!form.session_id || !form.texte}>Enregistrer</Button>
             </DialogFooter>
           </DialogContent>
-          </Dialog>
+          </Dialog>}
         </div>
       </div>
 

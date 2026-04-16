@@ -45,6 +45,8 @@ export default function Sessions() {
   const isReadOnly = isReadOnlyForOrgan("ca");
   const isPresident = roleName === "PCA";
   const isSecretariat = roleName === "Secrétariat juridique";
+  const canCreateSession = hasPermission("creer_session") || hasPermission("modifier_session");
+  const canModifySession = hasPermission("modifier_session");
 
   const [sessions, setSessions] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
@@ -540,7 +542,7 @@ export default function Sessions() {
                             <Send className="w-3.5 h-3.5" />Publier
                           </Button>
                         )}
-                        {!isReadOnly && (s.status === "tenue" || s.status === "cloturee") && (
+                        {!isReadOnly && canModifySession && (s.status === "tenue" || s.status === "cloturee") && (
                           <Button size="sm" variant="outline" onClick={() => updateSessionStatus(s.id, "archivee")}>Archiver</Button>
                         )}
                         {(s as any).convocation_letter && (
@@ -622,7 +624,7 @@ export default function Sessions() {
           <p className="text-sm text-muted-foreground">Gérez les sessions du Conseil d'Administration</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          {!isReadOnly && <DialogTrigger asChild>
+          {!isReadOnly && canCreateSession && <DialogTrigger asChild>
               <Button><Plus className="w-4 h-4 mr-2" />Nouvelle session</Button>
             </DialogTrigger>}
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

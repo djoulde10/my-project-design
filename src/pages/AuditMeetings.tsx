@@ -45,6 +45,8 @@ export default function AuditMeetings() {
   const isReadOnly = isReadOnlyForOrgan("comite_audit");
   const isPresident = roleName === "Président du Comité d'Audit";
   const isSecretariat = roleName === "Secrétariat juridique";
+  const canCreateSession = hasPermission("creer_session") || hasPermission("modifier_session");
+  const canModifySession = hasPermission("modifier_session");
 
   const [sessions, setSessions] = useState<any[]>([]);
   const [organs, setOrgans] = useState<any[]>([]);
@@ -449,7 +451,7 @@ export default function AuditMeetings() {
           <p className="text-sm text-muted-foreground">Gérez les réunions du Comité d'Audit</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          {!isReadOnly && <DialogTrigger asChild>
+          {!isReadOnly && canCreateSession && <DialogTrigger asChild>
               <Button><Plus className="w-4 h-4 mr-2" />Nouvelle réunion</Button>
             </DialogTrigger>}
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
