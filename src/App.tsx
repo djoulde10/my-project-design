@@ -30,6 +30,7 @@ import ApiKeys from "@/pages/ApiKeys";
 import ApiDocs from "@/pages/ApiDocs";
 import OrganizationSettings from "@/pages/OrganizationSettings";
 import HelpCenter from "@/pages/HelpCenter";
+import ConvocationView from "@/pages/ConvocationView";
 import NotFound from "./pages/NotFound";
 import AccessDenied from "@/pages/AccessDenied";
 import AIAssistant from "@/components/AIAssistant";
@@ -97,6 +98,7 @@ function ProtectedApp() {
       <Routes>
         <Route path="/auth" element={<AuthRoute />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/convocation/:token" element={<ConvocationView />} />
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
         <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
