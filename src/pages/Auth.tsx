@@ -45,7 +45,13 @@ export default function Auth() {
       if (error) {
         showError(error, "Échec de la connexion");
       } else {
-        navigate("/");
+        const pendingToken = sessionStorage.getItem("pending_convocation_token");
+        if (pendingToken) {
+          sessionStorage.removeItem("pending_convocation_token");
+          navigate(`/convocation/${pendingToken}`);
+        } else {
+          navigate("/");
+        }
       }
     } else {
       const { error } = await supabase.auth.signUp({
