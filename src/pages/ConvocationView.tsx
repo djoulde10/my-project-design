@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, MapPin, Video, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, Calendar, MapPin, Video, CheckCircle, AlertCircle, FileText, Printer } from "lucide-react";
 
 interface SessionData {
   id: string;
@@ -27,7 +27,6 @@ export default function ConvocationView() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      // Stocker le token et rediriger vers login
       sessionStorage.setItem("pending_convocation_token", token || "");
       navigate("/auth", { replace: true });
       return;
@@ -92,32 +91,63 @@ export default function ConvocationView() {
   });
 
   return (
-    <div className="min-h-screen bg-muted/30 py-10 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-          <CheckCircle className="w-4 h-4 text-green-600" />
-          {alreadyViewed ? "Déjà consultée" : "Marquée comme consultée"}
+    <div className="min-h-screen bg-muted/30 py-10 px-4 print:bg-white print:py-0">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-4 flex items-center justify-between print:hidden">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            {alreadyViewed ? "Convocation déjà consultée" : "Marquée comme consultée"}
+          </div>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="w-4 h-4 mr-2" />Imprimer
+          </Button>
         </div>
-        <Card>
-          <CardHeader className="border-b bg-primary/5">
-            <CardTitle className="text-2xl">{session.title}</CardTitle>
-            <div className="flex flex-wrap gap-4 mt-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />{dateFmt}</span>
-              {session.location && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{session.location}</span>}
-              {session.meeting_link && (
-                <a href={session.meeting_link} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-primary hover:underline">
-                  <Video className="w-4 h-4" />Rejoindre la visioconférence
-                </a>
-              )}
+
+        <Card className="print:shadow-none print:border-0">
+          <CardHeader className="border-b bg-primary/5 print:bg-white">
+            <div className="flex items-start gap-3">
+              <FileText className="w-6 h-6 text-primary mt-1 shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Lettre de convocation officielle</p>
+                <CardTitle className="text-2xl">{session.title}</CardTitle>
+                <div className="flex flex-wrap gap-4 mt-3 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />{dateFmt}</span>
+                  {session.location && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{session.location}</span>}
+                  {session.meeting_link && (
+                    <a href={session.meeting_link} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-primary hover:underline print:hidden">
+                      <Video className="w-4 h-4" />Rejoindre la visioconférence
+                    </a>
+                  )}
+                </div>
+              </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-6">
-            {session.convocation_letter ? (
-              <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: session.convocation_letter }} />
+
+          <CardContent className="pt-8 pb-8 px-8 md:px-12">
+            {session.convocation_letter && session.convocation_letter.trim().length > 0 ? (
+              <div
+                className="convocation-letter prose prose-sm md:prose-base max-w-none text-foreground
+                  [&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-6
+                  [&_p]:my-3 [&_p]:leading-relaxed [&_strong]:font-semibold
+                  [&_ol]:my-4 [&_ol]:pl-6 [&_ol_li]:my-1.5
+                  [&_ul]:my-4 [&_ul]:pl-6 [&_ul_li]:my-1.5
+                  [&_table]:w-full [&_table]:my-4 [&_td]:align-top [&_td]:py-1 [&_td]:px-2
+                  [&_em]:italic"
+                dangerouslySetInnerHTML={{ __html: session.convocation_letter }}
+              />
             ) : (
-              <p className="text-muted-foreground italic">Aucune lettre de convocation rédigée pour cette session.</p>
+              <div className="text-center py-12">
+                <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground italic">
+                  Aucune lettre de convocation n'a encore été rédigée pour cette session.
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Veuillez contacter le secrétariat juridique.
+                </p>
+              </div>
             )}
-            <div className="mt-8 pt-6 border-t flex gap-3">
+
+            <div className="mt-10 pt-6 border-t flex flex-wrap gap-3 print:hidden">
               <Button onClick={() => navigate("/sessions")}>Voir mes sessions</Button>
               <Button variant="outline" onClick={() => navigate("/")}>Tableau de bord</Button>
             </div>
