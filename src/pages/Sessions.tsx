@@ -554,6 +554,11 @@ export default function Sessions() {
                             <Eye className="w-4 h-4" />
                           </Button>
                         )}
+                        {canModifySession && s.is_published && (
+                          <Button size="sm" variant="ghost" onClick={() => setTrackingSession(s)} title="Suivi des convocations">
+                            <Mail className="w-4 h-4" />
+                          </Button>
+                        )}
                         {canEditSession(s) && (
                           <Button size="sm" variant="ghost" onClick={() => openEditSession(s)} title="Modifier">
                             <Pencil className="w-4 h-4" />
