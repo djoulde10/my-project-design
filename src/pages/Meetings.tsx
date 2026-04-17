@@ -30,6 +30,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
+import { useRealtimeTables } from "@/hooks/useRealtimeTable";
 
 // PV status helpers
 const pvStatusLabels: Record<string, string> = {
@@ -149,6 +150,9 @@ export default function Meetings() {
   }, [isDirectionMember]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // Realtime: instantly reflect PV creation, edits, validations and publications
+  useRealtimeTables(["minutes", "sessions", "meeting_ai_analysis"], fetchAll);
 
   // ========== REALTIME RECORDING ==========
   const startLiveTranscription = async () => {
