@@ -91,7 +91,7 @@ export default function ConvocationView() {
   });
 
   return (
-    <div className="min-h-screen bg-muted/30 py-10 px-4 print:bg-white print:py-0">
+    <div className="min-h-screen bg-muted/30 py-10 px-4 print:bg-background print:py-0">
       <div className="max-w-4xl mx-auto">
         <div className="mb-4 flex items-center justify-between print:hidden">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
