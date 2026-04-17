@@ -29,7 +29,7 @@ export default function NotificationCenter() {
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(15);
     setNotifications((data as Notification[]) ?? []);
   }, [user]);
 
