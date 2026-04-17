@@ -104,7 +104,7 @@ export default function ConvocationView() {
         </div>
 
         <Card className="print:shadow-none print:border-0">
-          <CardHeader className="border-b bg-primary/5 print:bg-white">
+          <CardHeader className="border-b bg-primary/5 print:bg-background">
             <div className="flex items-start gap-3">
               <FileText className="w-6 h-6 text-primary mt-1 shrink-0" />
               <div className="flex-1">
