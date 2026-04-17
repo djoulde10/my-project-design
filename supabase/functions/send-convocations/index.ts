@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const APP_URL = Deno.env.get("APP_URL") || "https://grigraboard.lovable.app";
+    const PUBLIC_CONVOCATION_URL = Deno.env.get("PUBLIC_CONVOCATION_URL")?.trim() || `${SUPABASE_URL}/functions/v1/public-convocation`;
 
     if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
       return new Response(JSON.stringify({ error: "Email service not configured" }), {
@@ -74,7 +74,9 @@ Deno.serve(async (req) => {
       const sess: any = sessionMap.get(conv.session_id);
       if (!sess) continue;
 
-      const link = `${APP_URL}/convocation/${conv.token}`;
+      const linkUrl = new URL(PUBLIC_CONVOCATION_URL);
+      linkUrl.searchParams.set("token", conv.token);
+      const link = linkUrl.toString();
       const dateFmt = (() => {
         try {
           return new Date(sess.session_date).toLocaleDateString("fr-FR", {

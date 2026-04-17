@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.send-convocations]
 verify_jwt = false
+
+[functions.public-convocation]
+verify_jwt = false
