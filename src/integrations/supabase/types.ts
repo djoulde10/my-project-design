@@ -640,6 +640,69 @@ export type Database = {
           },
         ]
       }
+      convocation_views: {
+        Row: {
+          company_id: string
+          created_at: string
+          email: string
+          email_status: string
+          error_message: string | null
+          id: string
+          member_id: string | null
+          sent_at: string | null
+          session_id: string
+          token: string
+          updated_at: string
+          user_id: string
+          viewed_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          email: string
+          email_status?: string
+          error_message?: string | null
+          id?: string
+          member_id?: string | null
+          sent_at?: string | null
+          session_id: string
+          token: string
+          updated_at?: string
+          user_id: string
+          viewed_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          email?: string
+          email_status?: string
+          error_message?: string | null
+          id?: string
+          member_id?: string | null
+          sent_at?: string | null
+          session_id?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convocation_views_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convocation_views_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decisions: {
         Row: {
           agenda_item_id: string | null
@@ -2060,12 +2123,17 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: never; Returns: boolean }
+      mark_convocation_viewed: { Args: { _token: string }; Returns: Json }
       members_safe_select: {
         Args: { _company_id: string; _member_user_id: string; _user_id: string }
         Returns: boolean
       }
       my_company_id: { Args: never; Returns: string }
       publish_minute: { Args: { _minute_id: string }; Returns: boolean }
+      queue_session_convocations: {
+        Args: { _session_id: string }
+        Returns: number
+      }
       update_company_colors: {
         Args: {
           _couleur_accent?: string
