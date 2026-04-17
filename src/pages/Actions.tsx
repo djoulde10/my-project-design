@@ -15,6 +15,7 @@ import { Plus, AlertTriangle, CheckCircle2, Clock, XCircle, Download, FileSpread
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useRealtimeTables } from "@/hooks/useRealtimeTable";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link } from "react-router-dom";
