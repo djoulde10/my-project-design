@@ -10,11 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Download, Link, Sparkles, Loader2, Pencil, CheckCircle, Eye, Send, FileText } from "lucide-react";
+import { Plus, CalendarDays, MapPin, Video, FileUp, Trash2, ChevronDown, ChevronUp, Download, Link, Sparkles, Loader2, Pencil, CheckCircle, Eye, Send, FileText, Mail } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 import { usePermissions } from "@/hooks/usePermissions";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
+import ConvocationTrackingDialog from "@/components/ConvocationTrackingDialog";
 
 const RichTextEditor = lazy(() => import("@/components/RichTextEditor"));
 
@@ -71,6 +72,9 @@ export default function Sessions() {
 
   // View convocation dialog
   const [viewConvocationSession, setViewConvocationSession] = useState<any | null>(null);
+
+  // Convocation tracking dialog
+  const [trackingSession, setTrackingSession] = useState<any | null>(null);
 
   const [form, setForm] = useState({
     organ_id: "", title: "", session_type: "ordinaire" as "ordinaire" | "extraordinaire",
@@ -548,6 +552,11 @@ export default function Sessions() {
                         {(s as any).convocation_letter && (
                           <Button size="sm" variant="ghost" onClick={() => setViewConvocationSession(s)} title="Voir la convocation">
                             <Eye className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {canModifySession && s.is_published && (
+                          <Button size="sm" variant="ghost" onClick={() => setTrackingSession(s)} title="Suivi des convocations">
+                            <Mail className="w-4 h-4" />
                           </Button>
                         )}
                         {canEditSession(s) && (
@@ -1044,6 +1053,15 @@ export default function Sessions() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {trackingSession && (
+        <ConvocationTrackingDialog
+          open={!!trackingSession}
+          onOpenChange={(v) => !v && setTrackingSession(null)}
+          sessionId={trackingSession.id}
+          sessionTitle={trackingSession.title}
+        />
+      )}
     </div>
   );
 }
