@@ -7,9 +7,9 @@ const corsHeaders = {
 
 const pageHeaders = {
   ...corsHeaders,
-  "Content-Type": "text/html; charset=utf-8",
-  "Cache-Control": "no-store",
-  "X-Robots-Tag": "noindex, nofollow",
+  "content-type": "text/html; charset=utf-8",
+  "cache-control": "no-store",
+  "x-robots-tag": "noindex, nofollow",
 };
 
 function escapeHtml(value: string | null | undefined) {
@@ -37,7 +37,224 @@ function formatDate(date: string) {
 }
 
 function renderPage(content: string, status = 200) {
-  return new Response(content, { status, headers: pageHeaders });
+  const response = new Response(content, {
+    status,
+    headers: new Headers(pageHeaders),
+  });
+  response.headers.set("content-type", "text/html; charset=utf-8");
+  return response;
+}
+
+function renderConvocationPage(params: {
+  companyName: string;
+  title: string;
+  organ: string;
+  date: string;
+  locationHtml: string;
+  meetingLinkHtml: string;
+  letter: string;
+}) {
+  const { companyName, title, organ, date, locationHtml, meetingLinkHtml, letter } = params;
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Convocation officielle — ${title}</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7fb;
+        --surface: #ffffff;
+        --text: #162033;
+        --muted: #64748b;
+        --line: #dbe2ec;
+        --accent: #163a63;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 32px 16px;
+        background: linear-gradient(180deg, #fafcff 0%, var(--bg) 100%);
+        color: var(--text);
+        font-family: "Segoe UI", Tahoma, sans-serif;
+      }
+      .shell {
+        width: min(960px, 100%);
+        margin: 0 auto;
+      }
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+      .status {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      .print-button {
+        border: 0;
+        border-radius: 999px;
+        padding: 11px 18px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .document {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: clamp(22px, 4vw, 40px);
+        box-shadow: 0 24px 70px rgba(22, 58, 99, 0.08);
+      }
+      .document-header {
+        margin-bottom: 28px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .eyebrow {
+        margin: 0 0 8px;
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .company {
+        margin: 0 0 10px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(24px, 4vw, 32px);
+        line-height: 1.15;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 20px;
+        margin-top: 14px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .meta strong {
+        color: var(--text);
+      }
+      .meta a {
+        color: var(--accent);
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .meta a:hover {
+        text-decoration: underline;
+      }
+      .letter {
+        color: var(--text);
+        font-size: 16px;
+        line-height: 1.75;
+      }
+      .letter h1,
+      .letter h2,
+      .letter h3,
+      .letter h4 {
+        color: var(--text);
+        line-height: 1.3;
+      }
+      .letter h1 { font-size: 1.5rem; margin: 0 0 1rem; }
+      .letter h2 { font-size: 1.25rem; margin: 2rem 0 0.8rem; }
+      .letter h3 { font-size: 1.1rem; margin: 1.5rem 0 0.7rem; }
+      .letter p { margin: 0.8rem 0; }
+      .letter ol,
+      .letter ul,
+      .letter .tiptap-ordered-list,
+      .letter .tiptap-bullet-list {
+        margin: 1rem 0;
+        padding-left: 1.4rem;
+      }
+      .letter li { margin: 0.45rem 0; }
+      .letter table,
+      .letter .tiptap-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+      }
+      .letter td,
+      .letter th,
+      .letter .tiptap-table-cell {
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .letter blockquote {
+        margin: 1.5rem 0;
+        padding: 14px 18px;
+        border-left: 4px solid var(--accent);
+        background: #f8fbff;
+      }
+      .empty-state {
+        padding: 20px;
+        border: 1px dashed var(--line);
+        border-radius: 18px;
+        background: #f8fafc;
+        color: var(--muted);
+      }
+      @media (max-width: 720px) {
+        body { padding: 20px 12px; }
+        .toolbar { flex-direction: column; align-items: stretch; }
+        .print-button { width: 100%; }
+      }
+      @media print {
+        body {
+          padding: 0;
+          background: #fff;
+        }
+        .toolbar { display: none; }
+        .document {
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+          padding: 0;
+        }
+        .meta a {
+          color: inherit;
+          text-decoration: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="toolbar">
+        <div class="status">Convocation consultée</div>
+        <button type="button" class="print-button" onclick="window.print()">Imprimer la convocation</button>
+      </div>
+
+      <main class="document">
+        <header class="document-header">
+          <p class="eyebrow">Lettre de convocation officielle</p>
+          <p class="company">${companyName}</p>
+          <h1>${title}</h1>
+          <div class="meta">
+            <span><strong>Organe :</strong> ${organ}</span>
+            <span><strong>Date :</strong> ${date}</span>
+            ${locationHtml}
+            ${meetingLinkHtml}
+          </div>
+        </header>
+
+        <article class="letter">${letter}</article>
+      </main>
+    </div>
+  </body>
+</html>`;
 }
 
 function renderErrorPage(title: string, message: string, status = 400) {
@@ -167,204 +384,15 @@ Deno.serve(async (req) => {
       ? session.convocation_letter
       : `<div class="empty-state"><p>Aucune lettre de convocation validée n’est disponible pour cette session.</p></div>`;
 
-    return renderPage(`<!DOCTYPE html>
-<html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Convocation officielle — ${title}</title>
-    <style>
-      :root {
-        color-scheme: light;
-        --bg: #eef2f7;
-        --surface: #ffffff;
-        --surface-soft: #f8fafc;
-        --text: #162033;
-        --muted: #5f6c82;
-        --line: #dbe2ec;
-        --accent: #163a63;
-        --accent-soft: #edf4fb;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        padding: 48px 20px;
-        background:
-          radial-gradient(circle at top left, rgba(255,255,255,0.95), rgba(255,255,255,0) 30%),
-          linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
-        color: var(--text);
-        font-family: "Segoe UI", Tahoma, sans-serif;
-      }
-      .shell {
-        width: min(1040px, 100%);
-        margin: 0 auto;
-      }
-      .toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 20px;
-      }
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 14px;
-        border-radius: 999px;
-        background: rgba(22, 58, 99, 0.08);
-        color: var(--accent);
-        font-size: 13px;
-        font-weight: 600;
-      }
-      .print-button {
-        border: 0;
-        border-radius: 999px;
-        padding: 12px 18px;
-        background: var(--accent);
-        color: #fff;
-        font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-      }
-      .document {
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 28px;
-        overflow: hidden;
-        box-shadow: 0 28px 90px rgba(22, 58, 99, 0.08);
-      }
-      .hero {
-        padding: 36px;
-        background: linear-gradient(135deg, #17375e 0%, #214e83 100%);
-        color: #fff;
-      }
-      .eyebrow {
-        margin: 0 0 10px;
-        font-size: 12px;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: rgba(255,255,255,0.7);
-      }
-      h1 {
-        margin: 0;
-        font-size: clamp(28px, 4vw, 40px);
-        line-height: 1.1;
-      }
-      .company {
-        margin: 0 0 18px;
-        font-size: 15px;
-        color: #f7d96e;
-        font-weight: 700;
-      }
-      .meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px 24px;
-        margin-top: 22px;
-        font-size: 14px;
-        color: rgba(255,255,255,0.88);
-      }
-      .meta strong {
-        color: #fff;
-      }
-      .meeting-link {
-        color: #fff;
-        font-weight: 700;
-      }
-      .body {
-        padding: 36px;
-      }
-      .letter {
-        color: var(--text);
-        font-size: 16px;
-        line-height: 1.8;
-      }
-      .letter h1, .letter h2, .letter h3 {
-        color: var(--text);
-        line-height: 1.25;
-      }
-      .letter h1 { font-size: 28px; margin: 0 0 20px; }
-      .letter h2 { font-size: 22px; margin: 32px 0 14px; }
-      .letter h3 { font-size: 18px; margin: 24px 0 12px; }
-      .letter p { margin: 14px 0; }
-      .letter ul, .letter ol { margin: 16px 0; padding-left: 22px; }
-      .letter li { margin: 8px 0; }
-      .letter table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 24px 0;
-      }
-      .letter td, .letter th {
-        border: 1px solid var(--line);
-        padding: 10px 12px;
-        text-align: left;
-        vertical-align: top;
-      }
-      .letter blockquote {
-        margin: 24px 0;
-        padding: 14px 18px;
-        border-left: 4px solid var(--accent);
-        background: var(--accent-soft);
-      }
-      .empty-state {
-        padding: 20px;
-        border: 1px dashed var(--line);
-        border-radius: 18px;
-        background: var(--surface-soft);
-        color: var(--muted);
-      }
-      @media (max-width: 720px) {
-        body { padding: 24px 12px; }
-        .hero, .body { padding: 24px 20px; }
-        .toolbar { flex-direction: column; align-items: stretch; }
-        .print-button { width: 100%; }
-      }
-      @media print {
-        body { padding: 0; background: #fff; }
-        .toolbar { display: none; }
-        .document {
-          border: 0;
-          border-radius: 0;
-          box-shadow: none;
-        }
-        .hero {
-          color: #000;
-          background: #fff;
-          border-bottom: 1px solid #ccc;
-        }
-        .eyebrow, .company, .meta { color: #000; }
-        .meeting-link { color: #000; }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="shell">
-      <div class="toolbar">
-        <div class="badge">Convocation consultée et tracée</div>
-        <button type="button" class="print-button" onclick="window.print()">Imprimer la convocation</button>
-      </div>
-
-      <main class="document">
-        <header class="hero">
-          <p class="eyebrow">Lettre de convocation officielle</p>
-          <p class="company">${companyName}</p>
-          <h1>${title}</h1>
-          <div class="meta">
-            <span><strong>Organe :</strong> ${organ}</span>
-            <span><strong>Date :</strong> ${date}</span>
-            ${location}
-            ${meetingLink}
-          </div>
-        </header>
-
-        <section class="body">
-          <article class="letter">${letter}</article>
-        </section>
-      </main>
-    </div>
-  </body>
-</html>`);
+    return renderPage(renderConvocationPage({
+      companyName,
+      title,
+      organ,
+      date,
+      locationHtml: location,
+      meetingLinkHtml: meetingLink,
+      letter,
+    }));
   } catch (error) {
     console.error("public-convocation error", error);
     return renderErrorPage("Erreur interne", "La convocation n’a pas pu être chargée. Veuillez réessayer dans quelques instants.", 500);
