@@ -2159,7 +2159,12 @@ export type Database = {
       }
     }
     Enums: {
-      action_status: "en_cours" | "terminee" | "en_retard" | "annulee"
+      action_status:
+        | "en_cours"
+        | "terminee"
+        | "en_retard"
+        | "annulee"
+        | "a_faire"
       agenda_nature: "information" | "decision"
       app_role: "admin" | "moderator" | "user" | "super_admin"
       member_quality:
@@ -2308,7 +2313,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      action_status: ["en_cours", "terminee", "en_retard", "annulee"],
+      action_status: [
+        "en_cours",
+        "terminee",
+        "en_retard",
+        "annulee",
+        "a_faire",
+      ],
       agenda_nature: ["information", "decision"],
       app_role: ["admin", "moderator", "user", "super_admin"],
       member_quality: [

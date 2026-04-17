@@ -51,7 +51,7 @@ const navSections = [
     items: [
       { label: "Réunions & PV", icon: Mic, path: "/meetings" },
       { label: "Résolutions", icon: Gavel, path: "/decisions" },
-      { label: "Suivi des actions", icon: ListTodo, path: "/actions" },
+      { label: "Suivi des résolutions", icon: ListTodo, path: "/actions" },
       
     ],
   },
