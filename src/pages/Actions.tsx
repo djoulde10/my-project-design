@@ -119,7 +119,7 @@ export default function Actions() {
       observations: form.observations || null,
     }]);
     if (error) showError(error, "Impossible de créer le suivi");
-    else { showSuccess("Résolution ajoutée au suivi"); setOpen(false); setForm({ ...defaultForm }); fetchAll(); }
+    else { showSuccess("action_created"); setOpen(false); setForm({ ...defaultForm }); fetchAll(); }
   };
 
   const handleEdit = async () => {
@@ -134,7 +134,7 @@ export default function Actions() {
       completion_date: editForm.status === "terminee" ? new Date().toISOString().split("T")[0] : null,
     }).eq("id", editForm.id);
     if (error) showError(error, "Impossible de modifier");
-    else { showSuccess("Suivi mis à jour"); setEditOpen(false); fetchAll(); }
+    else { showSuccess("action_updated"); setEditOpen(false); fetchAll(); }
   };
 
   const updateStatus = async (id: string, status: Status) => {
