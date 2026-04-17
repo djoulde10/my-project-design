@@ -1053,6 +1053,15 @@ export default function Sessions() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {trackingSession && (
+        <ConvocationTrackingDialog
+          open={!!trackingSession}
+          onOpenChange={(v) => !v && setTrackingSession(null)}
+          sessionId={trackingSession.id}
+          sessionTitle={trackingSession.title}
+        />
+      )}
     </div>
   );
 }
