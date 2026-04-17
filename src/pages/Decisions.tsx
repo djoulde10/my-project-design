@@ -17,6 +17,7 @@ import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { exportTableToPDF, exportTableToCSV } from "@/lib/exportUtils";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useRealtimeTables } from "@/hooks/useRealtimeTable";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -82,6 +83,9 @@ export default function Decisions() {
 
 
   useEffect(() => { fetchAll(); }, []);
+
+  // Realtime: instantly reflect new/edited decisions and sessions
+  useRealtimeTables(["decisions", "sessions"], () => fetchAll());
 
   const handleCreate = async () => {
     const { error } = await supabase.from("decisions").insert([{

@@ -16,6 +16,7 @@ import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestricti
 import { usePermissions } from "@/hooks/usePermissions";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import ConvocationTrackingDialog from "@/components/ConvocationTrackingDialog";
+import { useRealtimeTables } from "@/hooks/useRealtimeTable";
 
 const RichTextEditor = lazy(() => import("@/components/RichTextEditor"));
 
@@ -138,6 +139,9 @@ export default function Sessions() {
   };
 
   useEffect(() => { fetchSessions(); fetchOrgans(); }, []);
+
+  // Realtime: refresh when sessions change anywhere (validation by president, etc.)
+  useRealtimeTables(["sessions", "agenda_items", "session_attendees", "minutes"], fetchSessions);
 
   const addAgendaItem = () => {
     setAgendaDrafts([...agendaDrafts, { title: "", description: "", nature: "information", files: [] }]);
