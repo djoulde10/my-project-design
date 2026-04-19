@@ -8,9 +8,11 @@ import { CalendarDays, Users, ListTodo, AlertTriangle, CheckCircle2, Clock, Tren
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
+import { useUserQuality } from "@/hooks/useUserQuality";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { canSeePendingCA, canSeePendingAudit, canSeeAnyPending } = useUserQuality();
   const [stats, setStats] = useState({
     sessionsOrdinaires: 0, sessionsExtraordinaires: 0, reunionsAudit: 0,
     decisions: 0, actions: 0, overdueActions: 0,
@@ -18,7 +20,8 @@ export default function Dashboard() {
     recentDecisions: [] as any[],
     completedActions: 0, cancelledActions: 0, inProgressActions: 0,
     nearDueActions: [] as any[],
-    pendingPVs: 0,
+    pendingPVsCA: 0,
+    pendingPVsAudit: 0,
     sessionsByMonth: [] as { month: string; count: number }[],
   });
 
