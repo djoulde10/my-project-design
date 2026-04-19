@@ -75,6 +75,11 @@ export default function Dashboard() {
         return { month: monthNames[parseInt(m) - 1], count };
       });
 
+      // Split PV en attente par type d'organe
+      const pendingList = (pendingPVRes.data ?? []) as any[];
+      const pendingPVsCA = pendingList.filter((m) => m?.sessions?.organs?.type === "ca").length;
+      const pendingPVsAudit = pendingList.filter((m) => m?.sessions?.organs?.type === "comite_audit").length;
+
       setStats({
         sessionsOrdinaires,
         sessionsExtraordinaires,
@@ -88,7 +93,8 @@ export default function Dashboard() {
         cancelledActions: cancelledRes.count ?? 0,
         inProgressActions: inProgressRes.count ?? 0,
         nearDueActions: nearDueRes.data ?? [],
-        pendingPVs: pendingPVRes.count ?? 0,
+        pendingPVsCA,
+        pendingPVsAudit,
         sessionsByMonth,
       });
     };
@@ -101,7 +107,13 @@ export default function Dashboard() {
     { label: "Réunions comité d'audit", value: stats.reunionsAudit, icon: CalendarDays, color: "text-indigo-600", bg: "bg-indigo-50", path: "/audit-meetings" },
     { label: "Résolutions", value: stats.decisions, icon: Gavel, color: "text-amber-600", bg: "bg-amber-50", path: "/decisions" },
     { label: "Actions", value: stats.actions, icon: ListTodo, color: "text-violet-600", bg: "bg-violet-50", path: "/actions" },
-    { label: "PV en attente", value: stats.pendingPVs, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", path: "/meetings" },
+    // PV en attente : visible uniquement selon le rôle (PCA → CA, Président comité → Audit, OU valider_pv)
+    ...(canSeePendingCA
+      ? [{ label: "PV CA en attente", value: stats.pendingPVsCA, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", path: "/meetings" }]
+      : []),
+    ...(canSeePendingAudit
+      ? [{ label: "PV Audit en attente", value: stats.pendingPVsAudit, icon: FileText, color: "text-cyan-600", bg: "bg-cyan-50", path: "/audit-meetings" }]
+      : []),
   ];
 
   const totalActions = stats.actions;
