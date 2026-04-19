@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,10 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, User, Pencil, Eye, Search } from "lucide-react";
+import { Plus, User, Pencil, Eye } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { usePermissions } from "@/hooks/usePermissions";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 
 
 const qualityLabels: Record<string, string> = {
@@ -204,84 +203,135 @@ export default function Members() {
           </DialogContent>
         </Dialog>
       </div>
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Rechercher un membre..." value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-        </div>
-        <Select value={filterOrgan} onValueChange={setFilterOrgan}>
-          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Tous les organes" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les organes</SelectItem>
-            {organs.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}
-          </SelectContent>
-        </Select>
-      </div>
 
-      <Card>
-        <CardContent className="p-0 overflow-x-auto">
-          <Table className="min-w-[700px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Organe</TableHead>
-                <TableHead>Qualité</TableHead>
-                <TableHead>Mandat</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(() => {
-                const filtered = members.filter((m) => {
-                  if (searchText && !m.full_name?.toLowerCase().includes(searchText.toLowerCase())) return false;
-                  if (filterOrgan !== "all" && m.organ_id !== filterOrgan) return false;
-                  return true;
-                });
-                if (filtered.length === 0) return (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucun membre</TableCell></TableRow>
-                );
-                return filtered.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <User className="w-4 h-4 text-primary" />
-                        </div>
-                        {m.full_name}
-                      </div>
-                    </TableCell>
-                    <TableCell>{(m as any).organs?.name}</TableCell>
-                    <TableCell><Badge variant="outline">{qualityLabels[m.quality] ?? m.quality}</Badge></TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(m.mandate_start).toLocaleDateString("fr-FR")}
-                      {m.mandate_end ? ` — ${new Date(m.mandate_end).toLocaleDateString("fr-FR")}` : " — En cours"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={m.is_active ? "default" : "secondary"}>
-                        {m.is_active ? "Actif" : "Inactif"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => navigate(`/members/${m.id}`)}>
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        {canManageMembers && (
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(m)}>
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ));
-              })()}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <MembersTable
+        members={members}
+        organs={organs}
+        canManage={canManageMembers}
+        onView={(id) => navigate(`/members/${id}`)}
+        onEdit={openEdit}
+      />
     </div>
+  );
+}
+
+function MembersTable({
+  members,
+  organs,
+  canManage,
+  onView,
+  onEdit,
+}: {
+  members: any[];
+  organs: any[];
+  canManage: boolean;
+  onView: (id: string) => void;
+  onEdit: (m: any) => void;
+}) {
+  const columns: DataTableColumn<any>[] = useMemo(
+    () => [
+      {
+        key: "full_name",
+        label: "Nom",
+        accessor: (m) => m.full_name,
+        alwaysVisible: true,
+        render: (m) => (
+          <div className="flex items-center gap-2 font-medium">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <User className="w-4 h-4 text-primary" />
+            </div>
+            <span className="truncate">{m.full_name}</span>
+          </div>
+        ),
+      },
+      { key: "organ", label: "Organe", accessor: (m) => m.organs?.name ?? "" },
+      {
+        key: "quality",
+        label: "Qualité",
+        accessor: (m) => qualityLabels[m.quality] ?? m.quality,
+        render: (m) => <Badge variant="outline">{qualityLabels[m.quality] ?? m.quality}</Badge>,
+      },
+      {
+        key: "mandate",
+        label: "Mandat",
+        accessor: (m) => m.mandate_start ?? "",
+        render: (m) => (
+          <span className="text-sm text-muted-foreground">
+            {m.mandate_start ? new Date(m.mandate_start).toLocaleDateString("fr-FR") : "—"}
+            {m.mandate_end ? ` — ${new Date(m.mandate_end).toLocaleDateString("fr-FR")}` : " — En cours"}
+          </span>
+        ),
+      },
+      {
+        key: "status",
+        label: "Statut",
+        accessor: (m) => (m.is_active ? "Actif" : "Inactif"),
+        render: (m) => (
+          <Badge variant={m.is_active ? "default" : "secondary"}>{m.is_active ? "Actif" : "Inactif"}</Badge>
+        ),
+      },
+      { key: "email", label: "Email", accessor: (m) => m.email ?? "", hiddenByDefault: true },
+      { key: "phone", label: "Téléphone", accessor: (m) => m.phone ?? "", hiddenByDefault: true },
+      {
+        key: "actions",
+        label: "Actions",
+        sortable: false,
+        width: "w-24",
+        render: (m) => (
+          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" onClick={() => onView(m.id)} aria-label="Voir">
+              <Eye className="w-4 h-4" />
+            </Button>
+            {canManage && (
+              <Button variant="ghost" size="icon" onClick={() => onEdit(m)} aria-label="Modifier">
+                <Pencil className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [canManage, onView, onEdit],
+  );
+
+  const filters = useMemo(
+    () => [
+      {
+        key: "organ",
+        label: "Organe",
+        options: organs.map((o) => ({ value: o.id, label: o.name })),
+        predicate: (row: any, value: string) => row.organ_id === value,
+      },
+      {
+        key: "status",
+        label: "Statut",
+        options: [
+          { value: "active", label: "Actif" },
+          { value: "inactive", label: "Inactif" },
+        ],
+        predicate: (row: any, value: string) => (value === "active" ? row.is_active : !row.is_active),
+      },
+      {
+        key: "quality",
+        label: "Qualité",
+        options: qualityOptions.map((q) => ({ value: q, label: qualityLabels[q] })),
+        predicate: (row: any, value: string) => row.quality === value,
+      },
+    ],
+    [organs],
+  );
+
+  return (
+    <DataTable
+      storageKey="members"
+      data={members}
+      columns={columns}
+      filters={filters}
+      rowKey={(m) => m.id}
+      onRowClick={(m) => onView(m.id)}
+      searchPlaceholder="Rechercher un membre…"
+      searchableFields={[(m) => m.email, (m) => m.phone, (m) => m.organisation, (m) => m.titre_poste]}
+      emptyMessage="Aucun membre trouvé"
+    />
   );
 }

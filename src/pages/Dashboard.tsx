@@ -8,9 +8,11 @@ import { CalendarDays, Users, ListTodo, AlertTriangle, CheckCircle2, Clock, Tren
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
+import { useUserQuality } from "@/hooks/useUserQuality";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { canSeePendingCA, canSeePendingAudit, canSeeAnyPending } = useUserQuality();
   const [stats, setStats] = useState({
     sessionsOrdinaires: 0, sessionsExtraordinaires: 0, reunionsAudit: 0,
     decisions: 0, actions: 0, overdueActions: 0,
@@ -18,7 +20,8 @@ export default function Dashboard() {
     recentDecisions: [] as any[],
     completedActions: 0, cancelledActions: 0, inProgressActions: 0,
     nearDueActions: [] as any[],
-    pendingPVs: 0,
+    pendingPVsCA: 0,
+    pendingPVsAudit: 0,
     sessionsByMonth: [] as { month: string; count: number }[],
   });
 
@@ -42,7 +45,9 @@ export default function Dashboard() {
         supabase.from("actions").select("id", { count: "exact", head: true }).eq("status", "en_cours"),
         supabase.from("decisions").select("numero_decision, texte, statut, sessions(title)").order("created_at", { ascending: false }).limit(5),
         supabase.from("actions").select("title, due_date, members(full_name)").eq("status", "en_cours").lte("due_date", nearDueDate).order("due_date").limit(5),
-        supabase.from("minutes").select("id", { count: "exact", head: true }).eq("pv_status", "brouillon"),
+        supabase.from("minutes")
+          .select("id, sessions!inner(organs!inner(type))")
+          .in("pv_status", ["brouillon", "en_attente_validation"]),
         supabase.from("sessions").select("session_date").eq("is_published", true).order("session_date", { ascending: false }).limit(100),
       ]);
 
@@ -70,6 +75,11 @@ export default function Dashboard() {
         return { month: monthNames[parseInt(m) - 1], count };
       });
 
+      // Split PV en attente par type d'organe
+      const pendingList = (pendingPVRes.data ?? []) as any[];
+      const pendingPVsCA = pendingList.filter((m) => m?.sessions?.organs?.type === "ca").length;
+      const pendingPVsAudit = pendingList.filter((m) => m?.sessions?.organs?.type === "comite_audit").length;
+
       setStats({
         sessionsOrdinaires,
         sessionsExtraordinaires,
@@ -83,7 +93,8 @@ export default function Dashboard() {
         cancelledActions: cancelledRes.count ?? 0,
         inProgressActions: inProgressRes.count ?? 0,
         nearDueActions: nearDueRes.data ?? [],
-        pendingPVs: pendingPVRes.count ?? 0,
+        pendingPVsCA,
+        pendingPVsAudit,
         sessionsByMonth,
       });
     };
@@ -96,7 +107,13 @@ export default function Dashboard() {
     { label: "Réunions comité d'audit", value: stats.reunionsAudit, icon: CalendarDays, color: "text-indigo-600", bg: "bg-indigo-50", path: "/audit-meetings" },
     { label: "Résolutions", value: stats.decisions, icon: Gavel, color: "text-amber-600", bg: "bg-amber-50", path: "/decisions" },
     { label: "Actions", value: stats.actions, icon: ListTodo, color: "text-violet-600", bg: "bg-violet-50", path: "/actions" },
-    { label: "PV en attente", value: stats.pendingPVs, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", path: "/meetings" },
+    // PV en attente : visible uniquement selon le rôle (PCA → CA, Président comité → Audit, OU valider_pv)
+    ...(canSeePendingCA
+      ? [{ label: "PV CA en attente", value: stats.pendingPVsCA, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", path: "/meetings" }]
+      : []),
+    ...(canSeePendingAudit
+      ? [{ label: "PV Audit en attente", value: stats.pendingPVsAudit, icon: FileText, color: "text-cyan-600", bg: "bg-cyan-50", path: "/audit-meetings" }]
+      : []),
   ];
 
   const totalActions = stats.actions;
@@ -176,13 +193,21 @@ export default function Dashboard() {
                   <ArrowRight className="w-3 h-3 text-muted-foreground" />
                 </div>
               )}
-              {stats.pendingPVs > 0 && (
+              {canSeePendingCA && stats.pendingPVsCA > 0 && (
                 <div className="flex items-center justify-between text-sm cursor-pointer hover:bg-muted/50 rounded p-1 -mx-1" onClick={() => navigate("/meetings")}>
-                  <span className="text-amber-600 font-medium">{stats.pendingPVs} PV en attente</span>
+                  <span className="text-amber-600 font-medium">{stats.pendingPVsCA} PV CA en attente</span>
                   <ArrowRight className="w-3 h-3 text-muted-foreground" />
                 </div>
               )}
-              {stats.overdueActions === 0 && stats.pendingPVs === 0 && (
+              {canSeePendingAudit && stats.pendingPVsAudit > 0 && (
+                <div className="flex items-center justify-between text-sm cursor-pointer hover:bg-muted/50 rounded p-1 -mx-1" onClick={() => navigate("/audit-meetings")}>
+                  <span className="text-amber-600 font-medium">{stats.pendingPVsAudit} PV Audit en attente</span>
+                  <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                </div>
+              )}
+              {stats.overdueActions === 0 &&
+                (!canSeePendingCA || stats.pendingPVsCA === 0) &&
+                (!canSeePendingAudit || stats.pendingPVsAudit === 0) && (
                 <div className="flex items-center gap-2 text-emerald-600">
                   <CheckCircle2 className="w-5 h-5" />
                   <p className="text-sm">Tout est à jour</p>
