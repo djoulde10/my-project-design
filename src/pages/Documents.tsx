@@ -1,27 +1,23 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import EntityPermissionsDialog from "@/components/EntityPermissionsDialog";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, FileIcon, Download, Search, FolderOpen, FileText, Gavel, BookOpen, Scale, Presentation, File, MessageSquare, Shield, ExternalLink, Cloud } from "lucide-react";
+import { Upload, FileIcon, Download, FolderOpen, FileText, Gavel, BookOpen, Scale, Presentation, File, MessageSquare, ExternalLink, Cloud } from "lucide-react";
 import { getGoogleDriveLink, getOneDriveLink } from "@/lib/calendarIntegrations";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import CommentThread from "@/components/CommentThread";
 import { usePermissions } from "@/hooks/usePermissions";
-
+import { DataTable, type DataTableColumn, type DataTableFilter } from "@/components/ui/data-table";
 
 const categories = [
-  { value: "all", label: "Tous", icon: FolderOpen },
   { value: "pv", label: "Procès-verbaux", icon: FileText },
   { value: "politique", label: "Politiques internes", icon: BookOpen },
   { value: "rapport", label: "Rapports", icon: Gavel },
@@ -31,12 +27,8 @@ const categories = [
 ] as const;
 
 const categoryLabels: Record<string, string> = {
-  pv: "Procès-verbal",
-  politique: "Politique interne",
-  rapport: "Rapport",
-  juridique: "Juridique",
-  presentation: "Présentation",
-  autre: "Autre",
+  pv: "Procès-verbal", politique: "Politique interne", rapport: "Rapport",
+  juridique: "Juridique", presentation: "Présentation", autre: "Autre",
 };
 
 const categoryColors: Record<string, string> = {
@@ -55,23 +47,25 @@ export default function Documents() {
   const companyId = useCompanyId();
   const [documents, setDocuments] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ session_id: "", name: "", category: "autre" });
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [commentingId, setCommentingId] = useState<string | null>(null);
   const [permDocId, setPermDocId] = useState<string | null>(null);
   const [permDocName, setPermDocName] = useState("");
 
   const fetchAll = async () => {
+    setLoading(true);
     const [docsRes, sessionsRes] = await Promise.all([
       supabase.from("documents").select("*, sessions(title)").order("created_at", { ascending: false }),
       supabase.from("sessions").select("id, title").order("session_date", { ascending: false }),
     ]);
     setDocuments(docsRes.data ?? []);
     setSessions(sessionsRes.data ?? []);
+    setLoading(false);
   };
 
   useEffect(() => { fetchAll(); }, []);
@@ -79,34 +73,17 @@ export default function Documents() {
   const handleUpload = async () => {
     if (!file || !form.session_id) return;
     setUploading(true);
-
     const filePath = `${companyId}/${form.session_id}/${Date.now()}_${file.name}`;
     const { error: uploadError } = await supabase.storage.from("session-documents").upload(filePath, file);
-
-    if (uploadError) {
-      showError(uploadError, "Impossible de téléverser le fichier");
-      setUploading(false);
-      return;
-    }
-
+    if (uploadError) { showError(uploadError, "Impossible de téléverser le fichier"); setUploading(false); return; }
     const { error } = await supabase.from("documents").insert({
-      session_id: form.session_id,
-      name: form.name || file.name,
-      file_path: filePath,
-      file_size: file.size,
-      mime_type: file.type,
-      uploaded_by: user?.id,
-      category: form.category,
+      session_id: form.session_id, name: form.name || file.name, file_path: filePath,
+      file_size: file.size, mime_type: file.type, uploaded_by: user?.id, category: form.category,
     });
-
-    if (error) {
-      showError(error, "Impossible d'enregistrer le document");
-    } else {
+    if (error) showError(error, "Impossible d'enregistrer le document");
+    else {
       showSuccess("document_uploaded");
-      setOpen(false);
-      setForm({ session_id: "", name: "", category: "autre" });
-      setFile(null);
-      fetchAll();
+      setOpen(false); setForm({ session_id: "", name: "", category: "autre" }); setFile(null); fetchAll();
     }
     setUploading(false);
   };
@@ -114,13 +91,8 @@ export default function Documents() {
   const handleDownload = async (doc: any) => {
     const { data } = await supabase.storage.from("session-documents").createSignedUrl(doc.file_path, 3600);
     if (data?.signedUrl) {
-      // Log download in audit trail
       if (user && companyId) {
-        await supabase.from("document_downloads" as any).insert({
-          document_id: doc.id,
-          user_id: user.id,
-          company_id: companyId,
-        });
+        await supabase.from("document_downloads" as any).insert({ document_id: doc.id, user_id: user.id, company_id: companyId });
       }
       window.open(data.signedUrl, "_blank");
     }
@@ -133,17 +105,71 @@ export default function Documents() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const filtered = documents.filter((doc) => {
-    const matchCategory = activeCategory === "all" || doc.category === activeCategory;
-    const matchSearch = !search || doc.name.toLowerCase().includes(search.toLowerCase()) || (doc as any).sessions?.title?.toLowerCase().includes(search.toLowerCase());
-    return matchCategory && matchSearch;
-  });
+  const stats = categories.map(c => ({ ...c, count: documents.filter(d => d.category === c.value).length }));
+  const filteredData = activeCategory === "all" ? documents : documents.filter((d) => d.category === activeCategory);
 
-  // Stats per category
-  const stats = categories.filter(c => c.value !== "all").map(c => ({
-    ...c,
-    count: documents.filter(d => d.category === c.value).length,
-  }));
+  const columns: DataTableColumn<any>[] = [
+    {
+      key: "name", label: "Document", alwaysVisible: true,
+      accessor: (d) => d.name,
+      render: (d) => (
+        <div className="flex items-center gap-2">
+          <FileIcon className="w-4 h-4 text-primary flex-shrink-0" />
+          <span className="font-medium truncate max-w-xs">{d.name}</span>
+        </div>
+      ),
+    },
+    {
+      key: "category", label: "Catégorie", width: "w-[160px]",
+      accessor: (d) => categoryLabels[d.category] ?? d.category,
+      render: (d) => (
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${categoryColors[d.category] || categoryColors.autre}`}>
+          {categoryLabels[d.category] || d.category}
+        </span>
+      ),
+    },
+    {
+      key: "session", label: "Session",
+      accessor: (d) => d.sessions?.title ?? "",
+      render: (d) => <span className="text-sm">{d.sessions?.title ?? "—"}</span>,
+    },
+    {
+      key: "size", label: "Taille", width: "w-[100px]",
+      accessor: (d) => d.file_size ?? 0,
+      render: (d) => <span className="text-sm text-muted-foreground">{formatSize(d.file_size)}</span>,
+    },
+    {
+      key: "version", label: "Version", width: "w-[90px]", hiddenByDefault: true,
+      accessor: (d) => d.version ?? 1,
+      render: (d) => <Badge variant="outline">v{d.version}</Badge>,
+    },
+    {
+      key: "date", label: "Date", width: "w-[120px]",
+      accessor: (d) => d.created_at,
+      render: (d) => <span className="text-sm text-muted-foreground">{new Date(d.created_at).toLocaleDateString("fr-FR")}</span>,
+    },
+    {
+      key: "actions", label: "Actions", width: "w-[100px]", alwaysVisible: true,
+      render: (d) => (
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDownload(d); }}>
+            <Download className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setCommentingId(commentingId === d.id ? null : d.id); }}>
+            <MessageSquare className="w-4 h-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const filters: DataTableFilter[] = [
+    {
+      key: "category", label: "Catégorie",
+      options: categories.map((c) => ({ value: c.value, label: c.label, count: documents.filter((d) => d.category === c.value).length })),
+      predicate: (d, v) => d.category === v,
+    },
+  ];
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -154,65 +180,45 @@ export default function Documents() {
         </div>
         <div className="flex flex-wrap gap-2">
           <a href={getGoogleDriveLink()} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm">
-              <Cloud className="w-4 h-4 mr-1" />Google Drive
-              <ExternalLink className="w-3 h-3 ml-1" />
-            </Button>
+            <Button variant="outline" size="sm"><Cloud className="w-4 h-4 mr-1" />Google Drive<ExternalLink className="w-3 h-3 ml-1" /></Button>
           </a>
           <a href={getOneDriveLink()} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm">
-              <Cloud className="w-4 h-4 mr-1" />OneDrive
-              <ExternalLink className="w-3 h-3 ml-1" />
-            </Button>
+            <Button variant="outline" size="sm"><Cloud className="w-4 h-4 mr-1" />OneDrive<ExternalLink className="w-3 h-3 ml-1" /></Button>
           </a>
-          {canManageDocs && <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button><Upload className="w-4 h-4 mr-2" />Uploader un document</Button>
-              </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Uploader un document</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Catégorie</Label>
-                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {categories.filter(c => c.value !== "all").map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Session associée</Label>
-                <Select value={form.session_id} onValueChange={(v) => setForm({ ...form, session_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner une session" /></SelectTrigger>
-                  <SelectContent>
-                    {sessions.map((s) => (<SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Nom du document</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Optionnel — le nom du fichier sera utilisé par défaut" />
-              </div>
-              <div className="space-y-2">
-                <Label>Fichier</Label>
-                <Input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-              <Button onClick={handleUpload} disabled={!form.session_id || !file || uploading}>
-                {uploading ? "Upload en cours..." : "Uploader"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>}
+          {canManageDocs && (
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild><Button><Upload className="w-4 h-4 mr-2" />Uploader un document</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Uploader un document</DialogTitle></DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Catégorie</Label>
+                    <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{categories.map((c) => (<SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>))}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Session associée</Label>
+                    <Select value={form.session_id} onValueChange={(v) => setForm({ ...form, session_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Sélectionner une session" /></SelectTrigger>
+                      <SelectContent>{sessions.map((s) => (<SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>))}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2"><Label>Nom du document</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Optionnel — le nom du fichier sera utilisé par défaut" /></div>
+                  <div className="space-y-2"><Label>Fichier</Label><Input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+                  <Button onClick={handleUpload} disabled={!form.session_id || !file || uploading}>{uploading ? "Upload en cours..." : "Uploader"}</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 
-      {/* Category stats cards */}
+      {/* Cartes catégories cliquables */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {stats.map((s) => (
           <Card
@@ -229,88 +235,27 @@ export default function Documents() {
         ))}
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          className="pl-9"
-          placeholder="Rechercher par nom ou session..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+      <DataTable
+        storageKey="documents"
+        data={filteredData}
+        columns={columns}
+        loading={loading}
+        rowKey={(d) => d.id}
+        filters={filters}
+        searchPlaceholder="Rechercher par nom ou session…"
+        emptyMessage="Aucun document trouvé"
+        defaultPageSize={20}
+      />
 
-      {/* Documents table */}
-      <Card>
-        <CardContent className="p-0 overflow-x-auto">
-          <Table className="min-w-[750px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Document</TableHead>
-                <TableHead>Catégorie</TableHead>
-                <TableHead>Session</TableHead>
-                <TableHead>Taille</TableHead>
-                <TableHead>Version</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucun document trouvé</TableCell></TableRow>
-              ) : (
-                filtered.map((doc) => (
-                  <React.Fragment key={doc.id}>
-                  <TableRow>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <FileIcon className="w-4 h-4 text-primary" />
-                        <span className="font-medium">{doc.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${categoryColors[doc.category] || categoryColors.autre}`}>
-                        {categoryLabels[doc.category] || doc.category}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm">{(doc as any).sessions?.title}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{formatSize(doc.file_size)}</TableCell>
-                    <TableCell><Badge variant="outline">v{doc.version}</Badge></TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(doc.created_at).toLocaleDateString("fr-FR")}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleDownload(doc)}>
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setCommentingId(commentingId === doc.id ? null : doc.id)}>
-                          <MessageSquare className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  {commentingId === doc.id && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="p-4 bg-muted/20">
-                        <CommentThread entityType="document" entityId={doc.id} />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  </React.Fragment>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {commentingId && (
+        <Card><CardContent className="p-4"><CommentThread entityType="document" entityId={commentingId} /></CardContent></Card>
+      )}
+
       {permDocId && (
         <EntityPermissionsDialog
           open={!!permDocId}
           onOpenChange={(open) => { if (!open) setPermDocId(null); }}
-          entityType="document"
-          entityId={permDocId}
-          entityName={permDocName}
+          entityType="document" entityId={permDocId} entityName={permDocName}
         />
       )}
     </div>
