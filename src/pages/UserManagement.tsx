@@ -9,31 +9,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { showSuccess, showError } from "@/lib/toastHelpers";
-import { Plus, UserCog, Shield, Ban, CheckCircle2, Pencil, Trash2, Link } from "lucide-react";
-
+import { Plus, UserCog, Shield, Ban, CheckCircle2, Link } from "lucide-react";
+import { DataTable, type DataTableColumn, type DataTableFilter } from "@/components/ui/data-table";
 
 export default function UserManagement() {
-  
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [editProfile, setEditProfile] = useState<any | null>(null);
   const [linkDialog, setLinkDialog] = useState<{ profileId: string; userId: string } | null>(null);
   const [selectedMemberId, setSelectedMemberId] = useState("");
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-    full_name: "",
-    role_id: "",
-  });
+  const [form, setForm] = useState({ email: "", password: "", full_name: "", role_id: "" });
 
   const fetchData = async () => {
+    setLoading(true);
     const [profilesRes, rolesRes, membersRes] = await Promise.all([
       supabase.from("profiles").select("*, roles(nom)").order("created_at", { ascending: false }),
       supabase.from("roles").select("*").order("nom"),
@@ -42,84 +36,49 @@ export default function UserManagement() {
     setProfiles(profilesRes.data ?? []);
     setRoles(rolesRes.data ?? []);
     setMembers(membersRes.data ?? []);
+    setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  // Créer un utilisateur via signup
   const handleCreate = async () => {
     if (!form.email || !form.password || !form.full_name || !form.role_id) {
       showError("Tous les champs sont requis pour créer un utilisateur.");
       return;
     }
-
     const { data, error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
+      email: form.email, password: form.password,
       options: { data: { full_name: form.full_name } },
     });
-
-    if (error) {
-      showError(error, "Impossible de créer l'utilisateur");
-      return;
-    }
-
-    // Update the profile with role
+    if (error) { showError(error, "Impossible de créer l'utilisateur"); return; }
     if (data.user) {
-      // Small delay for trigger to create profile
       await new Promise((r) => setTimeout(r, 1000));
       await supabase.from("profiles").update({ role_id: form.role_id }).eq("id", data.user.id);
-
-      // Audit log is now handled automatically by database triggers
     }
-
     showSuccess("user_created", "Un e-mail de confirmation a été envoyé.");
     setOpen(false);
     setForm({ email: "", password: "", full_name: "", role_id: "" });
     fetchData();
   };
 
-  // Modifier le rôle
   const handleUpdateRole = async (profileId: string, roleId: string) => {
     const { error } = await supabase.from("profiles").update({ role_id: roleId }).eq("id", profileId);
-    if (error) {
-      showError(error, "Impossible de modifier le rôle");
-    } else {
-      // Audit log is now handled automatically by database triggers
-      showSuccess("user_updated");
-      fetchData();
-    }
+    if (error) showError(error, "Impossible de modifier le rôle");
+    else { showSuccess("user_updated"); fetchData(); }
   };
 
-  // Activer / Suspendre
   const handleToggleStatus = async (profileId: string, currentStatus: string) => {
     const newStatus = currentStatus === "actif" ? "suspendu" : "actif";
     const { error } = await supabase.from("profiles").update({ statut: newStatus }).eq("id", profileId);
-    if (error) {
-      showError(error, "Impossible de modifier le statut de l'utilisateur");
-    } else {
-      // Audit log is now handled automatically by database triggers
-      showSuccess(newStatus === "suspendu" ? "user_suspended" : "user_activated");
-      fetchData();
-    }
+    if (error) showError(error, "Impossible de modifier le statut de l'utilisateur");
+    else { showSuccess(newStatus === "suspendu" ? "user_suspended" : "user_activated"); fetchData(); }
   };
 
-  // Lier un membre à un utilisateur
   const handleLinkMember = async () => {
     if (!linkDialog || !selectedMemberId) return;
-    const { error } = await supabase
-      .from("members")
-      .update({ user_id: linkDialog.userId } as any)
-      .eq("id", selectedMemberId);
-    if (error) {
-      showError(error, "Impossible de lier le membre à l'utilisateur");
-    } else {
-      // Audit log is now handled automatically by database triggers
-      showSuccess("user_linked");
-      setLinkDialog(null);
-      setSelectedMemberId("");
-      fetchData();
-    }
+    const { error } = await supabase.from("members").update({ user_id: linkDialog.userId } as any).eq("id", selectedMemberId);
+    if (error) showError(error, "Impossible de lier le membre à l'utilisateur");
+    else { showSuccess("user_linked"); setLinkDialog(null); setSelectedMemberId(""); fetchData(); }
   };
 
   if (!hasPermission("gerer_utilisateurs")) {
@@ -136,6 +95,71 @@ export default function UserManagement() {
     );
   }
 
+  const columns: DataTableColumn<any>[] = [
+    {
+      key: "user", label: "Utilisateur", alwaysVisible: true,
+      accessor: (p) => p.full_name ?? "",
+      render: (p) => (
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center"><UserCog className="w-4 h-4 text-primary" /></div>
+          <div>
+            <p className="font-medium">{p.full_name ?? "—"}</p>
+            <p className="text-xs text-muted-foreground">{p.id.slice(0, 8)}…</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "role", label: "Rôle", width: "w-[200px]",
+      accessor: (p) => p.roles?.nom ?? "",
+      render: (p) => (
+        <Select value={p.role_id ?? ""} onValueChange={(v) => handleUpdateRole(p.id, v)}>
+          <SelectTrigger className="w-44 h-8"><SelectValue placeholder="Aucun rôle" /></SelectTrigger>
+          <SelectContent>{roles.map((r) => (<SelectItem key={r.id} value={r.id}>{r.nom}</SelectItem>))}</SelectContent>
+        </Select>
+      ),
+    },
+    {
+      key: "statut", label: "Statut", width: "w-[110px]",
+      accessor: (p) => p.statut,
+      render: (p) => <Badge variant={p.statut === "actif" ? "default" : "destructive"}>{p.statut === "actif" ? "Actif" : "Suspendu"}</Badge>,
+    },
+    {
+      key: "created", label: "Date de création", width: "w-[150px]",
+      accessor: (p) => p.created_at,
+      render: (p) => <span className="text-sm text-muted-foreground">{new Date(p.created_at).toLocaleDateString("fr-FR")}</span>,
+    },
+    {
+      key: "actions", label: "Actions", width: "w-[110px]", alwaysVisible: true,
+      render: (p) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="icon" title={p.statut === "actif" ? "Suspendre" : "Activer"} onClick={(e) => { e.stopPropagation(); handleToggleStatus(p.id, p.statut); }}>
+            {p.statut === "actif" ? <Ban className="w-4 h-4 text-destructive" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+          </Button>
+          <Button variant="ghost" size="icon" title="Associer à un membre" onClick={(e) => { e.stopPropagation(); setLinkDialog({ profileId: p.id, userId: p.id }); }}>
+            <Link className="w-4 h-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const filters: DataTableFilter[] = [
+    {
+      key: "statut", label: "Statut",
+      options: [
+        { value: "actif", label: "Actif", count: profiles.filter((p) => p.statut === "actif").length },
+        { value: "suspendu", label: "Suspendu", count: profiles.filter((p) => p.statut === "suspendu").length },
+      ],
+      predicate: (p, v) => p.statut === v,
+    },
+    {
+      key: "role", label: "Rôle",
+      options: roles.map((r) => ({ value: r.id, label: r.nom, count: profiles.filter((p) => p.role_id === r.id).length })),
+      predicate: (p, v) => p.role_id === v,
+    },
+  ];
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -144,20 +168,12 @@ export default function UserManagement() {
           <p className="text-muted-foreground">Créer, modifier et gérer les comptes utilisateurs</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" />Nouvel utilisateur</Button>
-            </DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nouvel utilisateur</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Créer un utilisateur</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Nom complet</Label>
-                <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-              </div>
+              <div className="space-y-2"><Label>Nom complet</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
               <div className="space-y-2">
                 <Label>Mot de passe</Label>
                 <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} minLength={8} />
@@ -167,11 +183,7 @@ export default function UserManagement() {
                 <Label>Rôle</Label>
                 <Select value={form.role_id} onValueChange={(v) => setForm({ ...form, role_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner un rôle" /></SelectTrigger>
-                  <SelectContent>
-                    {roles.map((r) => (
-                      <SelectItem key={r.id} value={r.id}>{r.nom}</SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectContent>{roles.map((r) => (<SelectItem key={r.id} value={r.id}>{r.nom}</SelectItem>))}</SelectContent>
                 </Select>
               </div>
             </div>
@@ -183,102 +195,21 @@ export default function UserManagement() {
         </Dialog>
       </div>
 
-      {/* Liste des utilisateurs */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Utilisateur</TableHead>
-                <TableHead>Rôle</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Date de création</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {profiles.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    Aucun utilisateur
-                  </TableCell>
-                </TableRow>
-              ) : (
-                profiles.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                          <UserCog className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{p.full_name ?? "—"}</p>
-                          <p className="text-xs text-muted-foreground">{p.id.slice(0, 8)}...</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={p.role_id ?? ""}
-                        onValueChange={(v) => handleUpdateRole(p.id, v)}
-                      >
-                        <SelectTrigger className="w-40">
-                          <SelectValue placeholder="Aucun rôle" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {roles.map((r) => (
-                            <SelectItem key={r.id} value={r.id}>{r.nom}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={p.statut === "actif" ? "default" : "destructive"}>
-                        {p.statut === "actif" ? "Actif" : "Suspendu"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(p.created_at).toLocaleDateString("fr-FR")}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title={p.statut === "actif" ? "Suspendre" : "Activer"}
-                          onClick={() => handleToggleStatus(p.id, p.statut)}
-                        >
-                          {p.statut === "actif" ? (
-                            <Ban className="w-4 h-4 text-destructive" />
-                          ) : (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Associer à un membre"
-                          onClick={() => setLinkDialog({ profileId: p.id, userId: p.id })}
-                        >
-                          <Link className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <DataTable
+        storageKey="users"
+        data={profiles}
+        columns={columns}
+        loading={loading}
+        rowKey={(p) => p.id}
+        filters={filters}
+        searchPlaceholder="Rechercher un utilisateur…"
+        emptyMessage="Aucun utilisateur"
+        defaultPageSize={20}
+      />
 
-      {/* Rôles et permissions */}
       <Card>
         <CardContent className="p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-primary" />
-            Rôles disponibles
-          </h2>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Shield className="w-5 h-5 text-primary" />Rôles disponibles</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {roles.map((r) => (
               <div key={r.id} className="border rounded-lg p-4">
@@ -290,25 +221,16 @@ export default function UserManagement() {
         </CardContent>
       </Card>
 
-      {/* Dialog pour lier membre */}
       <Dialog open={!!linkDialog} onOpenChange={(v) => !v && setLinkDialog(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Associer un membre</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Associez un membre d'organe à ce compte utilisateur.
-            </p>
+            <p className="text-sm text-muted-foreground">Associez un membre d'organe à ce compte utilisateur.</p>
             <div className="space-y-2">
               <Label>Membre (sans compte associé)</Label>
               <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
                 <SelectTrigger><SelectValue placeholder="Sélectionner un membre" /></SelectTrigger>
-                <SelectContent>
-                  {members.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.full_name} ({(m as any).organs?.name ?? "—"})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectContent>{members.map((m) => (<SelectItem key={m.id} value={m.id}>{m.full_name} ({(m as any).organs?.name ?? "—"})</SelectItem>))}</SelectContent>
               </Select>
             </div>
           </div>
