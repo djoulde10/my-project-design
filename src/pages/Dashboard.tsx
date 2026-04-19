@@ -193,13 +193,21 @@ export default function Dashboard() {
                   <ArrowRight className="w-3 h-3 text-muted-foreground" />
                 </div>
               )}
-              {stats.pendingPVs > 0 && (
+              {canSeePendingCA && stats.pendingPVsCA > 0 && (
                 <div className="flex items-center justify-between text-sm cursor-pointer hover:bg-muted/50 rounded p-1 -mx-1" onClick={() => navigate("/meetings")}>
-                  <span className="text-amber-600 font-medium">{stats.pendingPVs} PV en attente</span>
+                  <span className="text-amber-600 font-medium">{stats.pendingPVsCA} PV CA en attente</span>
                   <ArrowRight className="w-3 h-3 text-muted-foreground" />
                 </div>
               )}
-              {stats.overdueActions === 0 && stats.pendingPVs === 0 && (
+              {canSeePendingAudit && stats.pendingPVsAudit > 0 && (
+                <div className="flex items-center justify-between text-sm cursor-pointer hover:bg-muted/50 rounded p-1 -mx-1" onClick={() => navigate("/audit-meetings")}>
+                  <span className="text-amber-600 font-medium">{stats.pendingPVsAudit} PV Audit en attente</span>
+                  <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                </div>
+              )}
+              {stats.overdueActions === 0 &&
+                (!canSeePendingCA || stats.pendingPVsCA === 0) &&
+                (!canSeePendingAudit || stats.pendingPVsAudit === 0) && (
                 <div className="flex items-center gap-2 text-emerald-600">
                   <CheckCircle2 className="w-5 h-5" />
                   <p className="text-sm">Tout est à jour</p>
