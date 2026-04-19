@@ -45,7 +45,9 @@ export default function Dashboard() {
         supabase.from("actions").select("id", { count: "exact", head: true }).eq("status", "en_cours"),
         supabase.from("decisions").select("numero_decision, texte, statut, sessions(title)").order("created_at", { ascending: false }).limit(5),
         supabase.from("actions").select("title, due_date, members(full_name)").eq("status", "en_cours").lte("due_date", nearDueDate).order("due_date").limit(5),
-        supabase.from("minutes").select("id", { count: "exact", head: true }).eq("pv_status", "brouillon"),
+        supabase.from("minutes")
+          .select("id, sessions!inner(organs!inner(type))")
+          .in("pv_status", ["brouillon", "en_attente_validation"]),
         supabase.from("sessions").select("session_date").eq("is_published", true).order("session_date", { ascending: false }).limit(100),
       ]);
 
