@@ -880,7 +880,6 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             {/* Import audio dialog */}
             <Dialog open={createOpen} onOpenChange={(open) => {
               setCreateOpen(open);
-              if (!open && scribe.isConnected) stopLiveTranscription();
               if (!open) resetForm();
             }}>
                 <DialogTrigger asChild>
