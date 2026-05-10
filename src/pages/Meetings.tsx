@@ -772,14 +772,35 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            {!isLiveMode ? (
+            {recording.status === "idle" && (
               <Button onClick={startLiveTranscription} className="gap-2">
                 <Mic className="w-4 h-4" />Démarrer l'écoute
               </Button>
-            ) : (
-              <Button variant="destructive" onClick={stopLiveTranscription} className="gap-2">
-                <MicOff className="w-4 h-4" />Arrêter l'écoute
-              </Button>
+            )}
+            {isLiveMode && (
+              <>
+                <Button variant="secondary" onClick={recording.pause} className="gap-2">
+                  <Pause className="w-4 h-4" />Pause
+                </Button>
+                <Button variant="destructive" onClick={stopLiveTranscription} className="gap-2">
+                  <Square className="w-4 h-4" />Arrêter
+                </Button>
+              </>
+            )}
+            {isPaused && (
+              <>
+                <Button onClick={recording.resume} className="gap-2">
+                  <Play className="w-4 h-4" />Reprendre
+                </Button>
+                <Button variant="destructive" onClick={stopLiveTranscription} className="gap-2">
+                  <Square className="w-4 h-4" />Arrêter
+                </Button>
+              </>
+            )}
+            {(isLiveMode || isPaused) && (
+              <Badge variant="outline" className="font-mono">
+                {formatDuration(recording.elapsedMs)}
+              </Badge>
             )}
 
             <Button
@@ -814,17 +835,17 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </Select>
           </div>
 
-          {!isLiveMode && !liveTranscript && (
+          {recording.status === "idle" && !liveTranscript && (
             <p className="text-sm text-muted-foreground">
-              Cliquez sur "Démarrer l'écoute" pour transcrire en temps réel, ou importez un fichier audio.
+              Cliquez sur "Démarrer l'écoute" pour transcrire en temps réel. L'écoute continue même si vous changez de page.
             </p>
           )}
 
-          {isLiveMode && (
+          {(isLiveMode || isPaused) && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-destructive">
-                <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-                Écoute en cours — parlez maintenant...
+              <div className={`flex items-center gap-2 text-sm ${isPaused ? "text-amber-600" : "text-destructive"}`}>
+                <span className={`w-2 h-2 rounded-full ${isPaused ? "bg-amber-500" : "bg-destructive animate-pulse"}`} />
+                {isPaused ? "Écoute en pause" : "Écoute en cours — parlez maintenant..."}
               </div>
               <ScrollArea className="h-[150px] rounded-md border bg-muted/30 p-3">
                 <p className="text-sm whitespace-pre-wrap">
@@ -836,7 +857,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             </div>
           )}
 
-          {!isLiveMode && liveTranscript && (
+          {recording.status === "idle" && liveTranscript && (
             <div className="space-y-2">
               <Badge variant="secondary">✓ Transcription capturée</Badge>
               <ScrollArea className="h-[120px] rounded-md border bg-muted/30 p-3">
