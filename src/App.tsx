@@ -15,6 +15,8 @@ import Dashboard from "@/pages/Dashboard";
 import AccessDenied from "@/pages/AccessDenied";
 import AIAssistant from "@/components/AIAssistant";
 import CompanyBrandingTheme from "@/components/CompanyBrandingTheme";
+import FloatingRecordingWidget from "@/components/FloatingRecordingWidget";
+import { RecordingProvider } from "@/contexts/RecordingContext";
 
 // Lazy-loaded pages — split bundles, faster initial load
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
@@ -153,6 +155,7 @@ function ProtectedApp() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       {user && <AIAssistant />}
+      {user && <FloatingRecordingWidget />}
     </Suspense>
   );
 }
@@ -165,7 +168,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <CompanyBrandingTheme />
-          <ProtectedApp />
+          <RecordingProvider>
+            <ProtectedApp />
+          </RecordingProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
