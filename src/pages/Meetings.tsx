@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import DOMPurify from "dompurify";
 import { useCompanyBranding } from "@/hooks/useCompanyBranding";
-import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2,
+  Plus, Mic, MicOff, Upload, FileText, Download, Loader2, Volume2, BookOpen, Trash2, Eye, Wand2, Pause, Play, Square,
   ClipboardCheck, History, Edit, Save, FileDown, CheckCircle2, Brain, MessageSquare, Shield, Send
 } from "lucide-react";
 import MinuteVersionHistory from "@/components/MinuteVersionHistory";
@@ -31,6 +30,7 @@ import { useIsDirectionMember } from "@/hooks/useIsDirectionMember";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { usePresidentOrganRestriction } from "@/hooks/usePresidentOrganRestriction";
 import { useRealtimeTables } from "@/hooks/useRealtimeTable";
+import { useRecording, formatDuration } from "@/contexts/RecordingContext";
 
 // PV status helpers
 const pvStatusLabels: Record<string, string> = {
@@ -64,11 +64,12 @@ export default function Meetings() {
 
   const { branding } = useCompanyBranding();
 
-  // Realtime transcription state
-  const [liveTranscript, setLiveTranscript] = useState("");
-  const [partialText, setPartialText] = useState("");
-  const [isLiveMode, setIsLiveMode] = useState(false);
-  const committedTextRef = useRef("");
+  // Global recording session (survives navigation)
+  const recording = useRecording();
+  const isLiveMode = recording.status === "recording";
+  const isPaused = recording.status === "paused";
+  const liveTranscript = recording.transcript;
+  const partialText = recording.partialText;
 
   // Upload mode
   const [createOpen, setCreateOpen] = useState(false);
@@ -113,19 +114,6 @@ export default function Meetings() {
   const [versionHistoryContent, setVersionHistoryContent] = useState<string | null>(null);
 
 
-  // Realtime scribe hook
-  const scribe = useScribe({
-    modelId: "scribe_v2_realtime",
-    commitStrategy: CommitStrategy.VAD,
-    onPartialTranscript: (data) => setPartialText(data.text || ""),
-    onCommittedTranscript: (data) => {
-      const newText = data.text || "";
-      committedTextRef.current += (committedTextRef.current ? " " : "") + newText;
-      setLiveTranscript(committedTextRef.current);
-      setPartialText("");
-    },
-  });
-
   const fetchAll = useCallback(async () => {
     const [tplRes, sessRes, minRes, memRes] = await Promise.all([
       supabase.from("meeting_templates").select("*").order("created_at", { ascending: false }),
@@ -156,23 +144,16 @@ export default function Meetings() {
 
   // ========== REALTIME RECORDING ==========
   const startLiveTranscription = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
-      if (error || !data?.token) throw new Error(error?.message || "Impossible d'obtenir le token");
-      committedTextRef.current = "";
-      setLiveTranscript("");
-      setPartialText("");
-      setIsLiveMode(true);
-      await scribe.connect({ token: data.token, microphone: { echoCancellation: true, noiseSuppression: true } });
-    } catch (e: any) {
-      showError(e, "Impossible de démarrer la transcription en direct");
-      setIsLiveMode(false);
-    }
+    await recording.start({
+      title: newTitle || `Réunion du ${new Date().toLocaleDateString("fr-FR")}`,
+      sessionId: newSessionId || undefined,
+      templateId: selectedTemplateId || undefined,
+      mode: pvMode,
+    });
   };
 
   const stopLiveTranscription = async () => {
-    try { await scribe.disconnect(); } catch { /* ignore */ }
-    setIsLiveMode(false);
+    await recording.stop();
   };
 
   const resetForm = () => {
@@ -180,10 +161,7 @@ export default function Meetings() {
     setNewTitle("");
     setNewSessionId("");
     setSelectedTemplateId("");
-    setLiveTranscript("");
-    setPartialText("");
-    committedTextRef.current = "";
-    setIsLiveMode(false);
+    recording.reset();
   };
 
   // ========== GENERATE PV → SHOW IN EDITOR ==========
@@ -222,13 +200,23 @@ export default function Meetings() {
 
   // Generate from live transcription
   const generatePVFromLive = async () => {
-    const finalTranscript = committedTextRef.current;
+    let finalTranscript = recording.transcript;
+    let finalMeta = recording.meta;
+    if (recording.status !== "idle") {
+      const result = await recording.stop();
+      finalTranscript = result.transcript;
+      finalMeta = result.meta || finalMeta;
+    }
     if (!finalTranscript) {
       showError("Aucune transcription disponible");
       return;
     }
-    if (scribe.isConnected) await stopLiveTranscription();
-    await generateAndPreview(finalTranscript, newTitle, newSessionId);
+    await generateAndPreview(
+      finalTranscript,
+      finalMeta?.title || newTitle,
+      finalMeta?.sessionId || newSessionId,
+    );
+    recording.reset();
     resetForm();
   };
 
