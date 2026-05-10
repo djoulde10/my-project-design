@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
-import { showError, showInfo, showSuccess } from "@/lib/toastHelpers";
+import { showError, showInfo } from "@/lib/toastHelpers";
+import { toast } from "sonner";
 
 export type RecordingStatus = "idle" | "recording" | "paused";
 
@@ -139,7 +140,7 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
     setPausedAt(null);
     setPausedAccum(0);
     setElapsedMs(0);
-    if (finalTranscript) showSuccess("Enregistrement terminé");
+    if (finalTranscript) toast.success("Enregistrement terminé");
     return { transcript: finalTranscript, meta: finalMeta };
   }, [scribe, meta]);
 
