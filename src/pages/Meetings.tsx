@@ -806,7 +806,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
             <Button
               variant="outline"
               onClick={generatePVFromLive}
-              disabled={!liveTranscript || isLiveMode || generating}
+              disabled={!liveTranscript || generating}
               className="gap-2"
             >
               {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
