@@ -17,6 +17,7 @@ import AIAssistant from "@/components/AIAssistant";
 import CompanyBrandingTheme from "@/components/CompanyBrandingTheme";
 import FloatingRecordingWidget from "@/components/FloatingRecordingWidget";
 import { RecordingProvider } from "@/contexts/RecordingContext";
+import PageSkeleton from "@/components/PageSkeleton";
 
 // Lazy-loaded pages — split bundles, faster initial load
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
@@ -64,11 +65,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const PageFallback = () => (
-  <div className="flex items-center justify-center h-[60vh] text-muted-foreground">
-    Chargement…
-  </div>
-);
+const PageFallback = () => <PageSkeleton />;
 
 // CA-only routes that "Membre de la Direction" cannot access
 const directionBlockedPaths = ["/sessions", "/members", "/calendar"];
