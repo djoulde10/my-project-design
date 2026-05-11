@@ -9,10 +9,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { useUserQuality } from "@/hooks/useUserQuality";
+import PageSkeleton from "@/components/PageSkeleton";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { canSeePendingCA, canSeePendingAudit, canSeeAnyPending } = useUserQuality();
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     sessionsOrdinaires: 0, sessionsExtraordinaires: 0, reunionsAudit: 0,
     decisions: 0, actions: 0, overdueActions: 0,
@@ -97,6 +99,7 @@ export default function Dashboard() {
         pendingPVsAudit,
         sessionsByMonth,
       });
+      setLoading(false);
     };
     fetchStats();
   }, []);
@@ -118,6 +121,8 @@ export default function Dashboard() {
 
   const totalActions = stats.actions;
   const executionRate = totalActions > 0 ? Math.round((stats.completedActions / totalActions) * 100) : 0;
+
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
