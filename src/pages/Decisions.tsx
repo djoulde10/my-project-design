@@ -19,6 +19,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useRealtimeTables } from "@/hooks/useRealtimeTable";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DataTable, type DataTableColumn, type DataTableFilter } from "@/components/ui/data-table";
+import PageSkeleton from "@/components/PageSkeleton";
 
 const statutLabels: Record<string, string> = { adoptee: "Adoptée", rejetee: "Rejetée", ajournee: "Ajournée" };
 const statutColors: Record<string, string> = {
@@ -147,6 +148,8 @@ export default function Decisions() {
     },
   ];
 
+  if (loading) return <PageSkeleton />;
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -264,7 +267,6 @@ export default function Decisions() {
         storageKey="decisions"
         data={filterStatut === "all" ? decisions : decisions.filter((d) => d.statut === filterStatut)}
         columns={columns}
-        loading={loading}
         rowKey={(d) => d.id}
         filters={filters}
         searchPlaceholder="Rechercher une résolution…"
