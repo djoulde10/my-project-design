@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { Plus, UserCog, Shield, Ban, CheckCircle2, Link } from "lucide-react";
 import { DataTable, type DataTableColumn, type DataTableFilter } from "@/components/ui/data-table";
+import PageSkeleton from "@/components/PageSkeleton";
 
 export default function UserManagement() {
   const { user } = useAuth();
@@ -160,6 +161,8 @@ export default function UserManagement() {
     },
   ];
 
+  if (loading) return <PageSkeleton />;
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -199,7 +202,6 @@ export default function UserManagement() {
         storageKey="users"
         data={profiles}
         columns={columns}
-        loading={loading}
         rowKey={(p) => p.id}
         filters={filters}
         searchPlaceholder="Rechercher un utilisateur…"

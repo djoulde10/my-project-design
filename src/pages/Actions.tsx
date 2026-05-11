@@ -19,6 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link } from "react-router-dom";
 import { DataTable, type DataTableColumn, type DataTableFilter } from "@/components/ui/data-table";
+import PageSkeleton from "@/components/PageSkeleton";
 
 type Status = "a_faire" | "en_cours" | "terminee" | "en_retard" | "annulee";
 
@@ -335,6 +336,8 @@ export default function Actions() {
     </ScrollArea>
   );
 
+  if (loading) return <PageSkeleton />;
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -397,7 +400,6 @@ export default function Actions() {
         storageKey="actions"
         data={dataset}
         columns={columns}
-        loading={loading}
         rowKey={(a) => a.id}
         filters={filters}
         searchPlaceholder="Rechercher (objet, responsable, observations)…"

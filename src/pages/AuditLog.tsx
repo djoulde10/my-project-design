@@ -7,6 +7,7 @@ import { History, User, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DataTable, type DataTableColumn, type DataTableFilter } from "@/components/ui/data-table";
+import PageSkeleton from "@/components/PageSkeleton";
 
 const actionLabels: Record<string, string> = {
   INSERT: "Création", UPDATE: "Modification", DELETE: "Suppression",
@@ -50,18 +51,16 @@ export default function AuditLog() {
   const [detailLog, setDetailLog] = useState<any | null>(null);
 
   useEffect(() => {
-    supabase.from("profiles").select("id, full_name").then(({ data }) => {
-      const map: Record<string, string> = {};
-      (data ?? []).forEach((p) => { map[p.id] = p.full_name ?? "Utilisateur inconnu"; });
-      setProfiles(map);
-    });
-  }, []);
-
-  useEffect(() => {
     const fetchLogs = async () => {
       setLoading(true);
-      const { data } = await supabase.from("audit_log").select("*").order("created_at", { ascending: false }).limit(2000);
-      setLogs(data ?? []);
+      const [logsRes, profilesRes] = await Promise.all([
+        supabase.from("audit_log").select("*").order("created_at", { ascending: false }).limit(2000),
+        supabase.from("profiles").select("id, full_name"),
+      ]);
+      const map: Record<string, string> = {};
+      (profilesRes.data ?? []).forEach((p) => { map[p.id] = p.full_name ?? "Utilisateur inconnu"; });
+      setProfiles(map);
+      setLogs(logsRes.data ?? []);
       setLoading(false);
     };
     fetchLogs();
@@ -142,6 +141,8 @@ export default function AuditLog() {
     },
   ];
 
+  if (loading) return <PageSkeleton />;
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div>
@@ -153,7 +154,6 @@ export default function AuditLog() {
         storageKey="audit-log"
         data={logs}
         columns={columns}
-        loading={loading}
         rowKey={(l) => l.id}
         filters={filters}
         searchPlaceholder="Rechercher (action, entité, utilisateur)…"

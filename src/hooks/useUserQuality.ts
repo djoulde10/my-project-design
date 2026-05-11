@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAppData } from "@/contexts/AppDataContext";
 import { usePermissions } from "@/hooks/usePermissions";
 
 /**
@@ -12,36 +10,8 @@ import { usePermissions } from "@/hooks/usePermissions";
  * - PV Comité d'audit → visibles par le Président du Comité d'audit OU rôle "Président du Comité d'Audit" OU valider_pv
  */
 export function useUserQuality() {
-  const { user } = useAuth();
+  const { quality, loading } = useAppData();
   const { roleName, hasPermission } = usePermissions();
-  const [quality, setQuality] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user) {
-      setQuality(null);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("members")
-        .select("quality, is_active")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!cancelled) {
-        setQuality((data as any)?.quality ?? null);
-        setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
 
   const canValidate = hasPermission("valider_pv");
   const isPCA = quality === "pca" || roleName === "PCA";

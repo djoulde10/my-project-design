@@ -16,6 +16,7 @@ import { showSuccess, showError } from "@/lib/toastHelpers";
 import CommentThread from "@/components/CommentThread";
 import { usePermissions } from "@/hooks/usePermissions";
 import { DataTable, type DataTableColumn, type DataTableFilter } from "@/components/ui/data-table";
+import PageSkeleton from "@/components/PageSkeleton";
 
 const categories = [
   { value: "pv", label: "Procès-verbaux", icon: FileText },
@@ -171,6 +172,8 @@ export default function Documents() {
     },
   ];
 
+  if (loading) return <PageSkeleton />;
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -239,7 +242,6 @@ export default function Documents() {
         storageKey="documents"
         data={filteredData}
         columns={columns}
-        loading={loading}
         rowKey={(d) => d.id}
         filters={filters}
         searchPlaceholder="Rechercher par nom ou session…"
