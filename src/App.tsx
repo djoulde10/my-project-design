@@ -172,56 +172,6 @@ function ProtectedApp() {
   );
 }
 
-/* legacy route tree replaced by `routes` above */
-function UnusedRouteTree() {
-  return (
-      <Routes>
-        <Route path="/auth" element={<AuthRoute />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/convocation/:token" element={<ConvocationView />} />
-        <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
-        <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
-        <Route path="/members/:id" element={<ProtectedRoute><MemberProfile /></ProtectedRoute>} />
-
-        <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
-        <Route path="/minutes" element={<Navigate to="/meetings" replace />} />
-        <Route path="/meetings" element={<ProtectedRoute><Meetings /></ProtectedRoute>} />
-        <Route path="/decisions" element={<ProtectedRoute><Decisions /></ProtectedRoute>} />
-        <Route path="/actions" element={<ProtectedRoute><Actions /></ProtectedRoute>} />
-        <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
-        <Route path="/audit-meetings" element={<ProtectedRoute><AuditMeetings /></ProtectedRoute>} />
-
-        <Route path="/archives" element={<ProtectedRoute><Archives /></ProtectedRoute>} />
-        <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
-        <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
-        <Route path="/api-keys" element={<ProtectedRoute><ApiKeys /></ProtectedRoute>} />
-        <Route path="/api-docs" element={<ProtectedRoute><ApiDocs /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><OrganizationSettings /></ProtectedRoute>} />
-        <Route path="/help" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
-
-        {/* Super Admin routes */}
-        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-        <Route path="/admin/organizations" element={<AdminRoute><AdminOrganizations /></AdminRoute>} />
-        <Route path="/admin/plans" element={<AdminRoute><AdminPlans /></AdminRoute>} />
-        <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
-        <Route path="/admin/billing" element={<AdminRoute><AdminBilling /></AdminRoute>} />
-        <Route path="/admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
-        <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
-        <Route path="/admin/features" element={<AdminRoute><AdminFeatureFlags /></AdminRoute>} />
-        <Route path="/admin/support" element={<AdminRoute><AdminSupport /></AdminRoute>} />
-        <Route path="/admin/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
-        <Route path="/admin/monitoring" element={<AdminRoute><AdminMonitoring /></AdminRoute>} />
-        <Route path="/admin/api" element={<AdminRoute><AdminApiManagement /></AdminRoute>} />
-
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      {user && <AIAssistant />}
-      {user && <FloatingRecordingWidget />}
-    </Suspense>
-  );
-}
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -229,10 +179,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <CompanyBrandingTheme />
-          <RecordingProvider>
+          <AppDataProvider>
+            <CompanyBrandingTheme />
             <ProtectedApp />
-          </RecordingProvider>
+          </AppDataProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
