@@ -19,26 +19,39 @@ import FloatingRecordingWidget from "@/components/FloatingRecordingWidget";
 import { RecordingProvider } from "@/contexts/RecordingContext";
 import PageSkeleton from "@/components/PageSkeleton";
 
-// Lazy-loaded pages — split bundles, faster initial load
-const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
-const Sessions = lazy(() => import("@/pages/Sessions"));
-const Members = lazy(() => import("@/pages/Members"));
-const Documents = lazy(() => import("@/pages/Documents"));
-const Decisions = lazy(() => import("@/pages/Decisions"));
-const Meetings = lazy(() => import("@/pages/Meetings"));
-const Actions = lazy(() => import("@/pages/Actions"));
-const CalendarPage = lazy(() => import("@/pages/Calendar"));
-const AuditMeetings = lazy(() => import("@/pages/AuditMeetings"));
-const Archives = lazy(() => import("@/pages/Archives"));
-const AuditLog = lazy(() => import("@/pages/AuditLog"));
-const UserManagement = lazy(() => import("@/pages/UserManagement"));
-const MemberProfile = lazy(() => import("@/pages/MemberProfile"));
-const ApiKeys = lazy(() => import("@/pages/ApiKeys"));
-const ApiDocs = lazy(() => import("@/pages/ApiDocs"));
-const OrganizationSettings = lazy(() => import("@/pages/OrganizationSettings"));
-const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
-const ConvocationView = lazy(() => import("@/pages/ConvocationView"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+// Lazy-loaded pages — split bundles, faster initial load.
+// Each loader is exported on `window.__preload` so the sidebar can warm
+// the chunk on hover for an instant navigation feel.
+const lazyPage = <T extends { default: React.ComponentType<any> }>(
+  key: string,
+  loader: () => Promise<T>,
+) => {
+  if (typeof window !== "undefined") {
+    (window as any).__preload = (window as any).__preload ?? {};
+    (window as any).__preload[key] = loader;
+  }
+  return lazy(loader);
+};
+
+const ResetPassword = lazyPage("/reset-password", () => import("@/pages/ResetPassword"));
+const Sessions = lazyPage("/sessions", () => import("@/pages/Sessions"));
+const Members = lazyPage("/members", () => import("@/pages/Members"));
+const Documents = lazyPage("/documents", () => import("@/pages/Documents"));
+const Decisions = lazyPage("/decisions", () => import("@/pages/Decisions"));
+const Meetings = lazyPage("/meetings", () => import("@/pages/Meetings"));
+const Actions = lazyPage("/actions", () => import("@/pages/Actions"));
+const CalendarPage = lazyPage("/calendar", () => import("@/pages/Calendar"));
+const AuditMeetings = lazyPage("/audit-meetings", () => import("@/pages/AuditMeetings"));
+const Archives = lazyPage("/archives", () => import("@/pages/Archives"));
+const AuditLog = lazyPage("/audit", () => import("@/pages/AuditLog"));
+const UserManagement = lazyPage("/users", () => import("@/pages/UserManagement"));
+const MemberProfile = lazyPage("/members/:id", () => import("@/pages/MemberProfile"));
+const ApiKeys = lazyPage("/api-keys", () => import("@/pages/ApiKeys"));
+const ApiDocs = lazyPage("/api-docs", () => import("@/pages/ApiDocs"));
+const OrganizationSettings = lazyPage("/settings", () => import("@/pages/OrganizationSettings"));
+const HelpCenter = lazyPage("/help", () => import("@/pages/HelpCenter"));
+const ConvocationView = lazyPage("/convocation", () => import("@/pages/ConvocationView"));
+const NotFound = lazyPage("/404", () => import("./pages/NotFound"));
 
 // Admin pages (lazy)
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
