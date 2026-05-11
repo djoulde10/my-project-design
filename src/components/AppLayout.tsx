@@ -133,6 +133,10 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
                         key={item.path}
                         to={item.path}
                         onClick={onNavigate}
+                        onMouseEnter={() => {
+                          const preload = (window as any).__preload?.[item.path];
+                          if (typeof preload === "function") preload();
+                        }}
                         className={cn(
                           "flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all duration-150",
                           isActive
