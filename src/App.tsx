@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { AppDataProvider, useAppData } from "@/contexts/AppDataContext";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -125,6 +125,21 @@ function AuthRoute() {
   return <Auth />;
 }
 
+function QueryCacheSessionGuard() {
+  const { user } = useAuth();
+  const previousUserId = useRef<string | null>(null);
+
+  useEffect(() => {
+    const nextUserId = user?.id ?? null;
+    if (previousUserId.current !== nextUserId) {
+      queryClient.clear();
+      previousUserId.current = nextUserId;
+    }
+  }, [user?.id]);
+
+  return null;
+}
+
 function ProtectedApp() {
   const { user } = useAuth();
   const routes = (
@@ -186,6 +201,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <AppDataProvider>
+            <QueryCacheSessionGuard />
             <CompanyBrandingTheme />
             <ProtectedApp />
           </AppDataProvider>
