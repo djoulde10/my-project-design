@@ -15,6 +15,7 @@ import Auth from "@/pages/Auth";
 import AccessDenied from "@/pages/AccessDenied";
 import CompanyBrandingTheme from "@/components/CompanyBrandingTheme";
 import PageSkeleton from "@/components/PageSkeleton";
+import { prefetchRouteData } from "@/lib/pagePrefetch";
 
 // Lazy-loaded pages — split bundles, faster initial load.
 // Each loader is exported on `window.__preload` so the sidebar can warm
@@ -69,13 +70,18 @@ const AdminApiManagement = lazy(() => import("@/pages/admin/AdminApiManagement")
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000, // 30s — avoid refetching the same query immediately
-      gcTime: 5 * 60_000,
+      staleTime: 60_000,
+      gcTime: 10 * 60_000,
       refetchOnWindowFocus: false,
+      refetchOnMount: false,
       retry: 1,
     },
   },
 });
+
+if (typeof window !== "undefined") {
+  (window as any).__prefetchRouteData = (path: string) => prefetchRouteData(path, queryClient);
+}
 
 const PageFallback = () => <PageSkeleton />;
 
