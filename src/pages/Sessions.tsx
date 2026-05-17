@@ -135,7 +135,7 @@ export default function Sessions() {
   };
 
   const refreshSessions = () => {
-    queryClient.invalidateQueries({ queryKey: sessionsPageQueryKey });
+    queryClient.invalidateQueries({ queryKey: sessionsPageQueryKey, refetchType: "active" });
   };
 
   // Realtime: refresh cached page data without clearing the current rendered view.
