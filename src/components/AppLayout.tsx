@@ -136,6 +136,14 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
                         onMouseEnter={() => {
                           const preload = (window as any).__preload?.[item.path];
                           if (typeof preload === "function") preload();
+                          const prefetch = (window as any).__prefetchRouteData;
+                          if (typeof prefetch === "function") prefetch(item.path);
+                        }}
+                        onFocus={() => {
+                          const preload = (window as any).__preload?.[item.path];
+                          if (typeof preload === "function") preload();
+                          const prefetch = (window as any).__prefetchRouteData;
+                          if (typeof prefetch === "function") prefetch(item.path);
                         }}
                         className={cn(
                           "flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all duration-150",
