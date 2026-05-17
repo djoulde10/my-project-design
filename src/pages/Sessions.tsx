@@ -1,7 +1,8 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import ConvocationTrackingDialog from "@/components/ConvocationTrackingDialog";
 import { useRealtimeTables } from "@/hooks/useRealtimeTable";
+import PageSkeleton from "@/components/PageSkeleton";
+import { fetchSessionsPageData, sessionsPageQueryKey } from "@/lib/pagePrefetch";
 
 const RichTextEditor = lazy(() => import("@/components/RichTextEditor"));
 
@@ -41,6 +44,7 @@ interface AgendaItemDraft {
 
 export default function Sessions() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const companyId = useCompanyId();
   const { isReadOnlyForOrgan, roleName } = usePresidentOrganRestriction();
   const { hasPermission } = usePermissions();
@@ -50,8 +54,15 @@ export default function Sessions() {
   const canCreateSession = hasPermission("creer_session") || hasPermission("modifier_session");
   const canModifySession = hasPermission("modifier_session");
 
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [organs, setOrgans] = useState<any[]>([]);
+  const { data: pageData, isPending, refetch } = useQuery({
+    queryKey: sessionsPageQueryKey,
+    queryFn: fetchSessionsPageData,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    placeholderData: (previousData) => previousData,
+  });
+  const sessions = pageData?.sessions ?? [];
+  const organs = pageData?.organs ?? [];
   const [open, setOpen] = useState(false);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [sessionDetails, setSessionDetails] = useState<Record<string, { agendaItems: any[]; attendees: any[]; minute?: any }>>({});
