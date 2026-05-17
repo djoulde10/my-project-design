@@ -136,23 +136,15 @@ export default function Sessions() {
     }
   };
 
-  const fetchSessions = async () => {
-    const { data } = await supabase
-      .from("sessions")
-      .select("*, organs(name, type)")
-      .order("session_date", { ascending: false });
-    setSessions(data ?? []);
+  const refreshSessions = () => {
+    queryClient.invalidateQueries({ queryKey: sessionsPageQueryKey });
+    refetch();
   };
 
-  const fetchOrgans = async () => {
-    const { data } = await supabase.from("organs").select("*");
-    setOrgans(data ?? []);
-  };
+  // Realtime: refresh cached page data without clearing the current rendered view.
+  useRealtimeTables(["sessions", "agenda_items", "session_attendees", "minutes"], refreshSessions);
 
-  useEffect(() => { fetchSessions(); fetchOrgans(); }, []);
-
-  // Realtime: refresh when sessions change anywhere (validation by president, etc.)
-  useRealtimeTables(["sessions", "agenda_items", "session_attendees", "minutes"], fetchSessions);
+  if (isPending) return <PageSkeleton />;
 
   const addAgendaItem = () => {
     setAgendaDrafts([...agendaDrafts, { title: "", description: "", nature: "information", files: [] }]);
@@ -238,7 +230,7 @@ export default function Sessions() {
     setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
     setAgendaDrafts([]);
     setConvocationText(null);
-    fetchSessions();
+    refreshSessions();
   };
 
   const toggleSessionDetails = async (sessionId: string) => {
@@ -264,7 +256,7 @@ export default function Sessions() {
   const updateSessionStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("sessions").update({ status: status as any }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut de la session");
-    else { showSuccess("session_status_updated"); fetchSessions(); }
+    else { showSuccess("session_status_updated"); refreshSessions(); }
   };
 
   // Open validation dialog - president reviews convocation before validating
@@ -294,7 +286,7 @@ export default function Sessions() {
       showSuccess("session_status_updated");
       setValidationOpen(false);
       setValidationSession(null);
-      fetchSessions();
+      refreshSessions();
     } finally {
       setValidating(false);
     }
@@ -303,7 +295,7 @@ export default function Sessions() {
   const handlePublish = async (id: string) => {
     const { error } = await supabase.from("sessions").update({ is_published: true } as any).eq("id", id);
     if (error) showError(error, "Impossible de publier la session");
-    else { showSuccess("session_status_updated"); fetchSessions(); }
+    else { showSuccess("session_status_updated"); refreshSessions(); }
   };
 
   const openEditSession = async (s: any) => {
@@ -431,7 +423,7 @@ export default function Sessions() {
       setEditingSession(null);
       setConvocationText(null);
       setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
-      fetchSessions();
+      refreshSessions();
       if (expandedSession === editingSession.id) loadSessionDetails(editingSession.id);
     } finally {
       setEditSaving(false);
@@ -445,7 +437,7 @@ export default function Sessions() {
     await supabase.from("agenda_items").delete().eq("session_id", deleteSessionId);
     const { error } = await supabase.from("sessions").delete().eq("id", deleteSessionId);
     if (error) { showError(error, "Impossible de supprimer la session"); }
-    else { showSuccess("session_deleted"); fetchSessions(); }
+    else { showSuccess("session_deleted"); refreshSessions(); }
     setDeleteSessionId(null);
   };
 
