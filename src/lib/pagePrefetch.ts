@@ -17,9 +17,6 @@ export async function fetchSessionsPageData(): Promise<SessionsPageData> {
     supabase.from("organs").select("*"),
   ]);
 
-  if (sessionsRes.error) throw sessionsRes.error;
-  if (organsRes.error) throw organsRes.error;
-
   return {
     sessions: sessionsRes.data ?? [],
     organs: organsRes.data ?? [],
