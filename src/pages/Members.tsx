@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { Plus, User, Pencil, Eye } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toastHelpers";
 import { usePermissions } from "@/hooks/usePermissions";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { fetchMembersPageData, membersPageQueryKey } from "@/lib/pagePrefetch";
 
 
 const qualityLabels: Record<string, string> = {
@@ -34,27 +36,26 @@ const emptyForm = {
 
 export default function Members() {
   const { hasPermission } = usePermissions();
+  const queryClient = useQueryClient();
   const canManageMembers = hasPermission("gerer_membres");
   const navigate = useNavigate();
-  const [members, setMembers] = useState<any[]>([]);
-  const [organs, setOrgans] = useState<any[]>([]);
+  const { data: pageData } = useSuspenseQuery({
+    queryKey: membersPageQueryKey,
+    queryFn: fetchMembersPageData,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+  });
+  const members = pageData.members;
+  const organs = pageData.organs;
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [searchText, setSearchText] = useState("");
   const [filterOrgan, setFilterOrgan] = useState("all");
 
-  const fetchMembers = async () => {
-    const { data } = await supabase.from("members").select("*, organs(name)").order("full_name");
-    setMembers(data ?? []);
+  const refreshMembers = () => {
+    queryClient.invalidateQueries({ queryKey: membersPageQueryKey, refetchType: "active" });
   };
-
-  const fetchOrgans = async () => {
-    const { data } = await supabase.from("organs").select("*");
-    setOrgans(data ?? []);
-  };
-
-  useEffect(() => { fetchMembers(); fetchOrgans(); }, []);
 
   const handleSave = async () => {
     const payload = {
@@ -76,7 +77,7 @@ export default function Members() {
       setOpen(false);
       setEditingId(null);
       setForm(emptyForm);
-      fetchMembers();
+      refreshMembers();
     }
   };
 

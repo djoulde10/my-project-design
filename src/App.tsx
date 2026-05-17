@@ -1,9 +1,9 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { keepPreviousData, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { AppDataProvider, useAppData } from "@/contexts/AppDataContext";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -15,6 +15,7 @@ import Auth from "@/pages/Auth";
 import AccessDenied from "@/pages/AccessDenied";
 import CompanyBrandingTheme from "@/components/CompanyBrandingTheme";
 import PageSkeleton from "@/components/PageSkeleton";
+import { prefetchRouteData } from "@/lib/pagePrefetch";
 
 // Lazy-loaded pages — split bundles, faster initial load.
 // Each loader is exported on `window.__preload` so the sidebar can warm
@@ -69,13 +70,19 @@ const AdminApiManagement = lazy(() => import("@/pages/admin/AdminApiManagement")
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000, // 30s — avoid refetching the same query immediately
-      gcTime: 5 * 60_000,
+      staleTime: 60_000,
+      gcTime: 10 * 60_000,
       refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      placeholderData: keepPreviousData,
       retry: 1,
     },
   },
 });
+
+if (typeof window !== "undefined") {
+  (window as any).__prefetchRouteData = (path: string) => prefetchRouteData(path, queryClient);
+}
 
 const PageFallback = () => <PageSkeleton />;
 
@@ -117,6 +124,21 @@ function AuthRoute() {
   if (loading) return <PageSkeleton />;
   if (user) return <Navigate to="/" replace />;
   return <Auth />;
+}
+
+function QueryCacheSessionGuard() {
+  const { user } = useAuth();
+  const previousUserId = useRef<string | null>(null);
+
+  useEffect(() => {
+    const nextUserId = user?.id ?? null;
+    if (previousUserId.current !== nextUserId) {
+      queryClient.clear();
+      previousUserId.current = nextUserId;
+    }
+  }, [user?.id]);
+
+  return null;
 }
 
 function ProtectedApp() {
@@ -180,6 +202,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <AppDataProvider>
+            <QueryCacheSessionGuard />
             <CompanyBrandingTheme />
             <ProtectedApp />
           </AppDataProvider>

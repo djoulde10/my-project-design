@@ -1,5 +1,5 @@
-import { ReactNode, useState, useMemo } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { ReactNode, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useSuperAdmin } from "@/hooks/useSuperAdmin";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -74,10 +74,11 @@ const navSections = [
 // Routes hidden for "Membre de la Direction" (CA-only routes)
 const caOnlyPaths = ["/sessions", "/members", "/calendar"];
 
-function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, branding, permissions, isDirectionMember }: {
+function SidebarContent({ user, signOut, location, navigateTo, onNavigate, isSuperAdmin, branding, permissions, isDirectionMember }: {
   user: any;
   signOut: () => void;
   location: any;
+  navigateTo: (path: string) => void;
   onNavigate?: () => void;
   isSuperAdmin?: boolean;
   branding?: { displayName: string; logoUrl: string | null; primaryColor: string };
@@ -132,10 +133,23 @@ function SidebarContent({ user, signOut, location, onNavigate, isSuperAdmin, bra
                       <Link
                         key={item.path}
                         to={item.path}
-                        onClick={onNavigate}
+                        onClick={(event) => {
+                          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+                          event.preventDefault();
+                          onNavigate?.();
+                          navigateTo(item.path);
+                        }}
                         onMouseEnter={() => {
                           const preload = (window as any).__preload?.[item.path];
                           if (typeof preload === "function") preload();
+                          const prefetch = (window as any).__prefetchRouteData;
+                          if (typeof prefetch === "function") prefetch(item.path);
+                        }}
+                        onFocus={() => {
+                          const preload = (window as any).__preload?.[item.path];
+                          if (typeof preload === "function") preload();
+                          const prefetch = (window as any).__prefetchRouteData;
+                          if (typeof prefetch === "function") prefetch(item.path);
                         }}
                         className={cn(
                           "flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all duration-150",
@@ -194,8 +208,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const isDirectionMember = useIsDirectionMember();
   const { branding, displayName } = useCompanyBranding();
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navigateWhenReady = async (path: string) => {
+    if (location.pathname === path) return;
+    const preload = (window as any).__preload?.[path];
+    const prefetch = (window as any).__prefetchRouteData;
+    await Promise.allSettled([
+      typeof preload === "function" ? preload() : Promise.resolve(),
+      typeof prefetch === "function" ? prefetch(path) : Promise.resolve(),
+    ]);
+    navigate(path);
+  };
 
   const brandingProps = {
     displayName,
@@ -208,7 +234,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-[260px] flex-shrink-0 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border/40">
-          <SidebarContent user={user} signOut={signOut} location={location} isSuperAdmin={isSuperAdmin} branding={brandingProps} permissions={permissions} isDirectionMember={isDirectionMember} />
+          <SidebarContent user={user} signOut={signOut} location={location} navigateTo={navigateWhenReady} isSuperAdmin={isSuperAdmin} branding={brandingProps} permissions={permissions} isDirectionMember={isDirectionMember} />
         </aside>
       )}
 
@@ -217,7 +243,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-72 p-0 bg-sidebar text-sidebar-foreground flex flex-col">
             <SheetTitle className="sr-only">Navigation</SheetTitle>
-            <SidebarContent user={user} signOut={signOut} location={location} onNavigate={() => setMobileOpen(false)} isSuperAdmin={isSuperAdmin} branding={brandingProps} permissions={permissions} isDirectionMember={isDirectionMember} />
+            <SidebarContent user={user} signOut={signOut} location={location} navigateTo={navigateWhenReady} onNavigate={() => setMobileOpen(false)} isSuperAdmin={isSuperAdmin} branding={brandingProps} permissions={permissions} isDirectionMember={isDirectionMember} />
           </SheetContent>
         </Sheet>
       )}

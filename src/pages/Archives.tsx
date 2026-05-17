@@ -1,30 +1,25 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Archive } from "lucide-react";
+import { archivesPageQueryKey, fetchArchivesPageData } from "@/lib/pagePrefetch";
 
 export default function Archives() {
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [organs, setOrgans] = useState<any[]>([]);
+  const { data: pageData } = useSuspenseQuery({
+    queryKey: archivesPageQueryKey,
+    queryFn: fetchArchivesPageData,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+  });
+  const sessions = pageData.sessions;
+  const organs = pageData.organs;
   const [search, setSearch] = useState("");
   const [filterOrgan, setFilterOrgan] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const [sessRes, orgRes] = await Promise.all([
-        supabase.from("sessions").select("*, organs(name)").in("status", ["cloturee", "archivee"]).order("session_date", { ascending: false }),
-        supabase.from("organs").select("*"),
-      ]);
-      setSessions(sessRes.data ?? []);
-      setOrgans(orgRes.data ?? []);
-    };
-    fetchData();
-  }, []);
 
   const years = [...new Set(sessions.map((s) => new Date(s.session_date).getFullYear()))].sort((a, b) => b - a);
 
