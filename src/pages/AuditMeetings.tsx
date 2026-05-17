@@ -1,5 +1,6 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +18,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { showSuccess, showError, showInfo } from "@/lib/toastHelpers";
 import ConvocationTrackingDialog from "@/components/ConvocationTrackingDialog";
 import { useRealtimeTables } from "@/hooks/useRealtimeTable";
+import { auditMeetingsPageQueryKey, fetchAuditMeetingsPageData } from "@/lib/pagePrefetch";
 
 const RichTextEditor = lazy(() => import("@/components/RichTextEditor"));
 
@@ -41,6 +43,7 @@ interface AgendaItemDraft {
 
 export default function AuditMeetings() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const companyId = useCompanyId();
   const { isReadOnlyForOrgan, roleName } = usePresidentOrganRestriction();
   const { hasPermission } = usePermissions();
@@ -50,8 +53,14 @@ export default function AuditMeetings() {
   const canCreateSession = hasPermission("creer_session") || hasPermission("modifier_session");
   const canModifySession = hasPermission("modifier_session");
 
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [organs, setOrgans] = useState<any[]>([]);
+  const { data: pageData } = useSuspenseQuery({
+    queryKey: auditMeetingsPageQueryKey,
+    queryFn: fetchAuditMeetingsPageData,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+  });
+  const sessions = pageData.sessions;
+  const organs = pageData.organs;
   const [open, setOpen] = useState(false);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [sessionDetails, setSessionDetails] = useState<Record<string, { agendaItems: any[]; attendees: any[]; minute?: any }>>({});
@@ -126,23 +135,12 @@ export default function AuditMeetings() {
     }
   };
 
-  const fetchSessions = async () => {
-    const { data } = await supabase
-      .from("sessions")
-      .select("*, organs(name, type)")
-      .order("session_date", { ascending: false });
-    setSessions((data ?? []).filter((s: any) => s.organs?.type === "comite_audit"));
+  const refreshSessions = () => {
+    queryClient.invalidateQueries({ queryKey: auditMeetingsPageQueryKey, refetchType: "active" });
   };
 
-  const fetchOrgans = async () => {
-    const { data } = await supabase.from("organs").select("*");
-    setOrgans((data ?? []).filter((o: any) => o.type === "comite_audit"));
-  };
-
-  useEffect(() => { fetchSessions(); fetchOrgans(); }, []);
-
-  // Realtime: refresh when audit committee sessions change anywhere
-  useRealtimeTables(["sessions", "agenda_items", "session_attendees", "minutes"], fetchSessions);
+  // Realtime: refresh cached page data without clearing the current rendered view.
+  useRealtimeTables(["sessions", "agenda_items", "session_attendees", "minutes"], refreshSessions);
 
   const addAgendaItem = () => {
     setAgendaDrafts([...agendaDrafts, { title: "", description: "", nature: "information", files: [] }]);
@@ -227,7 +225,7 @@ export default function AuditMeetings() {
     setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
     setAgendaDrafts([]);
     setConvocationText(null);
-    fetchSessions();
+    refreshSessions();
   };
 
   const toggleSessionDetails = async (sessionId: string) => {
@@ -253,7 +251,7 @@ export default function AuditMeetings() {
   const updateSessionStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("sessions").update({ status: status as any }).eq("id", id);
     if (error) showError(error, "Impossible de mettre à jour le statut");
-    else { showSuccess("session_status_updated"); fetchSessions(); }
+    else { showSuccess("session_status_updated"); refreshSessions(); }
   };
 
   // Open validation dialog
@@ -281,7 +279,7 @@ export default function AuditMeetings() {
       showSuccess("session_status_updated");
       setValidationOpen(false);
       setValidationSession(null);
-      fetchSessions();
+      refreshSessions();
     } finally {
       setValidating(false);
     }
@@ -290,7 +288,7 @@ export default function AuditMeetings() {
   const handlePublish = async (id: string) => {
     const { error } = await supabase.from("sessions").update({ is_published: true } as any).eq("id", id);
     if (error) showError(error, "Impossible de publier la réunion");
-    else { showSuccess("session_status_updated"); fetchSessions(); }
+    else { showSuccess("session_status_updated"); refreshSessions(); }
   };
 
   const openEditSession = async (s: any) => {
@@ -412,7 +410,7 @@ export default function AuditMeetings() {
       setEditingSession(null);
       setConvocationText(null);
       setForm({ organ_id: "", title: "", session_type: "ordinaire", session_date: "", location: "", is_virtual: false, meeting_link: "" });
-      fetchSessions();
+      refreshSessions();
       if (expandedSession === editingSession.id) loadSessionDetails(editingSession.id);
     } finally {
       setEditSaving(false);
@@ -426,7 +424,7 @@ export default function AuditMeetings() {
     await supabase.from("agenda_items").delete().eq("session_id", deleteSessionId);
     const { error } = await supabase.from("sessions").delete().eq("id", deleteSessionId);
     if (error) { showError(error, "Impossible de supprimer la réunion"); }
-    else { showSuccess("session_deleted"); fetchSessions(); }
+    else { showSuccess("session_deleted"); refreshSessions(); }
     setDeleteSessionId(null);
   };
 
