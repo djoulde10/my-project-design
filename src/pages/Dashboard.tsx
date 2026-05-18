@@ -1,66 +1,112 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Users, ListTodo, AlertTriangle, CheckCircle2, Clock, TrendingUp, Target, Gavel, FileText, ArrowRight } from "lucide-react";
+import {
+  CalendarDays, Users, ListTodo, AlertTriangle, CheckCircle2, Clock, TrendingUp,
+  Target, Gavel, FileText, ArrowRight, Sparkles, Mic, Pause, Play, Square,
+  Bell, FileSignature, FolderOpen, Activity, Eye, ChevronRight, Zap,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { useUserQuality } from "@/hooks/useUserQuality";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useAppData } from "@/contexts/AppDataContext";
+import { useAuth } from "@/lib/auth";
+import { useRecording, formatDuration } from "@/contexts/RecordingContext";
 import PageSkeleton from "@/components/PageSkeleton";
+
+interface DashboardData {
+  sessionsOrdinaires: number;
+  sessionsExtraordinaires: number;
+  reunionsAudit: number;
+  decisions: number;
+  actions: number;
+  overdueActions: number;
+  completedActions: number;
+  inProgressActions: number;
+  activeMembers: number;
+  signedDocs: number;
+  unreadConvocations: number;
+  upcomingSessions: any[];
+  recentDecisions: any[];
+  nearDueActions: any[];
+  pendingPVsCA: number;
+  pendingPVsAudit: number;
+  pendingPVsList: any[];
+  sessionsByMonth: { month: string; count: number }[];
+  recentNotifications: any[];
+  recentDocuments: any[];
+  recentAudit: any[];
+  todaySessions: number;
+  fullName: string;
+}
+
+const MONTH_NAMES = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { displayName } = useAppData();
   const { canSeePendingCA, canSeePendingAudit, canSeeAnyPending } = useUserQuality();
+  const { hasPermission } = usePermissions();
+  const recording = useRecording();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    sessionsOrdinaires: 0, sessionsExtraordinaires: 0, reunionsAudit: 0,
-    decisions: 0, actions: 0, overdueActions: 0,
-    upcomingSessions: [] as any[],
-    recentDecisions: [] as any[],
-    completedActions: 0, cancelledActions: 0, inProgressActions: 0,
-    nearDueActions: [] as any[],
-    pendingPVsCA: 0,
-    pendingPVsAudit: 0,
-    sessionsByMonth: [] as { month: string; count: number }[],
-  });
+  const [data, setData] = useState<DashboardData | null>(null);
+
+  const canSeeDocs = hasPermission("consulter_documents") || hasPermission("gerer_documents");
+  const canSeeMembers = hasPermission("gerer_membres");
+  const canSeeAudit = hasPermission("consulter_audit");
+  const canSeeActions = hasPermission("suivre_actions") || hasPermission("consulter_documents");
 
   useEffect(() => {
-    const fetchStats = async () => {
-      const now = new Date().toISOString();
-      const nearDueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    let cancelled = false;
+    const fetchAll = async () => {
+      const now = new Date();
+      const nowIso = now.toISOString();
+      const nearDue = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
 
       const [
-        publishedSessionsRes, decisionsRes, actionsRes, overdueRes, upcomingRes,
-        completedRes, cancelledRes, inProgressRes, recentDecisionsRes,
-        nearDueRes, pendingPVRes, sessionsAllRes
+        publishedRes, decisionsRes, actionsRes, overdueRes, completedRes, inProgressRes,
+        upcomingRes, recentDecisionsRes, nearDueRes, pendingPVRes, sessionsAllRes,
+        membersRes, signedRes, convocationsRes, notifRes, docsRes, auditRes, profileRes, todayRes,
       ] = await Promise.all([
         supabase.from("sessions").select("id, session_type, organs(type)").eq("is_published", true),
         supabase.from("decisions").select("id", { count: "exact", head: true }),
         supabase.from("actions").select("id", { count: "exact", head: true }),
         supabase.from("actions").select("id", { count: "exact", head: true }).eq("status", "en_retard"),
-        supabase.from("sessions").select("*, organs(name)").gte("session_date", now).order("session_date", { ascending: true }).limit(5),
         supabase.from("actions").select("id", { count: "exact", head: true }).eq("status", "terminee"),
-        supabase.from("actions").select("id", { count: "exact", head: true }).eq("status", "annulee"),
         supabase.from("actions").select("id", { count: "exact", head: true }).eq("status", "en_cours"),
-        supabase.from("decisions").select("numero_decision, texte, statut, sessions(title)").order("created_at", { ascending: false }).limit(5),
-        supabase.from("actions").select("title, due_date, members(full_name)").eq("status", "en_cours").lte("due_date", nearDueDate).order("due_date").limit(5),
-        supabase.from("minutes")
-          .select("id, sessions!inner(organs!inner(type))")
-          .in("pv_status", ["brouillon", "en_attente_validation"]),
-        supabase.from("sessions").select("session_date").eq("is_published", true).order("session_date", { ascending: false }).limit(100),
+        supabase.from("sessions").select("id, title, session_date, status, session_type, organs(name, type)").gte("session_date", nowIso).order("session_date", { ascending: true }).limit(5),
+        supabase.from("decisions").select("id, numero_decision, texte, statut, created_at, sessions(title)").order("created_at", { ascending: false }).limit(5),
+        supabase.from("actions").select("id, title, due_date, members(full_name)").eq("status", "en_cours").lte("due_date", nearDue).order("due_date").limit(5),
+        supabase.from("minutes").select("id, session_id, pv_status, updated_at, sessions!inner(title, organs!inner(type, name))").in("pv_status", ["brouillon", "en_attente_validation"]).order("updated_at", { ascending: false }).limit(10),
+        supabase.from("sessions").select("session_date").eq("is_published", true).order("session_date", { ascending: false }).limit(200),
+        canSeeMembers
+          ? supabase.from("members").select("id", { count: "exact", head: true }).eq("is_active", true)
+          : Promise.resolve({ count: 0 } as any),
+        supabase.from("minutes").select("id", { count: "exact", head: true }).eq("is_published", true),
+        user ? supabase.from("convocation_views").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("viewed_at", null) : Promise.resolve({ count: 0 } as any),
+        user ? supabase.from("notifications").select("id, type, title, message, link, is_read, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(6) : Promise.resolve({ data: [] } as any),
+        canSeeDocs ? supabase.from("documents").select("id, name, category, created_at, sessions(title)").order("created_at", { ascending: false }).limit(5) : Promise.resolve({ data: [] } as any),
+        canSeeAudit ? supabase.from("audit_log").select("id, action, entity_type, created_at, user_id").order("created_at", { ascending: false }).limit(6) : Promise.resolve({ data: [] } as any),
+        user ? supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null } as any),
+        supabase.from("sessions").select("id", { count: "exact", head: true }).gte("session_date", todayStart).lt("session_date", todayEnd),
       ]);
 
-      const published = publishedSessionsRes.data ?? [];
+      if (cancelled) return;
+
+      const published = publishedRes.data ?? [];
       const sessionsOrdinaires = published.filter((s: any) => s.session_type === "ordinaire" && (s.organs as any)?.type === "ca").length;
       const sessionsExtraordinaires = published.filter((s: any) => s.session_type === "extraordinaire" && (s.organs as any)?.type === "ca").length;
       const reunionsAudit = published.filter((s: any) => (s.organs as any)?.type === "comite_audit").length;
 
-      // Sessions by month (last 6 months)
       const monthCounts: Record<string, number> = {};
-      const monthNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
       for (let i = 5; i >= 0; i--) {
         const d = new Date();
         d.setMonth(d.getMonth() - i);
@@ -74,80 +120,173 @@ export default function Dashboard() {
       });
       const sessionsByMonth = Object.entries(monthCounts).map(([key, count]) => {
         const [, m] = key.split("-");
-        return { month: monthNames[parseInt(m) - 1], count };
+        return { month: MONTH_NAMES[parseInt(m) - 1], count };
       });
 
-      // Split PV en attente par type d'organe
       const pendingList = (pendingPVRes.data ?? []) as any[];
       const pendingPVsCA = pendingList.filter((m) => m?.sessions?.organs?.type === "ca").length;
       const pendingPVsAudit = pendingList.filter((m) => m?.sessions?.organs?.type === "comite_audit").length;
 
-      setStats({
-        sessionsOrdinaires,
-        sessionsExtraordinaires,
-        reunionsAudit,
+      setData({
+        sessionsOrdinaires, sessionsExtraordinaires, reunionsAudit,
         decisions: decisionsRes.count ?? 0,
         actions: actionsRes.count ?? 0,
         overdueActions: overdueRes.count ?? 0,
+        completedActions: completedRes.count ?? 0,
+        inProgressActions: inProgressRes.count ?? 0,
+        activeMembers: (membersRes as any).count ?? 0,
+        signedDocs: signedRes.count ?? 0,
+        unreadConvocations: (convocationsRes as any).count ?? 0,
         upcomingSessions: upcomingRes.data ?? [],
         recentDecisions: recentDecisionsRes.data ?? [],
-        completedActions: completedRes.count ?? 0,
-        cancelledActions: cancelledRes.count ?? 0,
-        inProgressActions: inProgressRes.count ?? 0,
         nearDueActions: nearDueRes.data ?? [],
-        pendingPVsCA,
-        pendingPVsAudit,
+        pendingPVsCA, pendingPVsAudit,
+        pendingPVsList: pendingList,
         sessionsByMonth,
+        recentNotifications: (notifRes as any).data ?? [],
+        recentDocuments: (docsRes as any).data ?? [],
+        recentAudit: (auditRes as any).data ?? [],
+        todaySessions: (todayRes as any).count ?? 0,
+        fullName: (profileRes as any).data?.full_name?.split(" ")[0] ?? "",
       });
       setLoading(false);
     };
-    fetchStats();
+    fetchAll();
+    return () => { cancelled = true; };
+  }, [user, canSeeMembers, canSeeDocs, canSeeAudit]);
+
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    if (h < 6) return "Bonsoir";
+    if (h < 12) return "Bonjour";
+    if (h < 18) return "Bon après-midi";
+    return "Bonsoir";
   }, []);
 
+  if (loading || !data) return <PageSkeleton />;
+
+  const totalPendingPV = (canSeePendingCA ? data.pendingPVsCA : 0) + (canSeePendingAudit ? data.pendingPVsAudit : 0);
+  const executionRate = data.actions > 0 ? Math.round((data.completedActions / data.actions) * 100) : 0;
+
+  const insights: { icon: any; text: string; tone: "info" | "warn" | "danger" | "ok"; action?: () => void }[] = [];
+  if (data.todaySessions > 0) insights.push({ icon: CalendarDays, text: `${data.todaySessions} réunion${data.todaySessions > 1 ? "s" : ""} prévue${data.todaySessions > 1 ? "s" : ""} aujourd'hui`, tone: "info", action: () => navigate("/sessions") });
+  if (data.unreadConvocations > 0) insights.push({ icon: Bell, text: `${data.unreadConvocations} convocation${data.unreadConvocations > 1 ? "s" : ""} non consultée${data.unreadConvocations > 1 ? "s" : ""}`, tone: "warn", action: () => navigate("/sessions") });
+  if (totalPendingPV > 0) insights.push({ icon: FileText, text: `${totalPendingPV} PV en attente de validation`, tone: "warn", action: () => navigate("/meetings") });
+  if (data.overdueActions > 0) insights.push({ icon: AlertTriangle, text: `${data.overdueActions} action${data.overdueActions > 1 ? "s" : ""} en retard`, tone: "danger", action: () => navigate("/actions") });
+  if (insights.length === 0) insights.push({ icon: CheckCircle2, text: "Tout est à jour. Excellente gouvernance.", tone: "ok" });
+
   const statCards = [
-    { label: "Sessions ordinaires", value: stats.sessionsOrdinaires, icon: CalendarDays, color: "text-primary", bg: "bg-primary/10", path: "/sessions" },
-    { label: "Sessions extraordinaires", value: stats.sessionsExtraordinaires, icon: CalendarDays, color: "text-orange-600", bg: "bg-orange-50", path: "/sessions" },
-    { label: "Réunions comité d'audit", value: stats.reunionsAudit, icon: CalendarDays, color: "text-indigo-600", bg: "bg-indigo-50", path: "/audit-meetings" },
-    { label: "Résolutions", value: stats.decisions, icon: Gavel, color: "text-amber-600", bg: "bg-amber-50", path: "/decisions" },
-    { label: "Actions", value: stats.actions, icon: ListTodo, color: "text-violet-600", bg: "bg-violet-50", path: "/actions" },
-    // PV en attente : visible uniquement selon le rôle (PCA → CA, Président comité → Audit, OU valider_pv)
-    ...(canSeePendingCA
-      ? [{ label: "PV CA en attente", value: stats.pendingPVsCA, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", path: "/meetings" }]
-      : []),
-    ...(canSeePendingAudit
-      ? [{ label: "PV Audit en attente", value: stats.pendingPVsAudit, icon: FileText, color: "text-cyan-600", bg: "bg-cyan-50", path: "/audit-meetings" }]
-      : []),
+    { label: "Sessions ordinaires", value: data.sessionsOrdinaires, icon: CalendarDays, color: "text-primary", bg: "bg-primary/10", path: "/sessions" },
+    { label: "Sessions extraordinaires", value: data.sessionsExtraordinaires, icon: CalendarDays, color: "text-orange-600", bg: "bg-orange-50", path: "/sessions" },
+    { label: "Réunions audit", value: data.reunionsAudit, icon: CalendarDays, color: "text-indigo-600", bg: "bg-indigo-50", path: "/audit-meetings" },
+    { label: "Résolutions", value: data.decisions, icon: Gavel, color: "text-amber-600", bg: "bg-amber-50", path: "/decisions" },
+    ...(canSeeDocs ? [{ label: "Documents signés", value: data.signedDocs, icon: FileSignature, color: "text-emerald-600", bg: "bg-emerald-50", path: "/documents" }] : []),
+    ...(canSeeMembers ? [{ label: "Membres actifs", value: data.activeMembers, icon: Users, color: "text-violet-600", bg: "bg-violet-50", path: "/members" }] : []),
+    { label: "Convocations non lues", value: data.unreadConvocations, icon: Bell, color: "text-rose-600", bg: "bg-rose-50", path: "/sessions" },
+    ...(canSeePendingCA ? [{ label: "PV CA en attente", value: data.pendingPVsCA, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", path: "/meetings" }] : []),
+    ...(canSeePendingAudit ? [{ label: "PV Audit en attente", value: data.pendingPVsAudit, icon: FileText, color: "text-cyan-600", bg: "bg-cyan-50", path: "/audit-meetings" }] : []),
   ];
 
-  const totalActions = stats.actions;
-  const executionRate = totalActions > 0 ? Math.round((stats.completedActions / totalActions) * 100) : 0;
-
-  if (loading) return <PageSkeleton />;
+  const toneClass = (tone: string) =>
+    tone === "danger" ? "bg-destructive/10 text-destructive border-destructive/20" :
+    tone === "warn" ? "bg-amber-50 text-amber-700 border-amber-200" :
+    tone === "ok" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+    "bg-primary/10 text-primary border-primary/20";
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-6 lg:p-8 space-y-6 animate-in fade-in duration-300">
+      {/* Welcome zone */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Tableau de bord</h1>
-          <p className="text-muted-foreground">Vue d'ensemble de la gouvernance</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight">
+            {greeting}{data.fullName ? `, ${data.fullName}` : ""}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm lg:text-base">
+            {insights[0]?.text || `Bienvenue sur ${displayName}.`}
+          </p>
         </div>
-        <Button variant="outline" onClick={() => navigate("/calendar")}>
-          <CalendarDays className="w-4 h-4 mr-2" />Calendrier
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate("/calendar")}>
+            <CalendarDays className="w-4 h-4 mr-2" />Calendrier
+          </Button>
+          {hasPermission("creer_session") && (
+            <Button size="sm" onClick={() => navigate("/sessions")}>
+              <Sparkles className="w-4 h-4 mr-2" />Nouvelle session
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* AI Recording widget (when active) */}
+      {recording.status !== "idle" && (
+        <Card className="border-primary/30 bg-gradient-to-r from-primary/5 via-primary/10 to-transparent">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0",
+                recording.status === "recording" ? "bg-destructive/15 text-destructive animate-pulse" : "bg-amber-100 text-amber-700")}>
+                <Mic className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-sm truncate">{recording.meta?.title ?? "Écoute IA"}</p>
+                  <Badge variant={recording.status === "recording" ? "destructive" : "secondary"} className="text-[10px]">
+                    {recording.status === "recording" ? "En direct" : "En pause"}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                  {formatDuration(recording.elapsedMs)} · {(recording.transcript + " " + recording.partialText).trim().split(/\s+/).filter(Boolean).length} mots transcrits
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {recording.status === "recording" ? (
+                <Button size="sm" variant="outline" onClick={() => recording.pause()}><Pause className="w-4 h-4 mr-1" />Pause</Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => recording.resume()}><Play className="w-4 h-4 mr-1" />Reprendre</Button>
+              )}
+              <Button size="sm" variant="destructive" onClick={() => recording.stop()}><Square className="w-4 h-4 mr-1" />Arrêter</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Insights / IA bloc */}
+      {insights.length > 1 && (
+        <Card className="border-primary/20">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-semibold">Synthèse intelligente</h2>
+            </div>
+            <div className="grid gap-2">
+              {insights.map((ins, i) => (
+                <button
+                  key={i}
+                  onClick={ins.action}
+                  className={cn("flex items-center gap-3 px-3 py-2 rounded-lg border text-sm text-left transition-colors hover:opacity-90", toneClass(ins.tone))}
+                >
+                  <ins.icon className="w-4 h-4 shrink-0" />
+                  <span className="flex-1">{ins.text}</span>
+                  {ins.action && <ChevronRight className="w-4 h-4 opacity-50" />}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
         {statCards.map((stat) => (
-          <Card key={stat.label} className="cursor-pointer hover:shadow-md transition-all group" onClick={() => navigate(stat.path)}>
+          <Card key={stat.label} className="cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all group" onClick={() => navigate(stat.path)}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className={cn("p-2.5 rounded-xl", stat.bg, stat.color)}>
                   <stat.icon className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-2xl font-bold leading-none">{stat.value}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{stat.label}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1 truncate">{stat.label}</p>
                 </div>
               </div>
             </CardContent>
@@ -155,198 +294,354 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* KPIs Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Actions urgentes + Taux + Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
-              Taux de réalisation
+              <Zap className="w-4 h-4 text-amber-600" />Actions urgentes
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-end gap-2">
-              <span className="text-3xl font-bold">{executionRate}%</span>
-              <span className="text-sm text-muted-foreground mb-1">terminées</span>
-            </div>
-            <Progress value={executionRate} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                {stats.completedActions} terminées
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-destructive inline-block" />
-                {stats.overdueActions} en retard
-              </span>
-            </div>
+          <CardContent className="space-y-2">
+            {data.overdueActions === 0 && totalPendingPV === 0 && data.unreadConvocations === 0 ? (
+              <div className="flex items-center gap-2 text-emerald-600 py-2">
+                <CheckCircle2 className="w-5 h-5" /><p className="text-sm">Aucune action urgente</p>
+              </div>
+            ) : (
+              <>
+                {data.overdueActions > 0 && (
+                  <button onClick={() => navigate("/actions")} className="flex w-full items-center justify-between text-sm px-2 py-2 rounded-md bg-destructive/5 hover:bg-destructive/10">
+                    <span className="text-destructive font-medium">{data.overdueActions} action(s) en retard</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                )}
+                {canSeePendingCA && data.pendingPVsCA > 0 && (
+                  <button onClick={() => navigate("/meetings")} className="flex w-full items-center justify-between text-sm px-2 py-2 rounded-md bg-amber-50 hover:bg-amber-100">
+                    <span className="text-amber-700 font-medium">{data.pendingPVsCA} PV CA à valider</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                )}
+                {canSeePendingAudit && data.pendingPVsAudit > 0 && (
+                  <button onClick={() => navigate("/audit-meetings")} className="flex w-full items-center justify-between text-sm px-2 py-2 rounded-md bg-amber-50 hover:bg-amber-100">
+                    <span className="text-amber-700 font-medium">{data.pendingPVsAudit} PV Audit à valider</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                )}
+                {data.unreadConvocations > 0 && (
+                  <button onClick={() => navigate("/sessions")} className="flex w-full items-center justify-between text-sm px-2 py-2 rounded-md bg-primary/5 hover:bg-primary/10">
+                    <span className="text-primary font-medium">{data.unreadConvocations} convocation(s) non lue(s)</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
 
-        <Card>
+        {canSeeActions && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                <TrendingUp className="w-4 h-4 text-emerald-600" />Taux de réalisation
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-end gap-2">
+                <span className="text-3xl font-bold">{executionRate}%</span>
+                <span className="text-sm text-muted-foreground mb-1">terminées</span>
+              </div>
+              <Progress value={executionRate} className="h-2" />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" />{data.completedActions} terminées</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" />{data.inProgressActions} en cours</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-destructive" />{data.overdueActions} retard</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className={cn(!canSeeActions && "lg:col-span-2")}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
-              <AlertTriangle className="w-4 h-4 text-destructive" />
-              Alertes
+              <Activity className="w-4 h-4 text-primary" />Sessions (6 derniers mois)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {stats.overdueActions > 0 && (
-                <div className="flex items-center justify-between text-sm cursor-pointer hover:bg-muted/50 rounded p-1 -mx-1" onClick={() => navigate("/actions")}>
-                  <span className="text-destructive font-medium">{stats.overdueActions} action(s) en retard</span>
-                  <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                </div>
-              )}
-              {canSeePendingCA && stats.pendingPVsCA > 0 && (
-                <div className="flex items-center justify-between text-sm cursor-pointer hover:bg-muted/50 rounded p-1 -mx-1" onClick={() => navigate("/meetings")}>
-                  <span className="text-amber-600 font-medium">{stats.pendingPVsCA} PV CA en attente</span>
-                  <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                </div>
-              )}
-              {canSeePendingAudit && stats.pendingPVsAudit > 0 && (
-                <div className="flex items-center justify-between text-sm cursor-pointer hover:bg-muted/50 rounded p-1 -mx-1" onClick={() => navigate("/audit-meetings")}>
-                  <span className="text-amber-600 font-medium">{stats.pendingPVsAudit} PV Audit en attente</span>
-                  <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                </div>
-              )}
-              {stats.overdueActions === 0 &&
-                (!canSeePendingCA || stats.pendingPVsCA === 0) &&
-                (!canSeePendingAudit || stats.pendingPVsAudit === 0) && (
-                <div className="flex items-center gap-2 text-emerald-600">
-                  <CheckCircle2 className="w-5 h-5" />
-                  <p className="text-sm">Tout est à jour</p>
-                </div>
-              )}
-            </div>
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={data.sessionsByMonth}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                <Bar dataKey="count" name="Sessions" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
-      {/* Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Sessions par mois</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {stats.sessionsByMonth.length > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={stats.sessionsByMonth}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(220, 15%, 88%)" />
-                <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(220, 15%, 88%)" }} />
-                <Bar dataKey="count" name="Sessions" fill="hsl(225, 65%, 40%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">Aucune donnée</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Lists Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sessions à venir */}
-        <Card>
+      {/* Sessions & PV en attente */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                Sessions à venir
+                <Clock className="w-4 h-4 text-primary" />Prochaines réunions
               </CardTitle>
               <Button variant="ghost" size="sm" onClick={() => navigate("/calendar")}>Voir tout</Button>
             </div>
           </CardHeader>
           <CardContent>
-            {stats.upcomingSessions.length > 0 ? (
-              <div className="space-y-2">
-                {stats.upcomingSessions.map((s: any) => (
-                  <div key={s.id} className="flex items-center gap-3 py-2 border-b last:border-0 cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1" onClick={() => navigate("/sessions")}>
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex flex-col items-center justify-center text-xs font-bold shrink-0">
-                      <span>{new Date(s.session_date).getDate()}</span>
-                      <span className="text-[9px] font-normal">{new Date(s.session_date).toLocaleDateString("fr-FR", { month: "short" })}</span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-medium text-sm truncate">{s.title}</h4>
-                      <p className="text-xs text-muted-foreground">{s.organs?.name}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {data.upcomingSessions.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-6 text-center">Aucune session planifiée</p>
             ) : (
-              <p className="text-muted-foreground text-sm py-4">Aucune session planifiée</p>
+              <div className="space-y-2">
+                {data.upcomingSessions.map((s: any) => {
+                  const isAudit = s.organs?.type === "comite_audit";
+                  const d = new Date(s.session_date);
+                  return (
+                    <div key={s.id} className="flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="w-12 h-12 rounded-lg bg-primary/10 text-primary flex flex-col items-center justify-center text-xs font-bold shrink-0">
+                        <span className="text-base leading-none">{d.getDate()}</span>
+                        <span className="text-[9px] font-normal mt-0.5">{d.toLocaleDateString("fr-FR", { month: "short" })}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-sm truncate">{s.title}</h4>
+                          <Badge variant="outline" className="text-[10px] shrink-0">{s.status}</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {s.organs?.name} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                      <div className="hidden sm:flex gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => navigate(isAudit ? "/audit-meetings" : "/sessions")} title="Voir">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => navigate("/agenda-items")} title="Ordre du jour">
+                          <ListTodo className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Résolutions récentes */}
+        {canSeeAnyPending && (
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-amber-600" />PV en attente
+                </CardTitle>
+                <Badge variant="secondary">{totalPendingPV}</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const filtered = data.pendingPVsList.filter((m: any) => {
+                  const t = m?.sessions?.organs?.type;
+                  return (t === "ca" && canSeePendingCA) || (t === "comite_audit" && canSeePendingAudit);
+                }).slice(0, 5);
+                if (filtered.length === 0) {
+                  return (
+                    <div className="flex items-center gap-2 text-emerald-600 py-4">
+                      <CheckCircle2 className="w-5 h-5" /><p className="text-sm">Aucun PV en attente</p>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="space-y-2">
+                    {filtered.map((m: any) => {
+                      const isAudit = m.sessions?.organs?.type === "comite_audit";
+                      return (
+                        <button key={m.id} onClick={() => navigate(isAudit ? "/audit-meetings" : "/meetings")}
+                          className="w-full text-left py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium truncate">{m.sessions?.title || "Session"}</p>
+                            <Badge variant={m.pv_status === "en_attente_validation" ? "default" : "outline"} className="text-[10px] shrink-0">
+                              {m.pv_status === "en_attente_validation" ? "À valider" : "Brouillon"}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">{m.sessions?.organs?.name}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Notifications + Documents */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Bell className="w-4 h-4 text-primary" />Notifications
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.recentNotifications.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">Aucune notification</p>
+            ) : (
+              <div className="space-y-2">
+                {data.recentNotifications.slice(0, 5).map((n: any) => (
+                  <button key={n.id} onClick={() => n.link && navigate(n.link)}
+                    className={cn("w-full text-left py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors", !n.is_read && "bg-primary/5")}>
+                    <div className="flex items-start gap-2">
+                      {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{n.title}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{n.message}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {canSeeDocs && (
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4 text-emerald-600" />Documents récents
+                </CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/documents")}>Voir tout</Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {data.recentDocuments.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">Aucun document</p>
+              ) : (
+                <div className="space-y-2">
+                  {data.recentDocuments.map((d: any) => (
+                    <button key={d.id} onClick={() => navigate("/documents")}
+                      className="w-full text-left py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium truncate">{d.name}</p>
+                        <Badge variant="outline" className="text-[10px] shrink-0">{d.category}</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {d.sessions?.title} · {new Date(d.created_at).toLocaleDateString("fr-FR")}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <Gavel className="w-4 h-4 text-amber-600" />
-                Résolutions récentes
+                <Gavel className="w-4 h-4 text-amber-600" />Résolutions récentes
               </CardTitle>
               <Button variant="ghost" size="sm" onClick={() => navigate("/decisions")}>Voir tout</Button>
             </div>
           </CardHeader>
           <CardContent>
-            {stats.recentDecisions.length > 0 ? (
+            {data.recentDecisions.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">Aucune résolution</p>
+            ) : (
               <div className="space-y-2">
-                {stats.recentDecisions.map((d: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b last:border-0 cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1" onClick={() => navigate("/decisions")}>
-                    <div className="flex-1 min-w-0">
+                {data.recentDecisions.map((d: any) => (
+                  <button key={d.id} onClick={() => navigate("/decisions")}
+                    className="w-full text-left py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center justify-between gap-2">
                       <p className="font-mono text-xs text-muted-foreground">{d.numero_decision}</p>
-                      <p className="text-sm truncate">{d.texte}</p>
+                      <Badge className={cn(
+                        d.statut === "adoptee" ? "bg-emerald-100 text-emerald-800" :
+                        d.statut === "rejetee" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800",
+                        "text-[10px]"
+                      )}>{d.statut}</Badge>
                     </div>
-                    <Badge className={
-                      d.statut === "adoptee" ? "bg-emerald-100 text-emerald-800" :
-                      d.statut === "rejetee" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"
-                    }>{d.statut}</Badge>
-                  </div>
+                    <p className="text-sm truncate">{d.texte}</p>
+                  </button>
                 ))}
               </div>
-            ) : (
-              <p className="text-muted-foreground text-sm py-4">Aucune résolution</p>
             )}
           </CardContent>
         </Card>
+      </div>
 
-        {/* Actions proches échéance */}
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Target className="w-4 h-4 text-violet-600" />
-                Échéances proches
-              </CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/actions")}>Voir tout</Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {stats.nearDueActions.length > 0 ? (
-              <div className="space-y-2">
-                {stats.nearDueActions.map((a: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b last:border-0 cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1" onClick={() => navigate("/actions")}>
-                    <div>
-                      <p className="text-sm font-medium">{a.title}</p>
-                      <p className="text-xs text-muted-foreground">{(a as any).members?.full_name ?? "Non assigné"}</p>
+      {/* Échéances + Audit timeline */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {canSeeActions && (
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Target className="w-4 h-4 text-violet-600" />Échéances proches
+                </CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/actions")}>Voir tout</Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {data.nearDueActions.length === 0 ? (
+                <div className="flex items-center gap-2 text-emerald-600 py-4">
+                  <CheckCircle2 className="w-5 h-5" /><p className="text-sm">Aucune échéance proche</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {data.nearDueActions.map((a: any) => (
+                    <button key={a.id} onClick={() => navigate("/actions")}
+                      className="w-full text-left flex items-center justify-between py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{a.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{a.members?.full_name ?? "Non assigné"}</p>
+                      </div>
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {a.due_date ? new Date(a.due_date).toLocaleDateString("fr-FR") : "—"}
+                      </Badge>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {canSeeAudit && (
+          <Card className={cn(!canSeeActions && "lg:col-span-2")}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-muted-foreground" />Activité récente
+                </CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/audit")}>Audit</Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {data.recentAudit.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">Aucune activité</p>
+              ) : (
+                <div className="space-y-2">
+                  {data.recentAudit.map((a: any) => (
+                    <div key={a.id} className="flex items-center gap-3 py-1.5 text-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                      <span className="font-mono text-xs text-muted-foreground w-16 shrink-0">{a.action}</span>
+                      <span className="truncate flex-1">{a.entity_type}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {new Date(a.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                      </span>
                     </div>
-                    <Badge variant="outline" className="text-xs shrink-0">
-                      {a.due_date ? new Date(a.due_date).toLocaleDateString("fr-FR") : "—"}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-emerald-600 py-4">
-                <CheckCircle2 className="w-5 h-5" />
-                <p className="text-sm">Aucune échéance proche</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
