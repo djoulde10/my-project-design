@@ -175,16 +175,14 @@ export default function Dashboard() {
   if (data.overdueActions > 0) insights.push({ icon: AlertTriangle, text: `${data.overdueActions} action${data.overdueActions > 1 ? "s" : ""} en retard`, tone: "danger", action: () => navigate("/actions") });
   if (insights.length === 0) insights.push({ icon: CheckCircle2, text: "Tout est à jour. Excellente gouvernance.", tone: "ok" });
 
-  const statCards = [
-    { label: "Sessions ordinaires", value: data.sessionsOrdinaires, icon: CalendarDays, color: "text-primary", bg: "bg-primary/10", path: "/sessions" },
-    { label: "Sessions extraordinaires", value: data.sessionsExtraordinaires, icon: CalendarDays, color: "text-orange-600", bg: "bg-orange-50", path: "/sessions" },
-    { label: "Réunions audit", value: data.reunionsAudit, icon: CalendarDays, color: "text-indigo-600", bg: "bg-indigo-50", path: "/audit-meetings" },
-    { label: "Résolutions", value: data.decisions, icon: Gavel, color: "text-amber-600", bg: "bg-amber-50", path: "/decisions" },
-    ...(canSeeDocs ? [{ label: "Documents signés", value: data.signedDocs, icon: FileSignature, color: "text-emerald-600", bg: "bg-emerald-50", path: "/documents" }] : []),
-    ...(canSeeMembers ? [{ label: "Membres actifs", value: data.activeMembers, icon: Users, color: "text-violet-600", bg: "bg-violet-50", path: "/members" }] : []),
-    { label: "Convocations non lues", value: data.unreadConvocations, icon: Bell, color: "text-rose-600", bg: "bg-rose-50", path: "/sessions" },
-    ...(canSeePendingCA ? [{ label: "PV CA en attente", value: data.pendingPVsCA, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", path: "/meetings" }] : []),
-    ...(canSeePendingAudit ? [{ label: "PV Audit en attente", value: data.pendingPVsAudit, icon: FileText, color: "text-cyan-600", bg: "bg-cyan-50", path: "/audit-meetings" }] : []),
+  // Grandes cartes principales (héros) — limitées à 5 pour rester aérées
+  const totalReunions = data.sessionsOrdinaires + data.sessionsExtraordinaires + data.reunionsAudit;
+  const heroStats = [
+    { label: "Réunions", sublabel: `${data.sessionsOrdinaires + data.sessionsExtraordinaires} CA · ${data.reunionsAudit} audit`, value: totalReunions, icon: CalendarDays, color: "text-primary", bg: "bg-primary/10", path: "/sessions" },
+    ...(canSeeAnyPending ? [{ label: "PV en attente", sublabel: "À valider", value: totalPendingPV, icon: FileText, color: "text-amber-600", bg: "bg-amber-100", path: "/meetings" }] : []),
+    ...(canSeeDocs ? [{ label: "Documents signés", sublabel: "Publiés", value: data.signedDocs, icon: FileSignature, color: "text-emerald-600", bg: "bg-emerald-100", path: "/documents" }] : []),
+    { label: "Convocations non lues", sublabel: "À consulter", value: data.unreadConvocations, icon: Bell, color: "text-rose-600", bg: "bg-rose-100", path: "/sessions" },
+    ...(canSeeMembers ? [{ label: "Membres actifs", sublabel: "Dans l'organisation", value: data.activeMembers, icon: Users, color: "text-violet-600", bg: "bg-violet-100", path: "/members" }] : []),
   ];
 
   const toneClass = (tone: string) =>
@@ -193,29 +191,44 @@ export default function Dashboard() {
     tone === "ok" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
     "bg-primary/10 text-primary border-primary/20";
 
+  // Wrapper de section avec titre uniforme (vraie hiérarchie visuelle)
+  const SectionHeader = ({ eyebrow, title, action }: { eyebrow?: string; title: string; action?: { label: string; onClick: () => void } }) => (
+    <div className="flex items-end justify-between mb-4">
+      <div>
+        {eyebrow && <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground/70 mb-1">{eyebrow}</p>}
+        <h2 className="text-lg lg:text-xl font-semibold tracking-tight">{title}</h2>
+      </div>
+      {action && (
+        <Button variant="ghost" size="sm" onClick={action.onClick} className="text-muted-foreground hover:text-foreground">
+          {action.label}<ChevronRight className="w-3.5 h-3.5 ml-1" />
+        </Button>
+      )}
+    </div>
+  );
+
   return (
-    <div className="p-6 lg:p-8 space-y-6 animate-in fade-in duration-300">
+    <div className="p-6 lg:p-10 space-y-10 lg:space-y-12 max-w-[1600px] mx-auto animate-in fade-in duration-300">
       {/* Premium hero header */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 lg:p-8">
+      <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 lg:p-10">
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-10 w-72 h-72 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
-        <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+        <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="flex items-center gap-4 min-w-0">
-            <div className="w-14 h-14 rounded-2xl bg-background/80 backdrop-blur border border-border/60 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+            <div className="w-16 h-16 rounded-2xl bg-background/80 backdrop-blur border border-border/60 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
               {branding.logo_url ? (
                 <img src={branding.logo_url} alt={branding.nom} className="w-full h-full object-cover" />
               ) : (
-                <Building2 className="w-6 h-6 text-primary" />
+                <Building2 className="w-7 h-7 text-primary" />
               )}
             </div>
             <div className="min-w-0">
               <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
                 {branding.nom} · Centre de gouvernance
               </p>
-              <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight mt-0.5 truncate">
+              <h1 className="text-2xl lg:text-4xl font-bold text-foreground tracking-tight mt-1 truncate">
                 {greeting}{data.fullName ? `, ${data.fullName}` : ""}
               </h1>
-              <p className="text-muted-foreground mt-1 text-sm lg:text-base">
+              <p className="text-muted-foreground mt-2 text-sm lg:text-base max-w-xl">
                 {insights[0]?.text || `Bienvenue sur ${displayName}.`}
               </p>
             </div>
@@ -231,7 +244,7 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* AI Recording widget (when active) */}
       {recording.status !== "idle" && (
@@ -266,128 +279,137 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {/* Insights / IA bloc */}
-      {insights.length > 1 && (
-        <Card className="border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold">Synthèse intelligente</h2>
-            </div>
-            <div className="grid gap-2">
-              {insights.map((ins, i) => (
-                <button
-                  key={i}
-                  onClick={ins.action}
-                  className={cn("flex items-center gap-3 px-3 py-2 rounded-lg border text-sm text-left transition-colors hover:opacity-90", toneClass(ins.tone))}
-                >
-                  <ins.icon className="w-4 h-4 shrink-0" />
-                  <span className="flex-1">{ins.text}</span>
-                  {ins.action && <ChevronRight className="w-4 h-4 opacity-50" />}
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Premium stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-        {statCards.map((stat) => (
-          <Card
-            key={stat.label}
-            className="group cursor-pointer hover:shadow-lg hover:-translate-y-0.5 hover:border-primary/30 transition-all relative overflow-hidden"
-            onClick={() => navigate(stat.path)}
-          >
-            <div className={cn("absolute inset-x-0 top-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity", stat.bg.replace("bg-", "bg-").replace("/10", ""))} />
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div className={cn("p-2.5 rounded-xl transition-transform group-hover:scale-110", stat.bg, stat.color)}>
-                  <stat.icon className="w-4 h-4" />
+      {/* === SECTION : VUE D'ENSEMBLE === */}
+      <section>
+        <SectionHeader eyebrow="Vue d'ensemble" title="Indicateurs clés" />
+        <div className={cn("grid gap-4 grid-cols-1 sm:grid-cols-2", heroStats.length >= 5 ? "lg:grid-cols-5" : heroStats.length === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
+          {heroStats.map((stat) => (
+            <Card
+              key={stat.label}
+              className="group cursor-pointer hover:shadow-xl hover:-translate-y-1 hover:border-primary/40 transition-all duration-300 relative overflow-hidden"
+              onClick={() => navigate(stat.path)}
+            >
+              <CardContent className="p-5 lg:p-6">
+                <div className="flex items-start justify-between gap-2 mb-4">
+                  <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110", stat.bg, stat.color)}>
+                    <stat.icon className="w-5 h-5" />
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/40 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </div>
-              <p className="text-2xl lg:text-3xl font-bold leading-none mt-3 tabular-nums">{stat.value}</p>
-              <p className="text-[11px] text-muted-foreground mt-1.5 truncate font-medium">{stat.label}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <p className="text-3xl lg:text-4xl font-bold leading-none tabular-nums tracking-tight">{stat.value}</p>
+                <p className="text-sm font-semibold mt-3">{stat.label}</p>
+                <p className="text-xs text-muted-foreground mt-1 truncate">{stat.sublabel}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
 
-      {/* Actions urgentes + Taux + Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
-              <Zap className="w-4 h-4 text-amber-600" />Actions urgentes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {data.overdueActions === 0 && totalPendingPV === 0 && data.unreadConvocations === 0 ? (
-              <div className="flex items-center gap-2 text-emerald-600 py-2">
-                <CheckCircle2 className="w-5 h-5" /><p className="text-sm">Aucune action urgente</p>
-              </div>
-            ) : (
-              <>
-                {data.overdueActions > 0 && (
-                  <button onClick={() => navigate("/actions")} className="flex w-full items-center justify-between text-sm px-2 py-2 rounded-md bg-destructive/5 hover:bg-destructive/10">
-                    <span className="text-destructive font-medium">{data.overdueActions} action(s) en retard</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                )}
-                {canSeePendingCA && data.pendingPVsCA > 0 && (
-                  <button onClick={() => navigate("/meetings")} className="flex w-full items-center justify-between text-sm px-2 py-2 rounded-md bg-amber-50 hover:bg-amber-100">
-                    <span className="text-amber-700 font-medium">{data.pendingPVsCA} PV CA à valider</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                )}
-                {canSeePendingAudit && data.pendingPVsAudit > 0 && (
-                  <button onClick={() => navigate("/audit-meetings")} className="flex w-full items-center justify-between text-sm px-2 py-2 rounded-md bg-amber-50 hover:bg-amber-100">
-                    <span className="text-amber-700 font-medium">{data.pendingPVsAudit} PV Audit à valider</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                )}
-                {data.unreadConvocations > 0 && (
-                  <button onClick={() => navigate("/sessions")} className="flex w-full items-center justify-between text-sm px-2 py-2 rounded-md bg-primary/5 hover:bg-primary/10">
-                    <span className="text-primary font-medium">{data.unreadConvocations} convocation(s) non lue(s)</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {canSeeActions && (
-          <Card>
-            <CardHeader className="pb-2">
+      {/* === SECTION : INTELLIGENCE & ACTIONS URGENTES === */}
+      <section>
+        <SectionHeader eyebrow="Assistance" title="Synthèse intelligente" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Card className="lg:col-span-2 border-primary/20 bg-gradient-to-br from-primary/[0.03] to-transparent">
+            <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
-                <TrendingUp className="w-4 h-4 text-emerald-600" />Taux de réalisation
+                <Sparkles className="w-4 h-4 text-primary" />Recommandations IA
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-end gap-2">
-                <span className="text-3xl font-bold">{executionRate}%</span>
-                <span className="text-sm text-muted-foreground mb-1">terminées</span>
-              </div>
-              <Progress value={executionRate} className="h-2" />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" />{data.completedActions} terminées</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" />{data.inProgressActions} en cours</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-destructive" />{data.overdueActions} retard</span>
+            <CardContent>
+              <div className="grid gap-2">
+                {insights.map((ins, i) => (
+                  <button
+                    key={i}
+                    onClick={ins.action}
+                    className={cn("flex items-center gap-3 px-4 py-3 rounded-lg border text-sm text-left transition-all hover:shadow-sm hover:-translate-y-px", toneClass(ins.tone))}
+                  >
+                    <ins.icon className="w-4 h-4 shrink-0" />
+                    <span className="flex-1 font-medium">{ins.text}</span>
+                    {ins.action && <ChevronRight className="w-4 h-4 opacity-50" />}
+                  </button>
+                ))}
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                <Zap className="w-4 h-4 text-amber-600" />Actions urgentes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {data.overdueActions === 0 && totalPendingPV === 0 && data.unreadConvocations === 0 ? (
+                <div className="flex items-center gap-2 text-emerald-600 py-2">
+                  <CheckCircle2 className="w-5 h-5" /><p className="text-sm">Aucune action urgente</p>
+                </div>
+              ) : (
+                <>
+                  {data.overdueActions > 0 && (
+                    <button onClick={() => navigate("/actions")} className="flex w-full items-center justify-between text-sm px-3 py-2.5 rounded-md bg-destructive/5 hover:bg-destructive/10 transition-colors">
+                      <span className="text-destructive font-medium">{data.overdueActions} action(s) en retard</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {canSeePendingCA && data.pendingPVsCA > 0 && (
+                    <button onClick={() => navigate("/meetings")} className="flex w-full items-center justify-between text-sm px-3 py-2.5 rounded-md bg-amber-50 hover:bg-amber-100 transition-colors">
+                      <span className="text-amber-700 font-medium">{data.pendingPVsCA} PV CA à valider</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {canSeePendingAudit && data.pendingPVsAudit > 0 && (
+                    <button onClick={() => navigate("/audit-meetings")} className="flex w-full items-center justify-between text-sm px-3 py-2.5 rounded-md bg-amber-50 hover:bg-amber-100 transition-colors">
+                      <span className="text-amber-700 font-medium">{data.pendingPVsAudit} PV Audit à valider</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {data.unreadConvocations > 0 && (
+                    <button onClick={() => navigate("/sessions")} className="flex w-full items-center justify-between text-sm px-3 py-2.5 rounded-md bg-primary/5 hover:bg-primary/10 transition-colors">
+                      <span className="text-primary font-medium">{data.unreadConvocations} convocation(s) non lue(s)</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* === SECTION : PERFORMANCE & ACTIVITÉ === */}
+      <section>
+        <SectionHeader eyebrow="Performance" title="Activité de gouvernance" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {canSeeActions && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+              <TrendingUp className="w-4 h-4 text-emerald-600" />Taux de réalisation
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-end gap-2">
+              <span className="text-4xl font-bold tracking-tight">{executionRate}%</span>
+              <span className="text-sm text-muted-foreground mb-1.5">terminées</span>
+            </div>
+            <Progress value={executionRate} className="h-2" />
+            <div className="flex justify-between text-xs text-muted-foreground pt-1">
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />{data.completedActions} OK</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" />{data.inProgressActions} en cours</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-destructive" />{data.overdueActions} retard</span>
+            </div>
+          </CardContent>
+        </Card>
         )}
 
-        <Card className={cn(!canSeeActions && "lg:col-span-2")}>
-          <CardHeader className="pb-2">
+        <Card className={cn(canSeeActions ? "lg:col-span-2" : "lg:col-span-3")}>
+          <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
               <Activity className="w-4 h-4 text-primary" />Sessions (6 derniers mois)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={160}>
+            <ResponsiveContainer width="100%" height={180}>
               <BarChart data={data.sessionsByMonth}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" fontSize={11} tickLine={false} axisLine={false} />
@@ -398,12 +420,15 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </section>
 
-      {/* Sessions & PV en attente */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* === SECTION : RÉUNIONS & PV === */}
+      <section>
+        <SectionHeader eyebrow="Gouvernance" title="Réunions & procès-verbaux" action={{ label: "Voir le calendrier", onClick: () => navigate("/calendar") }} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Clock className="w-4 h-4 text-primary" />Prochaines réunions
@@ -413,28 +438,32 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {data.upcomingSessions.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-6 text-center">Aucune session planifiée</p>
+              <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground">
+                <CalendarDays className="w-8 h-8 opacity-30" />
+                <p className="text-sm">Aucune session planifiée</p>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {data.upcomingSessions.map((s: any) => {
                   const isAudit = s.organs?.type === "comite_audit";
                   const d = new Date(s.session_date);
                   return (
-                    <div key={s.id} className="flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 text-primary flex flex-col items-center justify-center text-xs font-bold shrink-0">
+                    <div key={s.id} className="flex items-center gap-3 py-3 px-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors group/row">
+                      <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex flex-col items-center justify-center text-xs font-bold shrink-0 border border-primary/10">
                         <span className="text-base leading-none">{d.getDate()}</span>
-                        <span className="text-[9px] font-normal mt-0.5">{d.toLocaleDateString("fr-FR", { month: "short" })}</span>
+                        <span className="text-[10px] font-medium mt-0.5 uppercase">{d.toLocaleDateString("fr-FR", { month: "short" })}</span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm truncate">{s.title}</h4>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-semibold text-sm truncate">{s.title}</h4>
                           <Badge variant="outline" className="text-[10px] shrink-0">{s.status}</Badge>
+                          {isAudit && <Badge variant="secondary" className="text-[10px]">Audit</Badge>}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
                           {s.organs?.name} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
-                      <div className="hidden sm:flex gap-1">
+                      <div className="hidden sm:flex gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
                         <Button size="sm" variant="ghost" onClick={() => navigate(isAudit ? "/audit-meetings" : "/sessions")} title="Voir">
                           <Eye className="w-4 h-4" />
                         </Button>
@@ -452,7 +481,7 @@ export default function Dashboard() {
 
         {canSeeAnyPending && (
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <FileText className="w-4 h-4 text-amber-600" />PV en attente
@@ -468,25 +497,26 @@ export default function Dashboard() {
                 }).slice(0, 5);
                 if (filtered.length === 0) {
                   return (
-                    <div className="flex items-center gap-2 text-emerald-600 py-4">
-                      <CheckCircle2 className="w-5 h-5" /><p className="text-sm">Aucun PV en attente</p>
+                    <div className="flex flex-col items-center gap-2 py-8 text-emerald-600">
+                      <CheckCircle2 className="w-8 h-8 opacity-60" />
+                      <p className="text-sm">Tout est validé</p>
                     </div>
                   );
                 }
                 return (
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {filtered.map((m: any) => {
                       const isAudit = m.sessions?.organs?.type === "comite_audit";
                       return (
                         <button key={m.id} onClick={() => navigate(isAudit ? "/audit-meetings" : "/meetings")}
-                          className="w-full text-left py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
+                          className="w-full text-left py-2.5 px-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors">
                           <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-medium truncate">{m.sessions?.title || "Session"}</p>
+                            <p className="text-sm font-semibold truncate">{m.sessions?.title || "Session"}</p>
                             <Badge variant={m.pv_status === "en_attente_validation" ? "default" : "outline"} className="text-[10px] shrink-0">
                               {m.pv_status === "en_attente_validation" ? "À valider" : "Brouillon"}
                             </Badge>
                           </div>
-                          <p className="text-xs text-muted-foreground truncate">{m.sessions?.organs?.name}</p>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">{m.sessions?.organs?.name}{isAudit ? " · Audit" : ""}</p>
                         </button>
                       );
                     })}
@@ -496,28 +526,34 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
-      </div>
+        </div>
+      </section>
 
-      {/* Notifications + Documents */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* === SECTION : NOTIFICATIONS, DOCUMENTS, RÉSOLUTIONS === */}
+      <section>
+        <SectionHeader eyebrow="Flux récents" title="Notifications & contenus" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Bell className="w-4 h-4 text-primary" />Notifications
             </CardTitle>
           </CardHeader>
           <CardContent>
             {data.recentNotifications.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">Aucune notification</p>
+              <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+                <Bell className="w-7 h-7 opacity-30" />
+                <p className="text-sm">Tout est lu</p>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {data.recentNotifications.slice(0, 5).map((n: any) => (
                   <button key={n.id} onClick={() => n.link && navigate(n.link)}
-                    className={cn("w-full text-left py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors", !n.is_read && "bg-primary/5")}>
+                    className={cn("w-full text-left py-2.5 px-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors", !n.is_read && "bg-primary/5")}>
                     <div className="flex items-start gap-2">
                       {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />}
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{n.title}</p>
+                        <p className="text-sm font-semibold truncate">{n.title}</p>
                         <p className="text-xs text-muted-foreground line-clamp-2">{n.message}</p>
                       </div>
                     </div>
@@ -530,7 +566,7 @@ export default function Dashboard() {
 
         {canSeeDocs && (
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <FolderOpen className="w-4 h-4 text-emerald-600" />Documents récents
@@ -540,17 +576,20 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               {data.recentDocuments.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">Aucun document</p>
+                <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+                  <FolderOpen className="w-7 h-7 opacity-30" />
+                  <p className="text-sm">Aucun document</p>
+                </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {data.recentDocuments.map((d: any) => (
                     <button key={d.id} onClick={() => navigate("/documents")}
-                      className="w-full text-left py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      className="w-full text-left py-2.5 px-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium truncate">{d.name}</p>
+                        <p className="text-sm font-semibold truncate">{d.name}</p>
                         <Badge variant="outline" className="text-[10px] shrink-0">{d.category}</Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
                         {d.sessions?.title} · {new Date(d.created_at).toLocaleDateString("fr-FR")}
                       </p>
                     </button>
@@ -562,7 +601,7 @@ export default function Dashboard() {
         )}
 
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Gavel className="w-4 h-4 text-amber-600" />Résolutions récentes
@@ -572,12 +611,15 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {data.recentDecisions.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">Aucune résolution</p>
+              <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+                <Gavel className="w-7 h-7 opacity-30" />
+                <p className="text-sm">Aucune résolution</p>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {data.recentDecisions.map((d: any) => (
                   <button key={d.id} onClick={() => navigate("/decisions")}
-                    className="w-full text-left py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    className="w-full text-left py-2.5 px-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-mono text-xs text-muted-foreground">{d.numero_decision}</p>
                       <Badge className={cn(
@@ -586,20 +628,24 @@ export default function Dashboard() {
                         "text-[10px]"
                       )}>{d.statut}</Badge>
                     </div>
-                    <p className="text-sm truncate">{d.texte}</p>
+                    <p className="text-sm truncate mt-1">{d.texte}</p>
                   </button>
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </section>
 
-      {/* Échéances + Audit timeline */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* === SECTION : ÉCHÉANCES & AUDIT === */}
+      {(canSeeActions || canSeeAudit) && (
+      <section>
+        <SectionHeader eyebrow="Suivi" title="Échéances & traçabilité" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {canSeeActions && (
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Target className="w-4 h-4 text-violet-600" />Échéances proches
@@ -609,16 +655,16 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               {data.nearDueActions.length === 0 ? (
-                <div className="flex items-center gap-2 text-emerald-600 py-4">
-                  <CheckCircle2 className="w-5 h-5" /><p className="text-sm">Aucune échéance proche</p>
+                <div className="flex flex-col items-center gap-2 py-8 text-emerald-600">
+                  <CheckCircle2 className="w-8 h-8 opacity-60" /><p className="text-sm">Aucune échéance proche</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {data.nearDueActions.map((a: any) => (
                     <button key={a.id} onClick={() => navigate("/actions")}
-                      className="w-full text-left flex items-center justify-between py-2 px-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      className="w-full text-left flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{a.title}</p>
+                        <p className="text-sm font-semibold truncate">{a.title}</p>
                         <p className="text-xs text-muted-foreground truncate">{a.members?.full_name ?? "Non assigné"}</p>
                       </div>
                       <Badge variant="outline" className="text-xs shrink-0">
@@ -634,7 +680,7 @@ export default function Dashboard() {
 
         {canSeeAudit && (
           <Card className={cn(!canSeeActions && "lg:col-span-2")}>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Activity className="w-4 h-4 text-muted-foreground" />Activité récente
@@ -644,12 +690,15 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               {data.recentAudit.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">Aucune activité</p>
+                <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+                  <Activity className="w-7 h-7 opacity-30" />
+                  <p className="text-sm">Aucune activité</p>
+                </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {data.recentAudit.map((a: any) => (
-                    <div key={a.id} className="flex items-center gap-3 py-1.5 text-sm">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                    <div key={a.id} className="flex items-center gap-3 py-2 px-3 -mx-3 rounded-md hover:bg-muted/40 text-sm transition-colors">
+                      <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
                       <span className="font-mono text-xs text-muted-foreground w-16 shrink-0">{a.action}</span>
                       <span className="truncate flex-1">{a.entity_type}</span>
                       <span className="text-xs text-muted-foreground shrink-0">
@@ -662,7 +711,9 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
-      </div>
+        </div>
+      </section>
+      )}
     </div>
   );
 }
