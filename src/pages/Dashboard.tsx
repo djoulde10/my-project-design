@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   CalendarDays, Users, ListTodo, AlertTriangle, CheckCircle2, Clock, TrendingUp,
   Target, Gavel, FileText, ArrowRight, Sparkles, Mic, Pause, Play, Square,
-  Bell, FileSignature, FolderOpen, Activity, Eye, ChevronRight, Zap,
+  Bell, FileSignature, FolderOpen, Activity, Eye, ChevronRight, Zap, Building2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ const MONTH_NAMES = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { displayName } = useAppData();
+  const { displayName, branding } = useAppData();
   const { canSeePendingCA, canSeePendingAudit, canSeeAnyPending } = useUserQuality();
   const { hasPermission } = usePermissions();
   const recording = useRecording();
@@ -195,25 +195,41 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6 animate-in fade-in duration-300">
-      {/* Welcome zone */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight">
-            {greeting}{data.fullName ? `, ${data.fullName}` : ""}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm lg:text-base">
-            {insights[0]?.text || `Bienvenue sur ${displayName}.`}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate("/calendar")}>
-            <CalendarDays className="w-4 h-4 mr-2" />Calendrier
-          </Button>
-          {hasPermission("creer_session") && (
-            <Button size="sm" onClick={() => navigate("/sessions")}>
-              <Sparkles className="w-4 h-4 mr-2" />Nouvelle session
+      {/* Premium hero header */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 lg:p-8">
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-10 w-72 h-72 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-14 h-14 rounded-2xl bg-background/80 backdrop-blur border border-border/60 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+              {branding.logo_url ? (
+                <img src={branding.logo_url} alt={branding.nom} className="w-full h-full object-cover" />
+              ) : (
+                <Building2 className="w-6 h-6 text-primary" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                {branding.nom} · Centre de gouvernance
+              </p>
+              <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight mt-0.5 truncate">
+                {greeting}{data.fullName ? `, ${data.fullName}` : ""}
+              </h1>
+              <p className="text-muted-foreground mt-1 text-sm lg:text-base">
+                {insights[0]?.text || `Bienvenue sur ${displayName}.`}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" size="sm" onClick={() => navigate("/calendar")} className="bg-background/60 backdrop-blur">
+              <CalendarDays className="w-4 h-4 mr-2" />Calendrier
             </Button>
-          )}
+            {hasPermission("creer_session") && (
+              <Button size="sm" onClick={() => navigate("/sessions")} className="shadow-md">
+                <Sparkles className="w-4 h-4 mr-2" />Nouvelle session
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -275,20 +291,24 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {/* Stat cards */}
+      {/* Premium stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
         {statCards.map((stat) => (
-          <Card key={stat.label} className="cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all group" onClick={() => navigate(stat.path)}>
+          <Card
+            key={stat.label}
+            className="group cursor-pointer hover:shadow-lg hover:-translate-y-0.5 hover:border-primary/30 transition-all relative overflow-hidden"
+            onClick={() => navigate(stat.path)}
+          >
+            <div className={cn("absolute inset-x-0 top-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity", stat.bg.replace("bg-", "bg-").replace("/10", ""))} />
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className={cn("p-2.5 rounded-xl", stat.bg, stat.color)}>
+              <div className="flex items-start justify-between gap-2">
+                <div className={cn("p-2.5 rounded-xl transition-transform group-hover:scale-110", stat.bg, stat.color)}>
                   <stat.icon className="w-4 h-4" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-2xl font-bold leading-none">{stat.value}</p>
-                  <p className="text-[11px] text-muted-foreground mt-1 truncate">{stat.label}</p>
-                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
               </div>
+              <p className="text-2xl lg:text-3xl font-bold leading-none mt-3 tabular-nums">{stat.value}</p>
+              <p className="text-[11px] text-muted-foreground mt-1.5 truncate font-medium">{stat.label}</p>
             </CardContent>
           </Card>
         ))}
