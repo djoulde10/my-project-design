@@ -128,6 +128,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "actions_responsible_member_id_fkey"
+            columns: ["responsible_member_id"]
+            isOneToOne: false
+            referencedRelation: "members_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "actions_solution_id_fkey"
             columns: ["solution_id"]
             isOneToOne: false
@@ -219,6 +226,13 @@ export type Database = {
             columns: ["presenter_member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agenda_items_presenter_member_id_fkey"
+            columns: ["presenter_member_id"]
+            isOneToOne: false
+            referencedRelation: "members_directory"
             referencedColumns: ["id"]
           },
           {
@@ -638,6 +652,13 @@ export type Database = {
             referencedRelation: "members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "conflict_of_interests_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       convocation_views: {
@@ -692,6 +713,13 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convocation_views_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members_directory"
             referencedColumns: ["id"]
           },
           {
@@ -775,6 +803,13 @@ export type Database = {
             columns: ["responsable_execution"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decisions_responsable_execution_fkey"
+            columns: ["responsable_execution"]
+            isOneToOne: false
+            referencedRelation: "members_directory"
             referencedColumns: ["id"]
           },
           {
@@ -1718,10 +1753,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "session_attendees_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "session_attendees_proxy_member_id_fkey"
             columns: ["proxy_member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendees_proxy_member_id_fkey"
+            columns: ["proxy_member_id"]
+            isOneToOne: false
+            referencedRelation: "members_directory"
             referencedColumns: ["id"]
           },
           {
@@ -2097,7 +2146,69 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      members_directory: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          mandate_end: string | null
+          mandate_start: string | null
+          organ_id: string | null
+          organisation: string | null
+          quality: Database["public"]["Enums"]["member_quality"] | null
+          titre_poste: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          mandate_end?: string | null
+          mandate_start?: string | null
+          organ_id?: string | null
+          organisation?: string | null
+          quality?: Database["public"]["Enums"]["member_quality"] | null
+          titre_poste?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          mandate_end?: string | null
+          mandate_start?: string | null
+          organ_id?: string | null
+          organisation?: string | null
+          quality?: Database["public"]["Enums"]["member_quality"] | null
+          titre_poste?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_organ_id_fkey"
+            columns: ["organ_id"]
+            isOneToOne: false
+            referencedRelation: "organs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_entity_permission: {
