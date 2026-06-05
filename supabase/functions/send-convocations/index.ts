@@ -15,6 +15,7 @@ Deno.serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const APP_URL = (Deno.env.get("APP_URL") ?? Deno.env.get("PUBLIC_APP_URL") ?? "https://grigraboard.lovable.app")
       .trim()
       .replace(/\/+$/, "");
@@ -25,7 +26,35 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Auth: require an authenticated user (block anon / unauthenticated callers)
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const authClient = createClient(SUPABASE_URL, ANON_KEY);
+    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims || claimsData.claims.role !== "authenticated" || !claimsData.claims.sub) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    // Require user to have permission to manage sessions
+    const userId = claimsData.claims.sub as string;
+    const { data: hasPerm } = await admin.rpc("user_has_permission", {
+      _user_id: userId, _permission_nom: "modifier_session",
+    });
+    const { data: isAdmin } = await admin.rpc("has_role", { _user_id: userId, _role: "admin" });
+    if (!hasPerm && !isAdmin) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Optional payload : { session_id, only_unread }
     let session_id: string | undefined;
