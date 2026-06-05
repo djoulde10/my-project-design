@@ -214,7 +214,7 @@ export default function Sessions() {
       }
     }
 
-    const { data: organMembers } = await supabase.from("members").select("id").eq("organ_id", form.organ_id).eq("is_active", true);
+    const { data: organMembers } = await supabase.from("members_directory").select("id").eq("organ_id", form.organ_id).eq("is_active", true);
     if (organMembers && organMembers.length > 0) {
       await supabase.from("session_attendees").insert(
         organMembers.map((m) => ({ session_id: session.id, member_id: m.id }))

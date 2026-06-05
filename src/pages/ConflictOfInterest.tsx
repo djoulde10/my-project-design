@@ -35,7 +35,7 @@ export default function ConflictOfInterest() {
   const fetchAll = async () => {
     const [confRes, memRes] = await Promise.all([
       supabase.from("conflict_of_interests").select("*, members(full_name)").order("declared_at", { ascending: false }),
-      supabase.from("members").select("id, full_name").eq("is_active", true),
+      supabase.from("members_directory").select("id, full_name").eq("is_active", true),
     ]);
     setConflicts(confRes.data ?? []);
     setMembers(memRes.data ?? []);

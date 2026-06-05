@@ -52,7 +52,7 @@ export default function Decisions() {
     const [decRes, sessRes, memRes] = await Promise.all([
       supabase.from("decisions").select("*, sessions(title, numero_session, organs(type)), members(full_name)").order("created_at", { ascending: false }),
       supabase.from("sessions").select("id, title, numero_session, organs(type)").order("session_date", { ascending: false }),
-      supabase.from("members").select("id, full_name").eq("is_active", true),
+      supabase.from("members_directory").select("id, full_name").eq("is_active", true),
     ]);
     if (isDirectionMember) {
       setDecisions((decRes.data ?? []).filter((d: any) => d.sessions?.organs?.type === "comite_audit"));

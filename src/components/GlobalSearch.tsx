@@ -246,15 +246,15 @@ export default function GlobalSearch() {
         promises.push(
           (async () => {
             const { data } = await supabase
-              .from("members")
-              .select("id, full_name, email, quality")
-              .or(`full_name.ilike.${pattern},email.ilike.${pattern}`)
+              .from("members_directory")
+              .select("id, full_name, quality")
+              .ilike("full_name", pattern)
               .eq("is_active", true)
               .limit(5);
             return (data ?? []).map((r) => ({
               id: r.id,
               title: r.full_name,
-              subtitle: r.email ?? undefined,
+              subtitle: undefined,
               category: "members" as const,
               path: "/members",
             }));
