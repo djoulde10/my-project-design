@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import DOMPurify from "dompurify";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useCompanyId } from "@/hooks/useCompanyId";
@@ -710,7 +711,7 @@ export default function AuditMeetings() {
                             </h4>
                             {sessionDetails[s.id].minute.is_published && sessionDetails[s.id].minute.content && (
                               <div className="bg-background rounded border p-3 max-h-[300px] overflow-y-auto">
-                                <div className="prose prose-sm max-w-none text-sm" dangerouslySetInnerHTML={{ __html: sessionDetails[s.id].minute.content }} />
+                                <div className="prose prose-sm max-w-none text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(sessionDetails[s.id].minute.content || "", { ALLOWED_TAGS: ['p','br','strong','em','u','h1','h2','h3','h4','ul','ol','li','blockquote','a','table','thead','tbody','tr','th','td','img','span','div','sub','sup','s','hr'], ALLOWED_ATTR: ['href','class','style','src','alt','width','height','target','rel','colspan','rowspan'] }) }} />
                               </div>
                             )}
                             {!sessionDetails[s.id].minute.is_published && (
@@ -800,7 +801,7 @@ export default function AuditMeetings() {
           <DialogHeader>
             <DialogTitle>Lettre de convocation — {viewConvocationSession?.title}</DialogTitle>
           </DialogHeader>
-          <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: (viewConvocationSession as any)?.convocation_letter || "" }} />
+          <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize((viewConvocationSession as any)?.convocation_letter || "", { ALLOWED_TAGS: ['p','br','strong','em','u','h1','h2','h3','h4','ul','ol','li','blockquote','a','table','thead','tbody','tr','th','td','img','span','div','sub','sup','s','hr'], ALLOWED_ATTR: ['href','class','style','src','alt','width','height','target','rel','colspan','rowspan'] }) }} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewConvocationSession(null)}>Fermer</Button>
             <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText((viewConvocationSession as any)?.convocation_letter || ""); showInfo("Copié"); }}>
