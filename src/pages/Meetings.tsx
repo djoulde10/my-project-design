@@ -241,13 +241,16 @@ export default function Meetings() {
       const formData = new FormData();
       formData.append("audio", uploadedFile, fileName);
       formData.append("language_code", transcriptionLang);
+      const { data: { session: _authSession } } = await supabase.auth.getSession();
+      const _accessToken = _authSession?.access_token;
+      if (!_accessToken) { throw new Error("Vous devez être connecté."); }
       const tRes = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
         {
           method: "POST",
           headers: {
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${_accessToken}`,
           },
           body: formData,
         }
@@ -463,6 +466,9 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
     setTtsLoading(true);
     try {
       const truncatedText = text.substring(0, 5000);
+      const { data: { session: _authSession } } = await supabase.auth.getSession();
+      const _accessToken = _authSession?.access_token;
+      if (!_accessToken) { throw new Error("Vous devez être connecté."); }
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tts-pv`,
         {
@@ -470,7 +476,7 @@ ${content.split("\n").map((l: string) => `<p>${l}</p>`).join("")}
           headers: {
             "Content-Type": "application/json",
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${_accessToken}`,
           },
           body: JSON.stringify({ text: truncatedText }),
         }

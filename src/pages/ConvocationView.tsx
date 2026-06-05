@@ -5,6 +5,12 @@ import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Calendar, MapPin, Video, CheckCircle, AlertCircle, FileText, Printer } from "lucide-react";
+import DOMPurify from "dompurify";
+
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: ['p','br','strong','em','u','h1','h2','h3','h4','ul','ol','li','blockquote','a','table','thead','tbody','tr','th','td','img','span','div','sub','sup','s','hr'],
+  ALLOWED_ATTR: ['href','class','style','src','alt','width','height','target','rel','colspan','rowspan'],
+};
 
 interface SessionData {
   id: string;
@@ -133,7 +139,7 @@ export default function ConvocationView() {
                   [&_ul]:my-4 [&_ul]:pl-6 [&_ul_li]:my-1.5
                   [&_table]:w-full [&_table]:my-4 [&_td]:align-top [&_td]:py-1 [&_td]:px-2
                   [&_em]:italic"
-                dangerouslySetInnerHTML={{ __html: session.convocation_letter }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(session.convocation_letter, SANITIZE_CONFIG) }}
               />
             ) : (
               <div className="text-center py-12">
