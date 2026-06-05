@@ -88,7 +88,7 @@ export default function Dashboard() {
         supabase.from("minutes").select("id, session_id, pv_status, updated_at, sessions!inner(title, organs!inner(type, name))").in("pv_status", ["brouillon", "en_attente_validation"]).order("updated_at", { ascending: false }).limit(10),
         supabase.from("sessions").select("session_date").eq("is_published", true).order("session_date", { ascending: false }).limit(200),
         canSeeMembers
-          ? supabase.from("members").select("id", { count: "exact", head: true }).eq("is_active", true)
+          ? supabase.from("members_directory").select("id", { count: "exact", head: true }).eq("is_active", true)
           : Promise.resolve({ count: 0 } as any),
         supabase.from("minutes").select("id", { count: "exact", head: true }).eq("is_published", true),
         user ? supabase.from("convocation_views").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("viewed_at", null) : Promise.resolve({ count: 0 } as any),

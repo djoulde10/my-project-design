@@ -49,7 +49,7 @@ export default function SessionAttendeeManager({ open, onOpenChange, sessionId, 
         .select("*, members!session_attendees_member_id_fkey(full_name, quality)")
         .eq("session_id", sessionId),
       supabase
-        .from("members")
+        .from("members_directory")
         .select("id, full_name, quality, organ_id")
         .eq("is_active", true),
     ]);

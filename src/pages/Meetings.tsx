@@ -119,7 +119,7 @@ export default function Meetings() {
       supabase.from("meeting_templates").select("*").order("created_at", { ascending: false }),
       supabase.from("sessions").select("id, title, organs(type)").order("session_date", { ascending: false }),
       supabase.from("minutes").select("*, sessions(title, organs(type))").order("created_at", { ascending: false }),
-      supabase.from("members").select("id, full_name").eq("is_active", true).order("full_name"),
+      supabase.from("members_directory").select("id, full_name").eq("is_active", true).order("full_name"),
     ]);
     
     // Filter for "Membre de la Direction": only comite_audit data

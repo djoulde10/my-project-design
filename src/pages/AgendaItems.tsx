@@ -47,7 +47,7 @@ export default function AgendaItems() {
     const [itemsRes, sessionsRes, membersRes] = await Promise.all([
       supabase.from("agenda_items").select("*, sessions(title, organs(type)), members(full_name)").order("order_index"),
       supabase.from("sessions").select("id, title, organs(type)").in("status", ["brouillon", "validee"]).order("session_date", { ascending: false }),
-      supabase.from("members").select("id, full_name").eq("is_active", true),
+      supabase.from("members_directory").select("id, full_name").eq("is_active", true),
     ]);
     
     if (isDirectionMember) {

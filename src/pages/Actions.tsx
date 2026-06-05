@@ -74,7 +74,7 @@ export default function Actions() {
       supabase.from("decisions")
         .select("id, numero_decision, texte, session_id, sessions(title, session_date, session_type, organs(type, name))")
         .order("created_at", { ascending: false }),
-      supabase.from("members").select("id, full_name").eq("is_active", true).order("full_name"),
+      supabase.from("members_directory").select("id, full_name").eq("is_active", true).order("full_name"),
     ]);
 
     let acts = actRes.data ?? [];
