@@ -2245,6 +2245,10 @@ export type Database = {
         Args: { _session_id: string }
         Returns: number
       }
+      role_name_to_member_quality: {
+        Args: { _role_name: string }
+        Returns: Database["public"]["Enums"]["member_quality"]
+      }
       update_company_colors: {
         Args: {
           _couleur_accent?: string
