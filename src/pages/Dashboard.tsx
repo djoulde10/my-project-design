@@ -261,8 +261,13 @@ export default function Dashboard() {
               <CalendarDays className="w-4 h-4 mr-2" />Calendrier
             </Button>
             {hasPermission("creer_session") && (
-              <Button size="sm" onClick={() => navigate("/sessions")} className="shadow-md">
-                <Sparkles className="w-4 h-4 mr-2" />Nouvelle session
+              <Button
+                size="sm"
+                onClick={() => navigate(isPresidentAudit && !isPCA ? "/audit-meetings" : "/sessions")}
+                className="shadow-md"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {isPresidentAudit && !isPCA ? "Nouvelle réunion" : "Nouvelle session"}
               </Button>
             )}
           </div>
