@@ -203,7 +203,7 @@ export default function Dashboard() {
   const heroStats = [
     { label: "Réunions", sublabel: `${data.sessionsOrdinaires + data.sessionsExtraordinaires} CA · ${data.reunionsAudit} audit`, value: totalReunions, icon: CalendarDays, color: "text-primary", bg: "bg-primary/10", path: "/sessions" },
     ...(canSeeAnyPending ? [{ label: "PV en attente", sublabel: "À valider", value: totalPendingPV, icon: FileText, color: "text-amber-600", bg: "bg-amber-100", path: "/meetings" }] : []),
-    ...(canSeeDocs ? [{ label: "Documents signés", sublabel: "Publiés", value: data.signedDocs, icon: FileSignature, color: "text-emerald-600", bg: "bg-emerald-100", path: "/documents" }] : []),
+    ...(pvScope !== "none" ? [{ label: "PV", sublabel: `${data.pvValidated} validés · ${data.pvPending} en attente`, value: data.pvTotal, icon: FileSignature, color: "text-emerald-600", bg: "bg-emerald-100", path: pvScope === "audit" ? "/audit-meetings" : "/meetings" }] : []),
     { label: "Convocations non lues", sublabel: "À consulter", value: data.unreadConvocations, icon: Bell, color: "text-rose-600", bg: "bg-rose-100", path: "/sessions" },
     ...(canSeeMembers ? [{ label: "Membres actifs", sublabel: "Dans l'organisation", value: data.activeMembers, icon: Users, color: "text-violet-600", bg: "bg-violet-100", path: "/members" }] : []),
   ];
