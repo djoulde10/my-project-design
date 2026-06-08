@@ -29,7 +29,9 @@ interface DashboardData {
   completedActions: number;
   inProgressActions: number;
   activeMembers: number;
-  signedDocs: number;
+  pvTotal: number;
+  pvPending: number;
+  pvValidated: number;
   unreadConvocations: number;
   upcomingSessions: any[];
   recentDecisions: any[];
@@ -51,7 +53,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { displayName, branding } = useAppData();
-  const { canSeePendingCA, canSeePendingAudit, canSeeAnyPending } = useUserQuality();
+  const { canSeePendingCA, canSeePendingAudit, canSeeAnyPending, isPCA, isPresidentAudit } = useUserQuality();
   const { hasPermission } = usePermissions();
   const recording = useRecording();
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,21 @@ export default function Dashboard() {
   const canSeeMembers = hasPermission("gerer_membres");
   const canSeeAudit = hasPermission("consulter_audit");
   const canSeeActions = hasPermission("suivre_actions") || hasPermission("consulter_documents");
+
+  // Scope PV visibility by role:
+  // - PCA → CA only
+  // - Président du Comité d'Audit → audit only
+  // - Others with valider_pv or consulter_documents → both
+  const pvScope: "ca" | "audit" | "both" | "none" =
+    isPCA && !isPresidentAudit ? "ca" :
+    isPresidentAudit && !isPCA ? "audit" :
+    (canSeePendingCA && canSeePendingAudit) || hasPermission("valider_pv") || hasPermission("consulter_documents") ? "both" :
+    "none";
+  const matchesScope = (t?: string) =>
+    pvScope === "both" ? (t === "ca" || t === "comite_audit") :
+    pvScope === "ca" ? t === "ca" :
+    pvScope === "audit" ? t === "comite_audit" :
+    false;
 
   useEffect(() => {
     let cancelled = false;
@@ -74,7 +91,7 @@ export default function Dashboard() {
       const [
         publishedRes, decisionsRes, actionsRes, overdueRes, completedRes, inProgressRes,
         upcomingRes, recentDecisionsRes, nearDueRes, pendingPVRes, sessionsAllRes,
-        membersRes, signedRes, convocationsRes, notifRes, docsRes, auditRes, profileRes, todayRes,
+        membersRes, allMinutesRes, convocationsRes, notifRes, docsRes, auditRes, profileRes, todayRes,
       ] = await Promise.all([
         supabase.from("sessions").select("id, session_type, organs(type)").eq("is_published", true),
         supabase.from("decisions").select("id", { count: "exact", head: true }),
@@ -90,7 +107,7 @@ export default function Dashboard() {
         canSeeMembers
           ? supabase.from("members_directory").select("id", { count: "exact", head: true }).eq("is_active", true)
           : Promise.resolve({ count: 0 } as any),
-        supabase.from("minutes").select("id", { count: "exact", head: true }).eq("is_published", true),
+        supabase.from("minutes").select("id, pv_status, is_published, sessions!inner(organs!inner(type))"),
         user ? supabase.from("convocation_views").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("viewed_at", null) : Promise.resolve({ count: 0 } as any),
         user ? supabase.from("notifications").select("id, type, title, message, link, is_read, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(6) : Promise.resolve({ data: [] } as any),
         canSeeDocs ? supabase.from("documents").select("id, name, category, created_at, sessions(title)").order("created_at", { ascending: false }).limit(5) : Promise.resolve({ data: [] } as any),
@@ -127,6 +144,12 @@ export default function Dashboard() {
       const pendingPVsCA = pendingList.filter((m) => m?.sessions?.organs?.type === "ca").length;
       const pendingPVsAudit = pendingList.filter((m) => m?.sessions?.organs?.type === "comite_audit").length;
 
+      const allMinutes = ((allMinutesRes as any).data ?? []) as any[];
+      const scopedMinutes = allMinutes.filter((m) => matchesScope(m?.sessions?.organs?.type));
+      const pvTotal = scopedMinutes.length;
+      const pvPending = scopedMinutes.filter((m) => m.pv_status === "brouillon" || m.pv_status === "en_attente_validation").length;
+      const pvValidated = scopedMinutes.filter((m) => m.is_published || m.pv_status === "valide" || m.pv_status === "publie").length;
+
       setData({
         sessionsOrdinaires, sessionsExtraordinaires, reunionsAudit,
         decisions: decisionsRes.count ?? 0,
@@ -135,7 +158,7 @@ export default function Dashboard() {
         completedActions: completedRes.count ?? 0,
         inProgressActions: inProgressRes.count ?? 0,
         activeMembers: (membersRes as any).count ?? 0,
-        signedDocs: signedRes.count ?? 0,
+        pvTotal, pvPending, pvValidated,
         unreadConvocations: (convocationsRes as any).count ?? 0,
         upcomingSessions: upcomingRes.data ?? [],
         recentDecisions: recentDecisionsRes.data ?? [],
