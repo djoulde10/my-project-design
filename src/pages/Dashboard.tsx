@@ -176,7 +176,7 @@ export default function Dashboard() {
     };
     fetchAll();
     return () => { cancelled = true; };
-  }, [user, canSeeMembers, canSeeDocs, canSeeAudit]);
+  }, [user, canSeeMembers, canSeeDocs, canSeeAudit, pvScope]);
 
   const greeting = useMemo(() => {
     const h = new Date().getHours();
