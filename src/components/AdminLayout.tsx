@@ -20,6 +20,9 @@ import {
   Activity,
   ShieldCheck,
   Plug,
+  Users,
+  Megaphone,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,15 +43,18 @@ const adminNav = [
     label: "Gestion",
     items: [
       { label: "Organisations", icon: Building2, path: "/admin/organizations" },
+      { label: "Utilisateurs", icon: Users, path: "/admin/users" },
       { label: "Plans & Tarifs", icon: Package, path: "/admin/plans" },
       { label: "Feature Flags", icon: ToggleRight, path: "/admin/features" },
       { label: "Facturation", icon: CreditCard, path: "/admin/billing" },
+      { label: "Diffusions", icon: Megaphone, path: "/admin/broadcasts" },
     ],
   },
   {
     label: "Système",
     items: [
       { label: "Logs système", icon: ScrollText, path: "/admin/logs" },
+      { label: "Audit global", icon: History, path: "/admin/audit-global" },
       { label: "Sécurité", icon: ShieldCheck, path: "/admin/security" },
       { label: "API Management", icon: Plug, path: "/admin/api" },
       { label: "Support", icon: MessageSquare, path: "/admin/support" },
