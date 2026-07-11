@@ -66,6 +66,9 @@ const AdminSupport = lazy(() => import("@/pages/admin/AdminSupport"));
 const AdminSecurity = lazy(() => import("@/pages/admin/AdminSecurity"));
 const AdminMonitoring = lazy(() => import("@/pages/admin/AdminMonitoring"));
 const AdminApiManagement = lazy(() => import("@/pages/admin/AdminApiManagement"));
+const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
+const AdminBroadcasts = lazy(() => import("@/pages/admin/AdminBroadcasts"));
+const AdminAuditGlobal = lazy(() => import("@/pages/admin/AdminAuditGlobal"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -182,6 +185,9 @@ function ProtectedApp() {
       <Route path="/admin/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
       <Route path="/admin/monitoring" element={<AdminRoute><AdminMonitoring /></AdminRoute>} />
       <Route path="/admin/api" element={<AdminRoute><AdminApiManagement /></AdminRoute>} />
+      <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+      <Route path="/admin/broadcasts" element={<AdminRoute><AdminBroadcasts /></AdminRoute>} />
+      <Route path="/admin/audit-global" element={<AdminRoute><AdminAuditGlobal /></AdminRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
