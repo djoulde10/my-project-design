@@ -176,6 +176,45 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_broadcasts: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          message: string
+          read_count: number | null
+          recipients_count: number | null
+          scope: string
+          sent_by: string | null
+          target_company_ids: string[] | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level?: string
+          message: string
+          read_count?: number | null
+          recipients_count?: number | null
+          scope?: string
+          sent_by?: string | null
+          target_company_ids?: string[] | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          message?: string
+          read_count?: number | null
+          recipients_count?: number | null
+          scope?: string
+          sent_by?: string | null
+          target_company_ids?: string[] | null
+          title?: string
+        }
+        Relationships: []
+      }
       agenda_items: {
         Row: {
           company_id: string | null
@@ -535,6 +574,9 @@ export type Database = {
           statut: string | null
           subscription_end: string | null
           subscription_start: string | null
+          suspended_at: string | null
+          suspended_by: string | null
+          suspended_reason: string | null
           updated_at: string
         }
         Insert: {
@@ -560,6 +602,9 @@ export type Database = {
           statut?: string | null
           subscription_end?: string | null
           subscription_start?: string | null
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspended_reason?: string | null
           updated_at?: string
         }
         Update: {
@@ -585,6 +630,9 @@ export type Database = {
           statut?: string | null
           subscription_end?: string | null
           subscription_start?: string | null
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspended_reason?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2226,6 +2274,7 @@ export type Database = {
           permission_nom: string
         }[]
       }
+      has_admin_capability: { Args: { _capability: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2233,6 +2282,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_platform_admin: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       mark_convocation_viewed: { Args: { _token: string }; Returns: Json }
       members_safe_select: {
