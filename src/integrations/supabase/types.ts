@@ -2281,7 +2281,15 @@ export type Database = {
         | "annulee"
         | "a_faire"
       agenda_nature: "information" | "decision"
-      app_role: "admin" | "moderator" | "user" | "super_admin"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "super_admin"
+        | "super_admin_readonly"
+        | "admin_support"
+        | "admin_billing"
+        | "admin_security"
       member_quality:
         | "pca"
         | "administrateur"
@@ -2436,7 +2444,16 @@ export const Constants = {
         "a_faire",
       ],
       agenda_nature: ["information", "decision"],
-      app_role: ["admin", "moderator", "user", "super_admin"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "super_admin",
+        "super_admin_readonly",
+        "admin_support",
+        "admin_billing",
+        "admin_security",
+      ],
       member_quality: [
         "pca",
         "administrateur",
