@@ -7,6 +7,23 @@ const corsHeaders = {
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 
+// Escape untrusted values before interpolating into email HTML.
+function escHtml(s: unknown): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// For URLs used in href attributes: reject anything that isn't http/https/mailto.
+function safeUrl(s: unknown): string {
+  const raw = String(s ?? "").trim();
+  if (!/^(https?:|mailto:)/i.test(raw)) return "";
+  return escHtml(raw);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -116,6 +133,13 @@ Deno.serve(async (req) => {
       })();
 
       const isReminder = only_unread && conv.email_status === "sent";
+      const safeTitle = escHtml(sess.title);
+      const safeOrgan = escHtml(sess.organs?.name || "—");
+      const safeCompany = escHtml(sess.companies?.nom || "GovBoard");
+      const safeLocation = escHtml(sess.location);
+      const safeMeetingLink = safeUrl(sess.meeting_link);
+      const safeDate = escHtml(dateFmt);
+      const safeLink = safeUrl(link);
       const subject = isReminder
         ? `Rappel : convocation à consulter — ${sess.title}`
         : `Convocation : ${sess.title}`;
@@ -127,21 +151,21 @@ Deno.serve(async (req) => {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
         <tr><td style="background:#1e3a5f;padding:24px 32px;">
-          <h1 style="color:#f5c542;margin:0;font-size:20px;font-weight:700;">${sess.companies?.nom || "GovBoard"}</h1>
+          <h1 style="color:#f5c542;margin:0;font-size:20px;font-weight:700;">${safeCompany}</h1>
           <p style="color:rgba(255,255,255,.7);margin:4px 0 0;font-size:12px;">Convocation officielle</p>
         </td></tr>
         <tr><td style="padding:32px;">
           ${isReminder ? '<p style="color:#c2410c;font-weight:600;margin:0 0 12px;">📌 Rappel — vous n\'avez pas encore consulté cette convocation</p>' : ''}
-          <h2 style="color:#1e3a5f;margin:0 0 12px;font-size:18px;">${sess.title}</h2>
-          <p style="color:#4a5568;margin:0 0 8px;font-size:14px;"><strong>Organe :</strong> ${sess.organs?.name || "—"}</p>
-          <p style="color:#4a5568;margin:0 0 8px;font-size:14px;"><strong>Date :</strong> ${dateFmt}</p>
-          ${sess.location ? `<p style="color:#4a5568;margin:0 0 8px;font-size:14px;"><strong>Lieu :</strong> ${sess.location}</p>` : ''}
-          ${sess.meeting_link ? `<p style="color:#4a5568;margin:0 0 8px;font-size:14px;"><strong>Visioconférence :</strong> ${sess.meeting_link}</p>` : ''}
+          <h2 style="color:#1e3a5f;margin:0 0 12px;font-size:18px;">${safeTitle}</h2>
+          <p style="color:#4a5568;margin:0 0 8px;font-size:14px;"><strong>Organe :</strong> ${safeOrgan}</p>
+          <p style="color:#4a5568;margin:0 0 8px;font-size:14px;"><strong>Date :</strong> ${safeDate}</p>
+          ${sess.location ? `<p style="color:#4a5568;margin:0 0 8px;font-size:14px;"><strong>Lieu :</strong> ${safeLocation}</p>` : ''}
+          ${safeMeetingLink ? `<p style="color:#4a5568;margin:0 0 8px;font-size:14px;"><strong>Visioconférence :</strong> <a href="${safeMeetingLink}" style="color:#1e3a5f;">${safeMeetingLink}</a></p>` : ''}
           <p style="color:#4a5568;margin:24px 0 24px;font-size:14px;line-height:1.6;">
             Vous êtes convoqué(e) à cette session. Cliquez ci-dessous pour consulter la convocation officielle et l'ordre du jour.
           </p>
           <table cellpadding="0" cellspacing="0"><tr><td style="background:#1e3a5f;border-radius:8px;padding:14px 28px;">
-            <a href="${link}" style="color:#fff;text-decoration:none;font-size:14px;font-weight:600;">Voir la convocation →</a>
+            <a href="${safeLink}" style="color:#fff;text-decoration:none;font-size:14px;font-weight:600;">Voir la convocation →</a>
           </td></tr></table>
           <p style="color:#94a3b8;margin:24px 0 0;font-size:12px;">Ce lien est personnel et sécurisé. Ne le partagez pas.</p>
         </td></tr>

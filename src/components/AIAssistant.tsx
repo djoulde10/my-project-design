@@ -116,8 +116,6 @@ export default function AIAssistant() {
           messages: allMessages,
           context_type: "general",
           current_page: location.pathname,
-          user_role: roleName,
-          user_permissions: permissions,
         }),
       });
 
