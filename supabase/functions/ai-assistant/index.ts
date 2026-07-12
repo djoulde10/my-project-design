@@ -22,9 +22,31 @@ serve(async (req) => {
     const { data: { user }, error: userErr } = await supabase.auth.getUser();
     if (userErr || !user) throw new Error("Unauthorized");
 
-    const { messages, context_type, current_page, user_role, user_permissions } = await req.json();
+    const { messages, context_type, current_page } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+
+    // SECURITY: derive role & permissions server-side from the verified JWT.
+    // Never trust client-supplied role/permissions — a regular user could otherwise
+    // impersonate an admin to receive elevated guidance.
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    let user_role: string | null = null;
+    let user_permissions: string[] = [];
+    try {
+      const { data: profile } = await admin
+        .from("profiles")
+        .select("role_id, roles(nom)")
+        .eq("id", user.id)
+        .maybeSingle();
+      user_role = (profile as any)?.roles?.nom ?? null;
+      const { data: perms } = await admin.rpc("get_user_permissions", { _user_id: user.id });
+      user_permissions = Array.isArray(perms) ? perms.map((p: any) => p.permission_nom).filter(Boolean) : [];
+    } catch (e) {
+      console.error("ai-assistant: failed to resolve role/permissions", e);
+    }
 
     // Fetch contextual data
     let contextInfo = "";
