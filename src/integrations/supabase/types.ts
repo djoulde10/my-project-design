@@ -2299,6 +2299,16 @@ export type Database = {
         Args: { _role_name: string }
         Returns: Database["public"]["Enums"]["member_quality"]
       }
+      send_admin_broadcast: {
+        Args: {
+          _level?: string
+          _message: string
+          _scope?: string
+          _target_company_id?: string
+          _title: string
+        }
+        Returns: Json
+      }
       update_company_colors: {
         Args: {
           _couleur_accent?: string
