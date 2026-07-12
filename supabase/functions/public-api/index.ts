@@ -73,6 +73,24 @@ function getPagination(url: URL) {
   return { page, limit, from, to };
 }
 
+// SECURITY: strict field allowlists prevent mass-assignment / workflow bypass
+// (e.g. setting pv_status='signe', is_published=true, or overriding vote counts).
+const ALLOWED_FIELDS: Record<string, string[]> = {
+  sessions: ["title", "session_date", "session_type", "location", "meeting_link", "is_virtual", "organ_id", "convocation_letter", "description"],
+  minutes: ["session_id", "content"],
+  decisions: ["texte", "session_id", "agenda_item_id", "type_vote", "date_effet"],
+  members: ["full_name", "email", "phone", "quality", "organ_id", "is_active", "mandate_start", "mandate_end", "titre_poste", "organisation", "bio", "nationalite"],
+};
+
+function pickAllowed(resource: keyof typeof ALLOWED_FIELDS, body: Record<string, unknown>) {
+  const allowed = ALLOWED_FIELDS[resource] || [];
+  const out: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in body) out[key] = body[key];
+  }
+  return out;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
