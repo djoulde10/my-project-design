@@ -227,7 +227,7 @@ serve(async (req) => {
           if (!hasScope("write")) return logAndReturn(addRL(error("Scope 'write' requis.", 403)), 403, "Missing scope");
           const body = await req.json();
           if (!body.title || !body.session_date || !body.organ_id) return logAndReturn(addRL(error("Champs requis: title, session_date, organ_id.")), 400, "Validation error");
-          const { data, error: e } = await supabase.from("sessions").insert({ ...body, company_id }).select().single();
+          const { data, error: e } = await supabase.from("sessions").insert({ ...pickAllowed("sessions", body), company_id }).select().single();
           if (e) return logAndReturn(addRL(error(e.message)), 400, e.message);
           return logAndReturn(addRL(success(data, 201)), 201);
         }
@@ -235,8 +235,7 @@ serve(async (req) => {
           if (!hasScope("write")) return logAndReturn(addRL(error("Scope 'write' requis.", 403)), 403, "Missing scope");
           if (!resourceId) return logAndReturn(addRL(error("ID requis pour la mise à jour.")), 400, "Missing ID");
           const body = await req.json();
-          delete body.id; delete body.company_id;
-          const { data, error: e } = await supabase.from("sessions").update(body).eq("id", resourceId).eq("company_id", company_id).select().single();
+          const { data, error: e } = await supabase.from("sessions").update(pickAllowed("sessions", body)).eq("id", resourceId).eq("company_id", company_id).select().single();
           if (e) return logAndReturn(addRL(error(e.code === "PGRST116" ? "Réunion introuvable." : e.message, e.code === "PGRST116" ? 404 : 400)), e.code === "PGRST116" ? 404 : 400, e.message);
           return logAndReturn(addRL(success(data)), 200);
         }
@@ -273,7 +272,7 @@ serve(async (req) => {
           if (!hasScope("write")) return logAndReturn(addRL(error("Scope 'write' requis.", 403)), 403, "Missing scope");
           const body = await req.json();
           if (!body.session_id) return logAndReturn(addRL(error("Champ requis: session_id.")), 400, "Validation error");
-          const { data, error: e } = await supabase.from("minutes").insert({ ...body, company_id }).select().single();
+          const { data, error: e } = await supabase.from("minutes").insert({ ...pickAllowed("minutes", body), company_id }).select().single();
           if (e) return logAndReturn(addRL(error(e.message)), 400, e.message);
           return logAndReturn(addRL(success(data, 201)), 201);
         }
@@ -281,8 +280,7 @@ serve(async (req) => {
           if (!hasScope("write")) return logAndReturn(addRL(error("Scope 'write' requis.", 403)), 403, "Missing scope");
           if (!resourceId) return logAndReturn(addRL(error("ID requis.")), 400, "Missing ID");
           const body = await req.json();
-          delete body.id; delete body.company_id;
-          const { data, error: e } = await supabase.from("minutes").update(body).eq("id", resourceId).eq("company_id", company_id).select().single();
+          const { data, error: e } = await supabase.from("minutes").update(pickAllowed("minutes", body)).eq("id", resourceId).eq("company_id", company_id).select().single();
           if (e) return logAndReturn(addRL(error(e.code === "PGRST116" ? "PV introuvable." : e.message, e.code === "PGRST116" ? 404 : 400)), e.code === "PGRST116" ? 404 : 400, e.message);
           return logAndReturn(addRL(success(data)), 200);
         }
@@ -381,7 +379,7 @@ serve(async (req) => {
           if (!hasScope("write")) return logAndReturn(addRL(error("Scope 'write' requis.", 403)), 403, "Missing scope");
           const body = await req.json();
           if (!body.texte || !body.session_id) return logAndReturn(addRL(error("Champs requis: texte, session_id.")), 400, "Validation error");
-          const { data, error: e } = await supabase.from("decisions").insert({ ...body, company_id }).select().single();
+          const { data, error: e } = await supabase.from("decisions").insert({ ...pickAllowed("decisions", body), company_id }).select().single();
           if (e) return logAndReturn(addRL(error(e.message)), 400, e.message);
           return logAndReturn(addRL(success(data, 201)), 201);
         }
@@ -389,8 +387,7 @@ serve(async (req) => {
           if (!hasScope("write")) return logAndReturn(addRL(error("Scope 'write' requis.", 403)), 403, "Missing scope");
           if (!resourceId) return logAndReturn(addRL(error("ID requis.")), 400, "Missing ID");
           const body = await req.json();
-          delete body.id; delete body.company_id;
-          const { data, error: e } = await supabase.from("decisions").update(body).eq("id", resourceId).eq("company_id", company_id).select().single();
+          const { data, error: e } = await supabase.from("decisions").update(pickAllowed("decisions", body)).eq("id", resourceId).eq("company_id", company_id).select().single();
           if (e) return logAndReturn(addRL(error(e.code === "PGRST116" ? "Décision introuvable." : e.message, e.code === "PGRST116" ? 404 : 400)), e.code === "PGRST116" ? 404 : 400, e.message);
           return logAndReturn(addRL(success(data)), 200);
         }
@@ -426,7 +423,7 @@ serve(async (req) => {
           if (!hasScope("write")) return logAndReturn(addRL(error("Scope 'write' requis.", 403)), 403, "Missing scope");
           const body = await req.json();
           if (!body.full_name || !body.organ_id) return logAndReturn(addRL(error("Champs requis: full_name, organ_id.")), 400, "Validation error");
-          const { data, error: e } = await supabase.from("members").insert({ ...body, company_id }).select().single();
+          const { data, error: e } = await supabase.from("members").insert({ ...pickAllowed("members", body), company_id }).select().single();
           if (e) return logAndReturn(addRL(error(e.message)), 400, e.message);
           return logAndReturn(addRL(success(data, 201)), 201);
         }
@@ -434,8 +431,7 @@ serve(async (req) => {
           if (!hasScope("write")) return logAndReturn(addRL(error("Scope 'write' requis.", 403)), 403, "Missing scope");
           if (!resourceId) return logAndReturn(addRL(error("ID requis.")), 400, "Missing ID");
           const body = await req.json();
-          delete body.id; delete body.company_id;
-          const { data, error: e } = await supabase.from("members").update(body).eq("id", resourceId).eq("company_id", company_id).select().single();
+          const { data, error: e } = await supabase.from("members").update(pickAllowed("members", body)).eq("id", resourceId).eq("company_id", company_id).select().single();
           if (e) return logAndReturn(addRL(error(e.code === "PGRST116" ? "Membre introuvable." : e.message, e.code === "PGRST116" ? 404 : 400)), e.code === "PGRST116" ? 404 : 400, e.message);
           return logAndReturn(addRL(success(data)), 200);
         }
