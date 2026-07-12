@@ -36,44 +36,17 @@ export default function AdminBroadcasts() {
     if (!form.title.trim() || !form.message.trim()) { toast.error("Titre et message requis"); return; }
     setSending(true);
     try {
-      // Determine recipients
-      let targetUsers: { id: string; company_id: string | null }[] = [];
-      if (form.scope === "all") {
-        const { data } = await supabase.from("profiles").select("id, company_id").eq("statut", "actif");
-        targetUsers = data ?? [];
-      } else if (form.scope === "org" && form.target_company_id) {
-        const { data } = await supabase.from("profiles").select("id, company_id").eq("company_id", form.target_company_id).eq("statut", "actif");
-        targetUsers = data ?? [];
-      }
-
-      // Insert broadcast record
-      const { data: broadcast, error: bErr } = await supabase.from("admin_broadcasts" as any).insert({
-        title: form.title,
-        message: form.message,
-        level: form.level,
-        scope: form.scope,
-        target_company_ids: form.scope === "org" && form.target_company_id ? [form.target_company_id] : null,
-        sent_by: user?.id,
-        recipients_count: targetUsers.length,
-      }).select().single();
-      if (bErr) throw bErr;
-
-      // Fan out to notifications (batch)
-      const notifs = targetUsers.map(u => ({
-        user_id: u.id,
-        type: "admin_broadcast",
-        title: form.title,
-        message: form.message,
-        link: "/",
-        metadata: { broadcast_id: (broadcast as any).id, level: form.level },
-      }));
-      // Chunk to avoid huge payloads
-      for (let i = 0; i < notifs.length; i += 500) {
-        await supabase.from("notifications").insert(notifs.slice(i, i + 500));
-      }
-
-      logAdminAction({ action: "diffusion_globale", entity_type: "admin_broadcasts", entity_id: (broadcast as any).id, details: { title: form.title, scope: form.scope, recipients: targetUsers.length } });
-      toast.success(`Annonce envoyée à ${targetUsers.length} utilisateur(s)`);
+      const { data, error } = await supabase.rpc("send_admin_broadcast" as any, {
+        _title: form.title,
+        _message: form.message,
+        _level: form.level,
+        _scope: form.scope,
+        _target_company_id: form.scope === "org" && form.target_company_id ? form.target_company_id : null,
+      });
+      if (error) throw error;
+      const result = data as any;
+      logAdminAction({ action: "diffusion_globale", entity_type: "admin_broadcasts", entity_id: result?.broadcast_id, details: { title: form.title, scope: form.scope, recipients: result?.recipients ?? 0 } });
+      toast.success(`Annonce envoyée à ${result?.recipients ?? 0} utilisateur(s)`);
       setForm({ title: "", message: "", level: "info", scope: "all", target_company_id: "" });
       fetchData();
     } catch (e: any) {

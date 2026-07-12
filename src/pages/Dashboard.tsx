@@ -18,6 +18,7 @@ import { useAppData } from "@/contexts/AppDataContext";
 import { useAuth } from "@/lib/auth";
 import { useRecording, formatDuration } from "@/contexts/RecordingContext";
 import PageSkeleton from "@/components/PageSkeleton";
+import { useRealtimeTables } from "@/hooks/useRealtimeTable";
 
 interface DashboardData {
   sessionsOrdinaires: number;
@@ -58,6 +59,7 @@ export default function Dashboard() {
   const recording = useRecording();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const canSeeDocs = hasPermission("consulter_documents") || hasPermission("gerer_documents");
   const canSeeMembers = hasPermission("gerer_membres");
@@ -176,7 +178,13 @@ export default function Dashboard() {
     };
     fetchAll();
     return () => { cancelled = true; };
-  }, [user, canSeeMembers, canSeeDocs, canSeeAudit, pvScope]);
+  }, [user, canSeeMembers, canSeeDocs, canSeeAudit, pvScope, refreshTick]);
+
+  // Live refresh whenever any dashboard-relevant table changes
+  useRealtimeTables(
+    ["convocation_views", "notifications", "minutes", "sessions", "decisions", "actions", "documents"],
+    () => setRefreshTick((t) => t + 1)
+  );
 
   const greeting = useMemo(() => {
     const h = new Date().getHours();
