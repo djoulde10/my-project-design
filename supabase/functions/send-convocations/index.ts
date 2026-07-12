@@ -73,6 +73,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Resolve the caller's own company for tenant scoping
+    const { data: callerProfile } = await admin
+      .from("profiles").select("company_id").eq("id", userId).maybeSingle();
+    const callerCompanyId = callerProfile?.company_id as string | undefined;
+    if (!callerCompanyId) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Optional payload : { session_id, only_unread }
     let session_id: string | undefined;
     let only_unread = false;
@@ -84,8 +94,20 @@ Deno.serve(async (req) => {
       } catch { /* no body */ }
     }
 
+    // SECURITY: if a session_id is supplied, verify it belongs to the caller's own tenant
+    // before the service-role client (which bypasses RLS) touches convocation rows.
+    if (session_id) {
+      const { data: sessRow } = await admin
+        .from("sessions").select("company_id").eq("id", session_id).maybeSingle();
+      if (!sessRow || sessRow.company_id !== callerCompanyId) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Fetch pending convocations
-    let query = admin.from("convocation_views").select("*").limit(100);
+    let query = admin.from("convocation_views").select("*").eq("company_id", callerCompanyId).limit(100);
     if (session_id) {
       query = query.eq("session_id", session_id);
       if (only_unread) {
