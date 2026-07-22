@@ -91,7 +91,10 @@ export default function GlobalSearch() {
         return;
       }
       setLoading(true);
-      const pattern = `%${q}%`;
+      // Escape PostgREST filter special characters and SQL LIKE wildcards
+      // to prevent injection into .or()/.ilike() filter strings.
+      const escaped = q.replace(/([\\%_,()*])/g, "\\$1");
+      const pattern = `%${escaped}%`;
       const cats =
         activeCategories.length > 0 ? activeCategories : allCategories;
 
