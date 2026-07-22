@@ -25,8 +25,10 @@ function generateApiKey(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const prefix = "gb_";
   let key = prefix;
+  const bytes = new Uint32Array(40);
+  crypto.getRandomValues(bytes);
   for (let i = 0; i < 40; i++) {
-    key += chars.charAt(Math.floor(Math.random() * chars.length));
+    key += chars.charAt(bytes[i] % chars.length);
   }
   return key;
 }
