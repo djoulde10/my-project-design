@@ -17,7 +17,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth: require an authenticated request (user JWT or service role key)
+    // Auth: internal/cron job — only the service role key is accepted.
+    // User JWTs are rejected because this function processes notifications
+    // across all tenants.
     const authHeader = req.headers.get("Authorization") ?? "";
     if (!authHeader.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -26,13 +28,9 @@ Deno.serve(async (req) => {
     }
     const token = authHeader.replace("Bearer ", "");
     if (token !== SUPABASE_SERVICE_ROLE_KEY) {
-      const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
-      if (claimsError || !claimsData?.claims || claimsData.claims.role !== "authenticated") {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
